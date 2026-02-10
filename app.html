@@ -16,12 +16,21 @@
 </head>
 <body>
 <header><h1>Barra <span>Libre</span></h1><div class="phase-badge">Fase <span id="phaseBadge">I</span></div></header>
-<div class="timer-bar" id="timerBar">
-  <button class="timer-btn" data-dur="60">1:00</button>
-  <button class="timer-btn active-dur" data-dur="120">2:00</button>
-  <button class="timer-btn" data-dur="180">3:00</button>
+<div class="timer-bar mode-countdown" id="timerBar">
+  <div class="timer-mode-toggle">
+    <button class="timer-mode active" data-mode="countdown">Descanso</button>
+    <button class="timer-mode" data-mode="stopwatch">Crono</button>
+  </div>
+  <div class="timer-presets" id="timerPresets">
+    <button class="timer-btn" data-dur="60">1:00</button>
+    <button class="timer-btn active-dur" data-dur="120">2:00</button>
+    <button class="timer-btn" data-dur="180">3:00</button>
+    <button class="timer-btn timer-custom-btn" id="timerCustomBtn">✏️</button>
+  </div>
   <div class="timer-display" id="timerDisplay">2:00</div>
+  <input type="text" class="timer-custom-input" id="timerCustomInput" placeholder="m:ss" maxlength="5" inputmode="numeric">
   <button class="timer-start" id="timerStartBtn">▶</button>
+  <button class="timer-reset" id="timerResetBtn">↩️</button>
 </div>
 <div class="section active" id="secTrain">
   <div id="prefillBanner">

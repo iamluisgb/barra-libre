@@ -3,6 +3,7 @@ let timerInterval = null;
 let timerSeconds = 120;
 let timerRunning = false;
 let timerDuration = 120;
+let timerMode = 'countdown';
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -35,27 +36,39 @@ function updateTimerDisplay() {
   const m = Math.floor(timerSeconds / 60), s = timerSeconds % 60;
   const d = document.getElementById('timerDisplay');
   d.textContent = `${m}:${s.toString().padStart(2, '0')}`;
-  d.classList.toggle('warning', timerSeconds <= 10 && timerSeconds > 0);
+  if (timerMode === 'countdown') {
+    d.classList.toggle('warning', timerSeconds <= 10 && timerSeconds > 0);
+  }
 }
 
 function startTimer() {
-  timerSeconds = timerDuration;
+  if (timerMode === 'countdown') {
+    timerSeconds = timerDuration;
+  }
   timerRunning = true;
   const btn = document.getElementById('timerStartBtn');
   btn.textContent = '⏹'; btn.classList.add('running');
   updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    timerSeconds--;
-    updateTimerDisplay();
-    if (timerSeconds <= 0) {
-      stopTimer();
-      const d = document.getElementById('timerDisplay');
-      d.classList.add('done'); d.textContent = '¡GO!';
-      playAlarm();
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-      setTimeout(() => { d.classList.remove('done'); timerSeconds = timerDuration; updateTimerDisplay(); }, 3000);
-    }
-  }, 1000);
+
+  if (timerMode === 'countdown') {
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds <= 0) {
+        stopTimer();
+        const d = document.getElementById('timerDisplay');
+        d.classList.add('done'); d.textContent = '¡GO!';
+        playAlarm();
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+        setTimeout(() => { d.classList.remove('done'); timerSeconds = timerDuration; updateTimerDisplay(); }, 3000);
+      }
+    }, 1000);
+  } else {
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  }
 }
 
 function stopTimer() {
@@ -63,14 +76,78 @@ function stopTimer() {
   timerRunning = false;
   const btn = document.getElementById('timerStartBtn');
   btn.textContent = '▶'; btn.classList.remove('running');
-  timerSeconds = timerDuration;
-  updateTimerDisplay();
+  if (timerMode === 'countdown') {
+    timerSeconds = timerDuration;
+    updateTimerDisplay();
+  }
   document.getElementById('timerDisplay').classList.remove('warning', 'done');
 }
 
 export function toggleTimer() {
   if (audioCtx) audioCtx.resume();
   if (timerRunning) stopTimer(); else startTimer();
+}
+
+export function setTimerMode(mode) {
+  if (timerRunning) stopTimer();
+  timerMode = mode;
+  const bar = document.getElementById('timerBar');
+  bar.classList.remove('mode-countdown', 'mode-stopwatch');
+  bar.classList.add('mode-' + mode);
+
+  document.querySelectorAll('.timer-mode').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.timer-mode[data-mode="${mode}"]`).classList.add('active');
+
+  document.getElementById('timerCustomInput').classList.remove('visible');
+  document.getElementById('timerDisplay').style.display = '';
+
+  if (mode === 'stopwatch') {
+    timerSeconds = 0;
+  } else {
+    timerSeconds = timerDuration;
+  }
+  updateTimerDisplay();
+}
+
+export function showCustomInput() {
+  const input = document.getElementById('timerCustomInput');
+  const display = document.getElementById('timerDisplay');
+  input.classList.add('visible');
+  display.style.display = 'none';
+  const m = Math.floor(timerDuration / 60), s = timerDuration % 60;
+  input.value = `${m}:${s.toString().padStart(2, '0')}`;
+  input.focus();
+  input.select();
+}
+
+export function confirmCustomInput() {
+  const input = document.getElementById('timerCustomInput');
+  const display = document.getElementById('timerDisplay');
+  const raw = input.value.trim();
+
+  let seconds = 0;
+  if (raw.includes(':')) {
+    const parts = raw.split(':');
+    seconds = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+  } else {
+    seconds = parseInt(raw) || 0;
+  }
+
+  if (seconds > 0) {
+    timerDuration = seconds;
+    timerSeconds = timerDuration;
+    document.querySelectorAll('.timer-btn[data-dur]').forEach(b => b.classList.remove('active-dur'));
+  }
+
+  input.classList.remove('visible');
+  display.style.display = '';
+  updateTimerDisplay();
+}
+
+export function resetStopwatch() {
+  if (timerRunning) stopTimer();
+  timerSeconds = 0;
+  updateTimerDisplay();
 }
 
 export function initTimer() {

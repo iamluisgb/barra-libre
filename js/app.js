@@ -1,6 +1,6 @@
 import { loadDB, saveDB, exportData, importData, clearAllData } from './data.js';
 import { today } from './utils.js';
-import { initTimer, toggleTimer } from './ui/timer.js';
+import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI } from './ui/nav.js';
 import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill } from './ui/training.js';
 import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
@@ -50,8 +50,16 @@ function bindEvents() {
   // Header phase badge
   document.querySelector('.phase-badge').addEventListener('click', () => openPhaseModal());
 
-  // Timer toggle
+  // Timer
   document.getElementById('timerStartBtn').addEventListener('click', () => toggleTimer());
+  document.querySelectorAll('.timer-mode[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => setTimerMode(btn.dataset.mode));
+  });
+  document.getElementById('timerCustomBtn').addEventListener('click', () => showCustomInput());
+  const customInput = document.getElementById('timerCustomInput');
+  customInput.addEventListener('blur', () => confirmCustomInput());
+  customInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') customInput.blur(); });
+  document.getElementById('timerResetBtn').addEventListener('click', () => resetStopwatch());
 
   // Training section
   document.getElementById('trainSession').addEventListener('change', () => loadSessionTemplate(db, true));
