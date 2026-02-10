@@ -1,29 +1,102 @@
 import { saveDB } from '../data.js';
-import { BODY_MEASURES } from '../programs.js';
+import { getBodyMeasures } from '../programs.js';
 import { formatDate } from '../utils.js';
+
+let editingBodyId = null;
+
+function clearBodyEditState() {
+  editingBodyId = null;
+  const btn = document.querySelector('#secBody .btn.mb2');
+  btn.textContent = 'Guardar medidas';
+  btn.style.background = '';
+  document.getElementById('bodyEditBanner').style.display = 'none';
+  document.getElementById('bodyDeleteBtn').style.display = 'none';
+}
 
 export function renderBodyForm(db) {
   const last = db.bodyLogs.length ? db.bodyLogs[db.bodyLogs.length - 1] : {};
-  document.getElementById('bodyMeasures').innerHTML = BODY_MEASURES.map(m =>
+  document.getElementById('bodyMeasures').innerHTML = getBodyMeasures().map(m =>
     `<div class="measure-row"><label>${m.label}</label><input type="number" id="bm_${m.id}" step="0.1" placeholder="${last[m.id] || '—'}"></div>`
   ).join('');
 }
 
 export function saveBodyLog(db) {
   const date = document.getElementById('bodyDate').value;
-  const entry = { date, id: Date.now() };
+  const entry = { date, id: editingBodyId || Date.now() };
   let has = false;
-  BODY_MEASURES.forEach(m => {
+  getBodyMeasures().forEach(m => {
     const v = document.getElementById('bm_' + m.id).value;
     if (v) { entry[m.id] = parseFloat(v); has = true; }
   });
   if (!has) return alert('Introduce al menos una medida');
-  db.bodyLogs.push(entry);
+
+  if (editingBodyId) {
+    const idx = db.bodyLogs.findIndex(l => l.id === editingBodyId);
+    if (idx !== -1) db.bodyLogs[idx] = entry;
+    editingBodyId = null;
+  } else {
+    db.bodyLogs.push(entry);
+  }
   saveDB(db);
+
+  clearBodyEditState();
   renderBodyForm(db);
   renderBodyHistory(db);
   calcProportions(db);
   calcCalories(db);
+
+  const btn = document.querySelector('#secBody .btn.mb2');
+  const o = btn.textContent;
+  btn.textContent = '✓ Guardado'; btn.style.background = 'var(--green)';
+  setTimeout(() => { btn.textContent = o; btn.style.background = ''; }, 1200);
+}
+
+export function startBodyEdit(logId, db) {
+  const log = db.bodyLogs.find(l => l.id === logId);
+  if (!log) return;
+
+  editingBodyId = logId;
+
+  // Fill form
+  document.getElementById('bodyDate').value = log.date;
+  getBodyMeasures().forEach(m => {
+    const input = document.getElementById('bm_' + m.id);
+    input.value = log[m.id] || '';
+  });
+
+  // Show edit banner
+  const banner = document.getElementById('bodyEditBanner');
+  const dateStr = log.date.slice(5).replace('-', '/');
+  document.getElementById('bodyEditText').textContent = `✏️ Editando registro (${dateStr})`;
+  banner.style.display = 'flex';
+
+  // Show delete, change save text
+  document.getElementById('bodyDeleteBtn').style.display = '';
+  document.querySelector('#secBody .btn.mb2').textContent = 'Guardar cambios';
+
+  // Scroll to banner
+  document.getElementById('bodyEditBanner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+export function cancelBodyEdit(db) {
+  clearBodyEditState();
+  renderBodyForm(db);
+}
+
+export function deleteBodyLog(db) {
+  const btn = document.getElementById('bodyDeleteBtn');
+  if (btn.dataset.confirm === 'true') {
+    db.bodyLogs = db.bodyLogs.filter(l => l.id !== editingBodyId);
+    saveDB(db);
+    clearBodyEditState();
+    renderBodyForm(db);
+    renderBodyHistory(db);
+    calcProportions(db);
+    calcCalories(db);
+  } else {
+    btn.dataset.confirm = 'true'; btn.textContent = '¿Seguro?';
+    setTimeout(() => { btn.dataset.confirm = 'false'; btn.textContent = 'Borrar'; }, 3000);
+  }
 }
 
 export function renderBodyHistory(db) {
@@ -31,15 +104,15 @@ export function renderBodyHistory(db) {
   document.getElementById('bodyHistory').innerHTML = logs.length === 0
     ? '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:20px 0">Sin registros</p>'
     : logs.map(l => {
-      const vals = BODY_MEASURES.filter(m => l[m.id]).map(m => `${m.label}: ${l[m.id]}`).join(' · ');
-      return `<div class="history-item"><div class="hi-date">${formatDate(l.date)}</div><div class="hi-summary">${vals}</div></div>`;
+      const vals = getBodyMeasures().filter(m => l[m.id]).map(m => `${m.label}: ${l[m.id]}`).join(' · ');
+      return `<div class="history-item" data-body-id="${l.id}"><div class="hi-date">${formatDate(l.date)}</div><div class="hi-summary">${vals}</div><button class="hi-edit-btn">Editar</button></div>`;
     }).join('');
 }
 
 function getLatestBodyData(db) {
   const r = {};
   [...db.bodyLogs].reverse().forEach(l => {
-    BODY_MEASURES.forEach(m => { if (!r[m.id] && l[m.id]) r[m.id] = l[m.id]; });
+    getBodyMeasures().forEach(m => { if (!r[m.id] && l[m.id]) r[m.id] = l[m.id]; });
   });
   return r;
 }

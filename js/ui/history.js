@@ -93,6 +93,10 @@ export function closeDetailModal() {
   document.getElementById('detailBtnBar').style.display = 'none';
 }
 
+export function getDetailWorkout(db) {
+  return db.workouts.find(x => x.id === detailWorkoutId) || null;
+}
+
 export function deleteWorkout(db) {
   const btn = document.getElementById('deleteBtn');
   if (btn.dataset.confirm === 'true') {

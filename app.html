@@ -50,8 +50,16 @@
 </div>
 <div class="section" id="secBody">
   <div class="mb2"><label>Fecha registro</label><input type="date" id="bodyDate"></div>
-  <div class="sec-title sec-title-accent">Medidas (cm / kg)</div><div id="bodyMeasures"></div>
-  <button class="btn mb2">Guardar medidas</button>
+  <div class="sec-title sec-title-accent">Medidas (cm / kg)</div>
+  <div id="bodyEditBanner" style="display:none">
+    <div id="bodyEditText"></div>
+    <button class="prefill-clear body-edit-cancel">✕ Cancelar</button>
+  </div>
+  <div id="bodyMeasures"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn mb2" style="flex:1">Guardar medidas</button>
+    <button class="btn btn-danger mb2" id="bodyDeleteBtn" style="display:none">Borrar</button>
+  </div>
   <div class="sec-title sec-title-accent">Proporciones Divinas</div><div id="proportionsPanel"></div>
   <div class="sec-title sec-title-accent sec-title-mt">Calorías Estimadas</div>
   <div class="row mb"><div><label>Altura (cm)</label><input type="number" id="calcHeight" value="175"></div><div><label>Edad</label><input type="number" id="calcAge" value="32"></div></div>
@@ -97,6 +105,7 @@
 </div></div>
 <div class="detail-btn-bar" id="detailBtnBar">
   <button class="btn btn-outline detail-close-btn">Cerrar</button>
+  <button class="btn detail-edit-btn" id="editBtn">Editar</button>
   <button class="btn detail-share-btn">📸 Compartir</button>
   <button id="deleteBtn" class="btn">Borrar</button>
 </div>

@@ -72,6 +72,8 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .history-item .hi-date{font-size:.75rem;color:var(--accent);font-weight:700}
 .history-item .hi-session{font-size:.68rem;color:var(--text2);font-weight:500;margin-top:1px}
 .history-item .hi-summary{font-size:.7rem;color:var(--text);margin-top:6px;line-height:1.4}
+.history-item .hi-edit-btn{background:var(--accent);color:#fff;border:none;font-family:var(--font);font-size:.65rem;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer;margin-top:8px;transition:opacity .2s}
+.history-item .hi-edit-btn:active{opacity:.7}
 .measure-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .measure-row label{flex:1;margin:0;font-size:.72rem;font-weight:500}
 .measure-row input{width:85px;flex:none}
@@ -109,6 +111,8 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 #prefillBanner{display:none;background:rgba(0,85,255,.08);border:.5px solid rgba(0,85,255,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:8px}
 #prefillText{font-size:.78rem;color:var(--accent);font-weight:600}
 .prefill-clear{background:none;border:none;color:var(--text3);font-size:.7rem;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:8px;white-space:nowrap}
+#bodyEditBanner{display:none;background:rgba(0,85,255,.08);border:.5px solid rgba(0,85,255,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;align-items:center;justify-content:space-between;gap:8px}
+#bodyEditText{font-size:.78rem;color:var(--accent);font-weight:600}
 .cal-nav-today{flex:1;text-align:center}
 .history-filter-wrap{margin-top:12px}
 .sec-title-mt{margin-top:20px}

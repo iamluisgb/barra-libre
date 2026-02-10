@@ -3,11 +3,11 @@ import { loadPrograms } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI } from './ui/nav.js';
-import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill } from './ui/training.js';
+import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill, startEdit, cancelEdit } from './ui/training.js';
 import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
-import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout } from './ui/history.js';
+import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
 import { renderProgressChart } from './ui/progress.js';
-import { saveBodyLog, calcCalories } from './ui/body.js';
+import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
 
 const db = loadDB();
 
@@ -67,7 +67,10 @@ function bindEvents() {
   document.getElementById('trainSession').addEventListener('change', () => loadSessionTemplate(db, true));
   document.querySelector('#secTrain .btn').addEventListener('click', () => saveWorkout(db));
   document.getElementById('prefillBanner').addEventListener('click', (e) => {
-    if (e.target.closest('.prefill-clear')) clearPrefill();
+    if (e.target.closest('.prefill-clear')) {
+      cancelEdit(db);
+      clearPrefill();
+    }
   });
 
   // Calendar nav
@@ -101,6 +104,15 @@ function bindEvents() {
 
   // Detail buttons
   document.querySelector('.detail-close-btn').addEventListener('click', () => closeDetailModal());
+  document.getElementById('editBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const workout = getDetailWorkout(db);
+    if (!workout) return;
+    closeDetailModal();
+    const trainBtn = document.querySelector('nav button[data-sec="secTrain"]');
+    switchTab(trainBtn, db);
+    startEdit(workout, db);
+  });
   document.querySelector('.detail-share-btn').addEventListener('click', (e) => { e.stopPropagation(); shareCard(); });
   document.getElementById('deleteBtn').addEventListener('click', (e) => { e.stopPropagation(); deleteWorkout(db); });
 
@@ -117,6 +129,16 @@ function bindEvents() {
 
   // Body section
   document.querySelector('#secBody .btn.mb2').addEventListener('click', () => saveBodyLog(db));
+  document.getElementById('bodyHistory').addEventListener('click', (e) => {
+    const btn = e.target.closest('.hi-edit-btn');
+    if (!btn) return;
+    const item = btn.closest('.history-item[data-body-id]');
+    if (item) startBodyEdit(parseInt(item.dataset.bodyId), db);
+  });
+  document.getElementById('bodyEditBanner').addEventListener('click', (e) => {
+    if (e.target.closest('.body-edit-cancel')) cancelBodyEdit(db);
+  });
+  document.getElementById('bodyDeleteBtn').addEventListener('click', () => deleteBodyLog(db));
   document.getElementById('calcHeight').addEventListener('change', () => calcCalories(db));
   document.getElementById('calcAge').addEventListener('change', () => calcCalories(db));
 

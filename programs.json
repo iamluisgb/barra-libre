@@ -108,5 +108,18 @@
         { "name": "Retraso Zona 2 - Ej.3", "sets": 4, "reps": "8-12", "type": "extra" }
       ]
     }
-  }
+  },
+  "bodyMeasures": [
+    { "id": "peso", "label": "Peso (kg)" },
+    { "id": "grasa", "label": "% Grasa" },
+    { "id": "muneca", "label": "Muñeca" },
+    { "id": "biceps", "label": "Bíceps" },
+    { "id": "pecho", "label": "Pecho" },
+    { "id": "hombros", "label": "Hombros" },
+    { "id": "cintura", "label": "Cintura" },
+    { "id": "cuello", "label": "Cuello" },
+    { "id": "muslo", "label": "Muslo" },
+    { "id": "rodilla", "label": "Rodilla" },
+    { "id": "pantorrilla", "label": "Pantorrilla" }
+  ]
 }

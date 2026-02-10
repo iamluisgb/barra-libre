@@ -2,6 +2,16 @@ import { saveDB } from '../data.js';
 import { getPrograms } from '../programs.js';
 import { formatDate } from '../utils.js';
 
+let editingId = null;
+
+function clearEditState() {
+  if (!editingId) return;
+  editingId = null;
+  const btn = document.querySelector('#secTrain .btn');
+  btn.textContent = 'Guardar sesión';
+  btn.style.background = '';
+}
+
 export function populateSessions(db) {
   const sel = document.getElementById('trainSession');
   const fsel = document.getElementById('historyFilter');
@@ -19,6 +29,7 @@ export function populateSessions(db) {
 }
 
 export function loadSessionTemplate(db, autoPrefill) {
+  clearEditState();
   const session = document.getElementById('trainSession').value;
   const exercises = getPrograms()[db.phase].sessions[session];
   if (!exercises) return;
@@ -78,6 +89,51 @@ export function getExercisePR(db, name, excludeId) {
   return max;
 }
 
+export function startEdit(workout, db) {
+  // Switch phase if needed
+  if (workout.phase !== db.phase) {
+    db.phase = workout.phase;
+    saveDB(db);
+    document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV'][db.phase - 1];
+    populateSessions(db);
+  }
+
+  // Set date and session
+  document.getElementById('trainDate').value = workout.date;
+  document.getElementById('trainSession').value = workout.session;
+  document.getElementById('trainNotes').value = workout.notes || '';
+
+  // Render empty template (clears edit state via loadSessionTemplate)
+  loadSessionTemplate(db, false);
+
+  // Now activate edit mode
+  editingId = workout.id;
+
+  // Fill in the workout data
+  workout.exercises.forEach((ex, i) => {
+    ex.sets.forEach((set, s) => {
+      const kgInput = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="kg"]`);
+      const repsInput = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="reps"]`);
+      if (kgInput) kgInput.value = set.kg || '';
+      if (repsInput) repsInput.value = set.reps || '';
+    });
+  });
+
+  // Show edit banner
+  const banner = document.getElementById('prefillBanner');
+  const dateStr = workout.date.slice(5).replace('-', '/');
+  document.getElementById('prefillText').textContent = `✏️ Editando ${workout.session} (${dateStr})`;
+  banner.style.display = 'flex';
+
+  // Change save button text
+  document.querySelector('#secTrain .btn').textContent = 'Guardar cambios';
+}
+
+export function cancelEdit(db) {
+  clearEditState();
+  loadSessionTemplate(db, true);
+}
+
 export function saveWorkout(db) {
   const date = document.getElementById('trainDate').value;
   const session = document.getElementById('trainSession').value;
@@ -97,13 +153,23 @@ export function saveWorkout(db) {
   exData.forEach(e => {
     const maxKg = Math.max(...e.sets.map(s => parseFloat(s.kg) || 0));
     if (maxKg <= 0) return;
-    const prevPR = getExercisePR(db, e.name);
+    const prevPR = getExercisePR(db, e.name, editingId);
     if (maxKg > prevPR) prs.push({ exercise: e.name, kg: maxKg, prevKg: prevPR });
   });
 
-  const workout = { id: Date.now(), date, session, phase: db.phase, notes, exercises: exData };
-  if (prs.length > 0) workout.prs = prs;
-  db.workouts.push(workout);
+  if (editingId) {
+    const idx = db.workouts.findIndex(w => w.id === editingId);
+    if (idx !== -1) {
+      const workout = { id: editingId, date, session, phase: db.phase, notes, exercises: exData };
+      if (prs.length > 0) workout.prs = prs;
+      db.workouts[idx] = workout;
+    }
+    editingId = null;
+  } else {
+    const workout = { id: Date.now(), date, session, phase: db.phase, notes, exercises: exData };
+    if (prs.length > 0) workout.prs = prs;
+    db.workouts.push(workout);
+  }
   saveDB(db);
 
   if (prs.length > 0) {
