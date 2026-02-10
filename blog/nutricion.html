@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrición: Come como un animal — Barra Libre</title>
+<style>
+:root{--bg:#000;--surface:rgba(28,28,30,1);--surface2:rgba(44,44,46,1);--surface-glass:rgba(28,28,30,.82);--border:rgba(56,56,58,.6);--text:#f5f5f7;--text2:rgba(235,235,245,.6);--text3:rgba(235,235,245,.3);--accent:#ff9f0a;--accent2:#ff7a00;--green:#30d158;--red:#ff453a;--blue:#0a84ff;--teal:#64d2ff;--font:-apple-system,'SF Pro Display','Helvetica Neue',system-ui,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:var(--accent);text-decoration:none;transition:opacity .2s}a:hover{opacity:.8}
+img{max-width:100%;border-radius:12px}
+
+/* Nav */
+.site-nav{position:sticky;top:0;z-index:100;background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.site-nav .logo{font-size:1.1rem;font-weight:700;letter-spacing:-.01em;color:var(--text)}
+.site-nav .logo span{color:var(--accent)}
+.site-nav .nav-links{display:flex;gap:20px;font-size:.85rem;font-weight:500}
+.site-nav .nav-links a{color:var(--text2)}.site-nav .nav-links a:hover{color:var(--accent)}
+.site-nav .nav-links a.active{color:var(--accent)}
+
+/* Hero */
+.hero{padding:60px 20px 40px;text-align:center;max-width:640px;margin:0 auto}
+.hero h1{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:12px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:1rem;color:var(--text2);max-width:480px;margin:0 auto;line-height:1.5}
+.hero .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;font-weight:600;font-size:.9rem;padding:14px 28px;border-radius:50px;margin-top:24px;transition:transform .1s,opacity .15s}
+.hero .cta:hover{opacity:.9;transform:scale(1.02)}
+
+/* Content container */
+.container{max-width:640px;margin:0 auto;padding:0 20px}
+
+/* Article cards */
+.articles-grid{display:flex;flex-direction:column;gap:12px;padding:0 20px 60px;max-width:640px;margin:0 auto}
+.article-card{background:var(--surface);border-radius:16px;padding:20px;transition:transform .15s}
+.article-card:hover{transform:translateY(-2px)}
+.article-card .card-phase{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px}
+.article-card h3{font-size:1rem;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.article-card p{font-size:.82rem;color:var(--text2);line-height:1.45}
+.article-card .card-meta{font-size:.68rem;color:var(--text3);margin-top:10px;font-weight:500}
+
+/* Section labels */
+.section-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin:32px 0 16px;padding:0 20px;max-width:640px;margin-left:auto;margin-right:auto}
+
+/* Article page */
+.article-header{padding:40px 20px 24px;max-width:640px;margin:0 auto}
+.article-header .back{font-size:.82rem;color:var(--text2);font-weight:500;display:inline-flex;align-items:center;gap:4px;margin-bottom:20px}
+.article-header .back:hover{color:var(--accent)}
+.article-header .phase-tag{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);display:inline-block;background:rgba(255,159,10,.12);padding:3px 10px;border-radius:12px;margin-bottom:10px}
+.article-header h1{font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:8px}
+.article-header .subtitle{font-size:.9rem;color:var(--text2);line-height:1.45}
+
+.article-body{padding:0 20px 60px;max-width:640px;margin:0 auto}
+.article-body h2{font-size:1.2rem;font-weight:700;letter-spacing:-.01em;margin:32px 0 12px;color:var(--text)}
+.article-body h3{font-size:1rem;font-weight:700;margin:24px 0 8px}
+.article-body p{font-size:.9rem;color:var(--text2);margin-bottom:16px;line-height:1.65}
+.article-body strong{color:var(--text);font-weight:600}
+.article-body em{color:var(--text3);font-style:italic}
+.article-body ul,.article-body ol{margin:0 0 16px 20px;font-size:.9rem;color:var(--text2);line-height:1.65}
+.article-body li{margin-bottom:6px}
+.article-body li strong{color:var(--text)}
+.article-body blockquote{border-left:3px solid var(--accent);padding:12px 16px;margin:20px 0;background:rgba(255,159,10,.05);border-radius:0 10px 10px 0;font-size:.88rem;color:var(--text2);font-style:italic}
+.article-body .info-box{background:var(--surface);border-radius:12px;padding:16px;margin:20px 0;font-size:.85rem}
+.article-body .info-box .box-title{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px}
+.article-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.82rem}
+.article-body th{text-align:left;padding:10px 12px;background:var(--surface);color:var(--accent);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px}
+.article-body td{padding:10px 12px;border-bottom:.5px solid var(--border);color:var(--text2)}
+.article-body tr:last-child td{border-bottom:none}
+
+/* Article nav (prev/next) */
+.article-nav{display:flex;gap:12px;margin-top:40px;padding-top:24px;border-top:.5px solid var(--border)}
+.article-nav a{flex:1;background:var(--surface);border-radius:12px;padding:14px;font-size:.78rem;transition:transform .15s}
+.article-nav a:hover{transform:translateY(-2px)}
+.article-nav .nav-label{font-size:.6rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.article-nav .nav-title{color:var(--text);font-weight:600}
+.article-nav .next{text-align:right}
+
+/* Footer */
+.site-footer{padding:40px 20px;text-align:center;font-size:.72rem;color:var(--text3);border-top:.5px solid var(--border);margin-top:40px}
+
+/* Responsive */
+@media(min-width:700px){.hero h1{font-size:2.8rem}.article-header h1{font-size:2.2rem}}
+@media(max-width:400px){.site-nav .nav-links{gap:14px;font-size:.78rem}}
+
+</style>
+
+</head>
+<body>
+<nav class="site-nav"><a href="../index.html" class="logo">Barra <span>Libre</span></a><div class="nav-links"><a href="../index.html" class="active">Guía</a><a href="../app.html">Mi Entreno</a></div></nav>
+<div class="article-header">
+  <a href="../index.html" class="back">← Volver a la guía</a>
+  <div class="phase-tag">Nutrición</div>
+  <h1>Come como un animal</h1>
+  <div class="subtitle">Calorías, macros, timing y la estrategia nutricional para cada fase. Sin dietas absurdas, sin pasar hambre innecesariamente.</div>
+</div>
+<div class="article-body">
+
+<h2>La pirámide nutricional</h2>
+<p>Marcos propone una pirámide de prioridades clara. De más a menos importante:</p>
+<ol>
+  <li><strong>Calidad de alimentos</strong> — comida real, no procesada</li>
+  <li><strong>Calorías totales</strong> — el balance energético determina si ganas o pierdes peso</li>
+  <li><strong>Macronutrientes</strong> — la distribución de proteína, carbohidratos y grasa</li>
+  <li><strong>Timing</strong> — cuándo comes importa menos de lo que crees, pero sí importa</li>
+  <li><strong>Suplementos</strong> — la guinda, nunca la base</li>
+</ol>
+<p>Si la base está mal (comes ultraprocesados), ningún suplemento te salvará. Si la base está bien, los detalles finos marcan la diferencia.</p>
+
+<h2>Alimentos: priorizar, moderar, eliminar</h2>
+
+<h3>Proteína</h3>
+<p><strong>Priorizar</strong>: carnes (idealmente de pasto), pescado, huevos, marisco. <strong>Moderar</strong>: proteína de suero (como suplemento, no sustituto), lácteos fermentados. <strong>Eliminar</strong>: carnes procesadas, embutidos industriales, proteína de soja no fermentada.</p>
+
+<h3>Carbohidratos</h3>
+<p><strong>Priorizar</strong>: tubérculos (patata, boniato), arroz, verduras. <strong>Moderar</strong>: avena, legumbres, frutas. <strong>Eliminar</strong>: azúcar refinado, cereales procesados, bollería.</p>
+
+<h3>Grasas</h3>
+<p><strong>Priorizar</strong>: yema de huevo, aguacate, aceitunas, aceite de oliva, mantequilla, leche de coco. <strong>Moderar</strong>: frutos secos, chocolate muy oscuro. <strong>Eliminar</strong>: grasas trans, aceites de semillas (canola, soja, maíz), margarina.</p>
+
+<h2>Calorías: flujo de energía</h2>
+<p>Un concepto central de Barra Libre: no importa solo el balance calórico, importa el <strong>flujo de energía</strong>.</p>
+<p>Dos hombres pueden estar en equilibrio calórico — uno comiendo 1.500 kcal sedentario, otro comiendo 3.000 kcal entrenando duro. El segundo tiene mejor composición corporal, mejor entorno hormonal y más energía. El objetivo es <strong>comer más y entrenar más</strong>.</p>
+
+<h3>Calcular tus calorías</h3>
+<p>La app tiene calculadora integrada, pero el proceso manual es:</p>
+<ol>
+  <li>Calcula tu TMB con Mifflin-St Jeor: <strong>10 × peso + 6.25 × altura - 5 × edad + 5</strong></li>
+  <li>Multiplica por <strong>1.65</strong> (factor de actividad del programa)</li>
+  <li>El resultado son tus calorías de mantenimiento (±10% de margen)</li>
+</ol>
+
+<h2>Macros por fase</h2>
+
+<table>
+<tr><th>Fase</th><th>Proteína</th><th>Carbohidrato</th><th>Grasa</th></tr>
+<tr><td>Volumen</td><td>1.8-2.2 g/kg</td><td>3-5 g/kg</td><td>Resto (~35%)</td></tr>
+<tr><td>Definición ligera</td><td>2.2-2.5 g/kg</td><td>2-4 g/kg</td><td>Resto (~30%)</td></tr>
+<tr><td>Def. Máxima (III)</td><td>2.5-3 g/kg</td><td>&lt;1 g/kg</td><td>Resto (~50%)</td></tr>
+<tr><td>Ajustes (IV)</td><td>1.8-2.2 g/kg</td><td>3-5 g/kg</td><td>Resto (~35%)</td></tr>
+</table>
+
+<p><strong>Siempre</strong>: más carbohidrato los días de entrenamiento, menos los días de descanso.</p>
+
+<h2>Timing de comidas</h2>
+<p>La frecuencia de comidas importa mucho menos de lo que la industria fitness ha vendido. Comer 6 veces al día no acelera el metabolismo. Las reglas prácticas son pocas:</p>
+
+<h3>1. La comida post-entreno es especial</h3>
+<p>Después de entrenar, tu cuerpo aprovecha mejor proteína y carbohidrato — las calorías van al músculo en vez de a grasa. Concentra una parte importante de tu ingesta diaria después de entrenar.</p>
+
+<h3>2. Menos comidas es válido</h3>
+<p>2-3 comidas grandes pueden funcionar mejor que 5-6 pequeñas. Menos picos de insulina, más saciedad por comida, y compatible con ayuno intermitente cuando sea necesario (Fase III).</p>
+
+<h3>3. No entrenes en ayunas prolongadas</h3>
+<p>Algo de proteína o BCAAs antes de entrenar protege el músculo. Un ayuno 16/8 saltando el desayuno es compatible si entrenas por la tarde.</p>
+
+<h2>Ciclar volumen y definición</h2>
+<p>La estrategia global de Barra Libre es alternar fases de <strong>superávit</strong> (volumen, +10-15% calorías) y <strong>déficit</strong> (definición, -15% calorías). Nunca demasiado tiempo en un extremo.</p>
+
+<div class="info-box">
+  <div class="box-title">Regla general</div>
+  <p>Mantente entre <strong>10-15% de grasa corporal</strong>. Si llegas al 15%, corta. Si bajas del 10%, sube. Dentro de ese rango, tu entorno hormonal es óptimo para construir músculo y quemar grasa eficientemente.</p>
+</div>
+
+<h2>Dieta inversa</h2>
+<p>Después de cualquier período de restricción calórica, <strong>no vuelvas directamente a comer mucho</strong>. Tu metabolismo está ralentizado y acumularás grasa rápidamente. Sube calorías gradualmente: 100-150 kcal por semana durante 2-3 semanas hasta llegar a mantenimiento.</p>
+
+<div class="article-nav">
+  <a href="fase4-ajustes.html"><div class="nav-label">← Anterior</div><div class="nav-title">Fase IV: Ajustes</div></a>
+  <a href="suplementos.html" class="next"><div class="nav-label">Siguiente →</div><div class="nav-title">Suplementos</div></a>
+</div>
+</div>
+<footer class="site-footer">Basado en <em>Barra Libre</em> de Marcos Vázquez · <a href="../index.html">Volver a la guía</a></footer>
+</body>
+</html>

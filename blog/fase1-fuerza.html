@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fase I: Fuerza — Barra Libre</title>
+<style>
+:root{--bg:#000;--surface:rgba(28,28,30,1);--surface2:rgba(44,44,46,1);--surface-glass:rgba(28,28,30,.82);--border:rgba(56,56,58,.6);--text:#f5f5f7;--text2:rgba(235,235,245,.6);--text3:rgba(235,235,245,.3);--accent:#ff9f0a;--accent2:#ff7a00;--green:#30d158;--red:#ff453a;--blue:#0a84ff;--teal:#64d2ff;--font:-apple-system,'SF Pro Display','Helvetica Neue',system-ui,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:var(--accent);text-decoration:none;transition:opacity .2s}a:hover{opacity:.8}
+img{max-width:100%;border-radius:12px}
+
+/* Nav */
+.site-nav{position:sticky;top:0;z-index:100;background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.site-nav .logo{font-size:1.1rem;font-weight:700;letter-spacing:-.01em;color:var(--text)}
+.site-nav .logo span{color:var(--accent)}
+.site-nav .nav-links{display:flex;gap:20px;font-size:.85rem;font-weight:500}
+.site-nav .nav-links a{color:var(--text2)}.site-nav .nav-links a:hover{color:var(--accent)}
+.site-nav .nav-links a.active{color:var(--accent)}
+
+/* Hero */
+.hero{padding:60px 20px 40px;text-align:center;max-width:640px;margin:0 auto}
+.hero h1{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:12px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:1rem;color:var(--text2);max-width:480px;margin:0 auto;line-height:1.5}
+.hero .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#000;font-weight:600;font-size:.9rem;padding:14px 28px;border-radius:50px;margin-top:24px;transition:transform .1s,opacity .15s}
+.hero .cta:hover{opacity:.9;transform:scale(1.02)}
+
+/* Content container */
+.container{max-width:640px;margin:0 auto;padding:0 20px}
+
+/* Article cards */
+.articles-grid{display:flex;flex-direction:column;gap:12px;padding:0 20px 60px;max-width:640px;margin:0 auto}
+.article-card{background:var(--surface);border-radius:16px;padding:20px;transition:transform .15s}
+.article-card:hover{transform:translateY(-2px)}
+.article-card .card-phase{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px}
+.article-card h3{font-size:1rem;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.article-card p{font-size:.82rem;color:var(--text2);line-height:1.45}
+.article-card .card-meta{font-size:.68rem;color:var(--text3);margin-top:10px;font-weight:500}
+
+/* Section labels */
+.section-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin:32px 0 16px;padding:0 20px;max-width:640px;margin-left:auto;margin-right:auto}
+
+/* Article page */
+.article-header{padding:40px 20px 24px;max-width:640px;margin:0 auto}
+.article-header .back{font-size:.82rem;color:var(--text2);font-weight:500;display:inline-flex;align-items:center;gap:4px;margin-bottom:20px}
+.article-header .back:hover{color:var(--accent)}
+.article-header .phase-tag{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);display:inline-block;background:rgba(255,159,10,.12);padding:3px 10px;border-radius:12px;margin-bottom:10px}
+.article-header h1{font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:8px}
+.article-header .subtitle{font-size:.9rem;color:var(--text2);line-height:1.45}
+
+.article-body{padding:0 20px 60px;max-width:640px;margin:0 auto}
+.article-body h2{font-size:1.2rem;font-weight:700;letter-spacing:-.01em;margin:32px 0 12px;color:var(--text)}
+.article-body h3{font-size:1rem;font-weight:700;margin:24px 0 8px}
+.article-body p{font-size:.9rem;color:var(--text2);margin-bottom:16px;line-height:1.65}
+.article-body strong{color:var(--text);font-weight:600}
+.article-body em{color:var(--text3);font-style:italic}
+.article-body ul,.article-body ol{margin:0 0 16px 20px;font-size:.9rem;color:var(--text2);line-height:1.65}
+.article-body li{margin-bottom:6px}
+.article-body li strong{color:var(--text)}
+.article-body blockquote{border-left:3px solid var(--accent);padding:12px 16px;margin:20px 0;background:rgba(255,159,10,.05);border-radius:0 10px 10px 0;font-size:.88rem;color:var(--text2);font-style:italic}
+.article-body .info-box{background:var(--surface);border-radius:12px;padding:16px;margin:20px 0;font-size:.85rem}
+.article-body .info-box .box-title{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px}
+.article-body table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.82rem}
+.article-body th{text-align:left;padding:10px 12px;background:var(--surface);color:var(--accent);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px}
+.article-body td{padding:10px 12px;border-bottom:.5px solid var(--border);color:var(--text2)}
+.article-body tr:last-child td{border-bottom:none}
+
+/* Article nav (prev/next) */
+.article-nav{display:flex;gap:12px;margin-top:40px;padding-top:24px;border-top:.5px solid var(--border)}
+.article-nav a{flex:1;background:var(--surface);border-radius:12px;padding:14px;font-size:.78rem;transition:transform .15s}
+.article-nav a:hover{transform:translateY(-2px)}
+.article-nav .nav-label{font-size:.6rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.article-nav .nav-title{color:var(--text);font-weight:600}
+.article-nav .next{text-align:right}
+
+/* Footer */
+.site-footer{padding:40px 20px;text-align:center;font-size:.72rem;color:var(--text3);border-top:.5px solid var(--border);margin-top:40px}
+
+/* Responsive */
+@media(min-width:700px){.hero h1{font-size:2.8rem}.article-header h1{font-size:2.2rem}}
+@media(max-width:400px){.site-nav .nav-links{gap:14px;font-size:.78rem}}
+
+</style>
+
+</head>
+<body>
+<nav class="site-nav"><a href="../index.html" class="logo">Barra <span>Libre</span></a><div class="nav-links"><a href="../index.html" class="active">Guía</a><a href="../app.html">Mi Entreno</a></div></nav>
+<div class="article-header">
+  <a href="../index.html" class="back">← Volver a la guía</a>
+  <div class="phase-tag">Fase I</div>
+  <h1>Fuerza: los cimientos</h1>
+  <div class="subtitle">Progresión lineal con los 6 grandes movimientos. El programa full-body que te lleva de novato a intermedio en 2-4 meses.</div>
+</div>
+<div class="article-body">
+
+<h2>El objetivo</h2>
+<p>La fuerza es la base de todo. Sin ella, no puedes construir músculo eficientemente ni rendir en ningún deporte. La Fase I tiene un único objetivo: <strong>hacerte fuerte en los movimientos fundamentales</strong> lo más rápido posible.</p>
+<p>Como novato, tienes una ventaja enorme: tu cuerpo responde rápidamente a estímulos nuevos. Las primeras semanas mejorarás sesión a sesión — no es hipertrofia todavía, es tu sistema nervioso aprendiendo a reclutar más fibras musculares. A las pocas semanas, el músculo empieza a crecer.</p>
+
+<h2>Los 6 movimientos</h2>
+<p>Toda la Fase I gira alrededor de seis ejercicios que trabajan el cuerpo completo:</p>
+
+<table>
+<tr><th>Movimiento</th><th>Patrón</th><th>Músculos principales</th></tr>
+<tr><td><strong>Sentadilla</strong></td><td>Empuje pierna</td><td>Cuádriceps, glúteos, core</td></tr>
+<tr><td><strong>Peso Muerto</strong></td><td>Tirón pierna</td><td>Cadena posterior, espalda, agarre</td></tr>
+<tr><td><strong>Press de Banca</strong></td><td>Empuje horizontal</td><td>Pectoral, deltoides, tríceps</td></tr>
+<tr><td><strong>Press Militar</strong></td><td>Empuje vertical</td><td>Deltoides, tríceps, core</td></tr>
+<tr><td><strong>Clean</strong></td><td>Potencia</td><td>Cuerpo completo, explosividad</td></tr>
+<tr><td><strong>Dominada</strong></td><td>Tirón vertical</td><td>Dorsal, bíceps, core</td></tr>
+</table>
+
+<p>Estos seis movimientos, ejecutados correctamente, trabajan <strong>todos los músculos de tu cuerpo</strong>. No necesitas nada más en esta fase. Nada de curls de bíceps ni extensiones de tríceps — eso viene después.</p>
+
+<h2>El programa: A/B alternante</h2>
+<p>Entrenas 3 días por semana, alternando dos sesiones:</p>
+
+<div class="info-box">
+  <div class="box-title">Sesión A</div>
+  <p>Sentadilla 3×5 · Press de Banca 3×5 · Peso Muerto 2×5 · Dominada Prono 3×F · Plancha Abdominal 2×2min</p>
+</div>
+<div class="info-box">
+  <div class="box-title">Sesión B</div>
+  <p>Sentadilla 3×5 · Press Militar 3×5 · Clean 5×3 · Dominada Supino 3×F · Plancha Lateral 2×1min/lado</p>
+</div>
+
+<p>La semana queda así: <strong>Lunes A, Miércoles B, Viernes A</strong> → siguiente semana <strong>Lunes B, Miércoles A, Viernes B</strong>. La sentadilla aparece en cada sesión porque es el rey de los ejercicios.</p>
+
+<h2>Progresión lineal</h2>
+<p>Esta es la clave de la Fase I. Cada vez que completas las repeticiones prescritas en todas las series, <strong>subes el peso la siguiente sesión</strong>:</p>
+<ul>
+  <li><strong>Sentadilla y Peso Muerto</strong>: +2.5 kg por sesión</li>
+  <li><strong>Press de Banca y Press Militar</strong>: +1.25 - 2.5 kg por sesión</li>
+  <li><strong>Clean</strong>: +2.5 kg cuando completas 5×3</li>
+  <li><strong>Dominadas</strong>: cuando hagas +12 reps en cada serie, añade lastre</li>
+</ul>
+<p>Si no completas las repeticiones, repites el mismo peso la siguiente sesión. Si fallas dos sesiones seguidas con el mismo peso, reduce un 10% y vuelve a subir.</p>
+
+<h2>HIIT complementario</h2>
+<p>Además de las 3 sesiones de fuerza, la Fase I incluye <strong>1-2 sesiones HIIT semanales</strong> en días alternos. El libro propone 4 variantes que se rotan:</p>
+<ul>
+  <li><strong>HIIT-1</strong>: 3 rondas de 10 dominadas + 20 flexiones + 30 sentadillas + 40 escaladores + 50 saltos</li>
+  <li><strong>HIIT-2</strong>: 5 rondas de sentadilla 1min + flexiones 1min + burpees 1min + descanso 1min</li>
+  <li><strong>HIIT-3/4</strong>: Variantes con kettlebells si las tienes</li>
+</ul>
+<p>Registra el tiempo de cada HIIT. Mejorar tu tiempo es otra forma de progresión.</p>
+
+<h2>Principios clave</h2>
+<ul>
+  <li><strong>Técnica primero</strong>. Empieza con pesos ligeros y domina el movimiento antes de perseguir números.</li>
+  <li><strong>Series de calentamiento</strong>. Antes de cada ejercicio, haz 2-3 series incrementales con peso ligero.</li>
+  <li><strong>Descanso entre series</strong>: 2-3 minutos en los ejercicios principales.</li>
+  <li><strong>No llegues al fallo</strong>. Deja 1-2 repeticiones en reserva. El fallo destruye la recuperación.</li>
+  <li><strong>Duración</strong>: 45-60 minutos incluyendo calentamiento.</li>
+</ul>
+
+<h2>Estándares de fuerza</h2>
+<p>¿Cuándo dejas de ser novato? Cuando tu 1RM alcanza aproximadamente:</p>
+<table>
+<tr><th>Movimiento</th><th>Objetivo (×peso corporal)</th></tr>
+<tr><td>Sentadilla</td><td>1.5×</td></tr>
+<tr><td>Peso Muerto</td><td>1.8×</td></tr>
+<tr><td>Press de Banca</td><td>1.0×</td></tr>
+<tr><td>Press Militar</td><td>0.75×</td></tr>
+</table>
+<p>Para un hombre de 70 kg: sentadilla 105 kg, peso muerto 126 kg, press banca 70 kg, press militar 52.5 kg. La mayoría llega en 2-4 meses con progresión constante.</p>
+
+<h2>¿Cuándo pasar a Fase II?</h2>
+<p>Cuando ya no puedas añadir peso sesión a sesión de manera consistente y te acerques a los estándares de fuerza. No tengas prisa — esta fase es la más importante. Cada kilo extra de fuerza que construyas aquí te beneficiará para siempre.</p>
+
+<div class="article-nav">
+  <a href="filosofia.html"><div class="nav-label">← Anterior</div><div class="nav-title">Los pilares</div></a>
+  <a href="fase2-hipertrofia.html" class="next"><div class="nav-label">Siguiente →</div><div class="nav-title">Fase II: Hipertrofia</div></a>
+</div>
+</div>
+<footer class="site-footer">Basado en <em>Barra Libre</em> de Marcos Vázquez · <a href="../index.html">Volver a la guía</a></footer>
+</body>
+</html>
