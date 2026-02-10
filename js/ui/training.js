@@ -1,11 +1,11 @@
 import { saveDB } from '../data.js';
-import { PROGRAMS } from '../programs.js';
+import { getPrograms } from '../programs.js';
 import { formatDate } from '../utils.js';
 
 export function populateSessions(db) {
   const sel = document.getElementById('trainSession');
   const fsel = document.getElementById('historyFilter');
-  const ss = Object.keys(PROGRAMS[db.phase].sessions);
+  const ss = Object.keys(getPrograms()[db.phase].sessions);
   sel.innerHTML = ss.map(s => `<option value="${s}">${s}</option>`).join('');
   fsel.innerHTML = '<option value="">Todas</option>' + ss.map(s => `<option value="${s}">${s}</option>`).join('');
 
@@ -20,7 +20,7 @@ export function populateSessions(db) {
 
 export function loadSessionTemplate(db, autoPrefill) {
   const session = document.getElementById('trainSession').value;
-  const exercises = PROGRAMS[db.phase].sessions[session];
+  const exercises = getPrograms()[db.phase].sessions[session];
   if (!exercises) return;
   const container = document.getElementById('exerciseList');
   const prev = getPrevSession(db, session);
@@ -82,7 +82,7 @@ export function saveWorkout(db) {
   const date = document.getElementById('trainDate').value;
   const session = document.getElementById('trainSession').value;
   const notes = document.getElementById('trainNotes').value;
-  const exercises = PROGRAMS[db.phase].sessions[session];
+  const exercises = getPrograms()[db.phase].sessions[session];
   const exData = exercises.map((ex, i) => {
     const sets = [];
     for (let s = 0; s < ex.sets; s++) {

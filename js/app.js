@@ -1,4 +1,5 @@
 import { loadDB, saveDB, exportData, importData, clearAllData } from './data.js';
+import { loadPrograms } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI } from './ui/nav.js';
@@ -27,8 +28,9 @@ function seedInitialData() {
 }
 
 // === INIT ===
-function init() {
+async function init() {
   seedInitialData();
+  await loadPrograms();
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
   document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV'][db.phase - 1];
