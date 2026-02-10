@@ -8,6 +8,7 @@ import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
 import { renderProgressChart } from './ui/progress.js';
 import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
+import { initDrive, backupToDrive, restoreFromDrive } from './drive.js';
 
 const db = loadDB();
 
@@ -40,6 +41,19 @@ async function init() {
   initTimer();
   populateSessions(db);
   bindEvents();
+
+  // Initialize Google Drive when GIS library is ready
+  if (typeof google !== 'undefined' && google.accounts) {
+    initDrive();
+  } else {
+    const checkGIS = setInterval(() => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(checkGIS);
+        initDrive();
+      }
+    }, 200);
+    setTimeout(() => clearInterval(checkGIS), 10000);
+  }
 }
 
 // === EVENT BINDING ===
@@ -141,6 +155,63 @@ function bindEvents() {
   document.getElementById('bodyDeleteBtn').addEventListener('click', () => deleteBodyLog(db));
   document.getElementById('calcHeight').addEventListener('change', () => calcCalories(db));
   document.getElementById('calcAge').addEventListener('change', () => calcCalories(db));
+
+  // Google Drive
+  document.getElementById('driveBackupBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('driveBackupBtn');
+    const status = document.getElementById('driveStatus');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    try {
+      await backupToDrive(db);
+      status.textContent = `Copia guardada en Drive (${new Date().toLocaleString('es')})`;
+      status.className = 'drive-status drive-success';
+    } catch (e) {
+      status.textContent = e.message === 'popup_closed_by_user'
+        ? 'Inicio de sesion cancelado'
+        : `Error: ${e.message}`;
+      status.className = 'drive-status drive-error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
+
+  document.getElementById('driveRestoreBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('driveRestoreBtn');
+    const status = document.getElementById('driveStatus');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Cargando...';
+    try {
+      const result = await restoreFromDrive();
+      if (!result.success) {
+        status.textContent = 'No hay copia de seguridad en Drive';
+        status.className = 'drive-status drive-error';
+        return;
+      }
+      const when = new Date(result.modifiedTime).toLocaleString('es');
+      if (!confirm(`Restaurar copia del ${when}?\nSe reemplazaran los datos actuales.`)) {
+        status.textContent = 'Restauracion cancelada';
+        status.className = 'drive-status';
+        return;
+      }
+      Object.assign(db, result.data);
+      saveDB(db);
+      status.textContent = 'Datos restaurados correctamente';
+      status.className = 'drive-status drive-success';
+      location.reload();
+    } catch (e) {
+      status.textContent = e.message === 'popup_closed_by_user'
+        ? 'Inicio de sesion cancelado'
+        : `Error: ${e.message}`;
+      status.className = 'drive-status drive-error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
 
   // Settings section
   document.querySelector('#secSettings .btn-outline:first-of-type').addEventListener('click', () => exportData(db));

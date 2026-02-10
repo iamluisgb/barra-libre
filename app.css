@@ -117,6 +117,11 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .history-filter-wrap{margin-top:12px}
 .sec-title-mt{margin-top:20px}
 #importFile{display:none}
+.drive-status{font-size:.75rem;padding:8px 12px;border-radius:var(--radius);margin-bottom:10px;text-align:center}
+.drive-status:empty{display:none}
+.drive-success{background:rgba(52,199,89,.1);color:var(--green)}
+.drive-error{background:rgba(255,59,48,.1);color:var(--red)}
+#driveBackupBtn:disabled,#driveRestoreBtn:disabled{opacity:.5;pointer-events:none}
 
 /* Share card (detail modal) */
 .detail-modal .modal{padding:0;overflow:hidden;width:100%;max-width:100%;max-height:100vh;display:flex;flex-direction:column;border-radius:0}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v5';
+const CACHE_NAME = 'barra-libre-v6';
 const ASSETS = [
   './',
   './app.html',
@@ -27,7 +27,8 @@ const ASSETS = [
   './js/ui/progress.js',
   './js/ui/body.js',
   './js/ui/settings.js',
-  './js/ui/timer.js'
+  './js/ui/timer.js',
+  './js/drive.js'
 ];
 
 // Install: cache all assets
@@ -50,6 +51,12 @@ self.addEventListener('activate', event => {
 
 // Fetch: cache-first, fallback to network
 self.addEventListener('fetch', event => {
+  const url = event.request.url;
+  // Never cache Google API / auth requests
+  if (url.includes('accounts.google.com') || url.includes('googleapis.com')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
