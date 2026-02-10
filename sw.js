@@ -1,19 +1,32 @@
-const CACHE_NAME = 'barra-libre-v1';
+const CACHE_NAME = 'barra-libre-v4';
 const ASSETS = [
   './',
   './app.html',
+  './app.css',
   './index.html',
   './style.css',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
   './blog/filosofia.html',
   './blog/fase1-fuerza.html',
   './blog/fase2-hipertrofia.html',
   './blog/fase3-definicion.html',
   './blog/fase4-ajustes.html',
   './blog/nutricion.html',
-  './blog/suplementos.html'
+  './blog/suplementos.html',
+  './js/app.js',
+  './js/data.js',
+  './js/programs.js',
+  './js/utils.js',
+  './js/ui/nav.js',
+  './js/ui/training.js',
+  './js/ui/calendar.js',
+  './js/ui/history.js',
+  './js/ui/progress.js',
+  './js/ui/body.js',
+  './js/ui/settings.js',
+  './js/ui/timer.js'
 ];
 
 // Install: cache all assets
