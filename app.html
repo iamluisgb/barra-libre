@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<header><h1>Barra <span>Libre</span></h1><div class="phase-badge">Fase <span id="phaseBadge">I</span></div></header>
+<header><h1>Barra <span>Libre</span></h1><div class="sync-indicator" id="syncIndicator"></div><div class="phase-badge">Fase <span id="phaseBadge">I</span></div></header>
 <div class="timer-bar mode-countdown" id="timerBar">
   <div class="timer-mode-toggle">
     <button class="timer-mode active" data-mode="countdown">Descanso</button>
@@ -69,12 +69,16 @@
 <div class="section" id="secSettings">
   <div class="sec-title sec-title-accent">1RM Estimados</div><div id="rmPanel"></div>
   <div class="sec-title sec-title-accent sec-title-mt">Google Drive</div>
+  <div class="drive-sync-toggle">
+    <div><div class="dst-label">Sincronización automática</div><div class="dst-desc" id="autoSyncDesc">Desactivada</div></div>
+    <button class="toggle-btn" id="autoSyncBtn"></button>
+  </div>
   <div id="driveStatus" class="drive-status"></div>
   <button class="btn btn-outline mb" id="driveBackupBtn">Copia de seguridad en Drive</button>
   <button class="btn btn-outline mb" id="driveRestoreBtn">Cargar de Drive</button>
   <div class="sec-title sec-title-accent sec-title-mt">Datos</div>
-  <button class="btn btn-outline mb">Exportar JSON</button>
-  <button class="btn btn-outline mb">Importar JSON</button>
+  <button class="btn btn-outline mb" id="exportBtn">Exportar JSON</button>
+  <button class="btn btn-outline mb" id="importBtn">Importar JSON</button>
   <input type="file" id="importFile" accept=".json">
   <div class="delete-zone"><button class="btn btn-danger">Borrar todos los datos</button></div>
 </div>

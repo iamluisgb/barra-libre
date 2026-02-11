@@ -1,4 +1,4 @@
-import { loadDB, saveDB, exportData, importData, clearAllData } from './data.js';
+import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
@@ -8,9 +8,29 @@ import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
 import { renderProgressChart } from './ui/progress.js';
 import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
-import { initDrive, backupToDrive, restoreFromDrive } from './drive.js';
+import { initDrive, backupToDrive, restoreFromDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing } from './drive.js';
 
 const db = loadDB();
+const AUTOSYNC_KEY = 'barraLibreAutoSync';
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+function isAutoSync() { return localStorage.getItem(AUTOSYNC_KEY) === '1'; }
+
+function updateSyncUI() {
+  const btn = document.getElementById('autoSyncBtn');
+  const desc = document.getElementById('autoSyncDesc');
+  if (isAutoSync()) {
+    btn.classList.add('active');
+    desc.textContent = 'Activada';
+  } else {
+    btn.classList.remove('active');
+    desc.textContent = 'Desactivada';
+  }
+}
 
 // === SEED ===
 function seedInitialData() {
@@ -42,14 +62,32 @@ async function init() {
   populateSessions(db);
   bindEvents();
 
+  // Sync indicator
+  const syncEl = document.getElementById('syncIndicator');
+  onSyncStatus(status => {
+    syncEl.className = 'sync-indicator visible ' + status;
+    syncEl.textContent = status === 'syncing' ? '' : status === 'ok' ? '✓' : '✗';
+    if (status !== 'syncing') setTimeout(() => syncEl.classList.remove('visible'), 3000);
+  });
+
+  // Auto-sync: debounced backup on every saveDB
+  const debouncedBackup = debounce((d) => silentBackup(d), 3000);
+  setOnSave((d) => { if (isAutoSync() && !isSyncing()) debouncedBackup(d); });
+
+  updateSyncUI();
+
   // Initialize Google Drive when GIS library is ready
-  if (typeof google !== 'undefined' && google.accounts) {
+  const startDrive = () => {
     initDrive();
+    if (isAutoSync()) syncOnLoad(db, saveDB);
+  };
+  if (typeof google !== 'undefined' && google.accounts) {
+    startDrive();
   } else {
     const checkGIS = setInterval(() => {
       if (typeof google !== 'undefined' && google.accounts) {
         clearInterval(checkGIS);
-        initDrive();
+        startDrive();
       }
     }, 200);
     setTimeout(() => clearInterval(checkGIS), 10000);
@@ -156,7 +194,32 @@ function bindEvents() {
   document.getElementById('calcHeight').addEventListener('change', () => calcCalories(db));
   document.getElementById('calcAge').addEventListener('change', () => calcCalories(db));
 
-  // Google Drive
+  // Auto-sync toggle
+  document.getElementById('autoSyncBtn').addEventListener('click', async () => {
+    if (isAutoSync()) {
+      localStorage.removeItem(AUTOSYNC_KEY);
+      updateSyncUI();
+      document.getElementById('driveStatus').textContent = '';
+      return;
+    }
+    const status = document.getElementById('driveStatus');
+    try {
+      status.textContent = 'Conectando con Google...';
+      status.className = 'drive-status';
+      await backupToDrive(db);
+      localStorage.setItem(AUTOSYNC_KEY, '1');
+      updateSyncUI();
+      status.textContent = 'Sincronización activada';
+      status.className = 'drive-status drive-success';
+    } catch (e) {
+      status.textContent = e.message === 'popup_closed_by_user'
+        ? 'Inicio de sesión cancelado'
+        : `Error: ${e.message}`;
+      status.className = 'drive-status drive-error';
+    }
+  });
+
+  // Google Drive manual buttons
   document.getElementById('driveBackupBtn').addEventListener('click', async () => {
     const btn = document.getElementById('driveBackupBtn');
     const status = document.getElementById('driveStatus');
@@ -214,8 +277,8 @@ function bindEvents() {
   });
 
   // Settings section
-  document.querySelector('#secSettings .btn-outline:first-of-type').addEventListener('click', () => exportData(db));
-  document.querySelector('#secSettings .btn-outline:nth-of-type(2)').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('exportBtn').addEventListener('click', () => exportData(db));
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
   document.getElementById('importFile').addEventListener('change', (e) => importData(e, db));
   document.querySelector('#secSettings .btn-danger').addEventListener('click', () => clearAllData());
 

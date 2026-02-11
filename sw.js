@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v6';
+const CACHE_NAME = 'barra-libre-v7';
 const ASSETS = [
   './',
   './app.html',
@@ -52,6 +52,8 @@ self.addEventListener('activate', event => {
 // Fetch: cache-first, fallback to network
 self.addEventListener('fetch', event => {
   const url = event.request.url;
+  // Only handle http/https requests
+  if (!url.startsWith('http')) return;
   // Never cache Google API / auth requests
   if (url.includes('accounts.google.com') || url.includes('googleapis.com')) {
     event.respondWith(fetch(event.request));

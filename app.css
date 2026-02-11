@@ -117,6 +117,18 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .history-filter-wrap{margin-top:12px}
 .sec-title-mt{margin-top:20px}
 #importFile{display:none}
+.drive-sync-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+.dst-label{font-size:.85rem;font-weight:600}.dst-desc{font-size:.7rem;color:var(--text2);margin-top:2px}
+.toggle-btn{width:50px;height:30px;border-radius:15px;border:none;background:var(--surface2);position:relative;cursor:pointer;transition:background .25s}
+.toggle-btn::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .25s}
+.toggle-btn.active{background:var(--green)}.toggle-btn.active::after{transform:translateX(20px)}
+.sync-indicator{font-size:.65rem;color:var(--text2);display:none;align-items:center;gap:4px}
+.sync-indicator.visible{display:flex}
+.sync-indicator.syncing{color:var(--accent)}
+.sync-indicator.syncing::before{content:'';width:10px;height:10px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.sync-indicator.ok{color:var(--green)}
+.sync-indicator.error{color:var(--red)}
+@keyframes spin{to{transform:rotate(360deg)}}
 .drive-status{font-size:.75rem;padding:8px 12px;border-radius:var(--radius);margin-bottom:10px;text-align:center}
 .drive-status:empty{display:none}
 .drive-success{background:rgba(52,199,89,.1);color:var(--green)}

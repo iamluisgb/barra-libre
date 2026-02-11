@@ -1,5 +1,8 @@
 const SK = 'barraLibre';
 
+let _onSave = null;
+export function setOnSave(fn) { _onSave = fn; }
+
 export function loadDB() {
   try {
     const d = JSON.parse(localStorage.getItem(SK));
@@ -11,6 +14,7 @@ export function loadDB() {
 
 export function saveDB(db) {
   localStorage.setItem(SK, JSON.stringify(db));
+  if (_onSave) _onSave(db);
 }
 
 export function exportData(db) {

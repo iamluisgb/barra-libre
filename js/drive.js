@@ -16,13 +16,13 @@ export function initDrive() {
   });
 }
 
-function isTokenValid() {
+export function hasValidToken() {
   return accessToken && Date.now() < tokenExpiry;
 }
 
 function ensureAuth() {
   return new Promise((resolve, reject) => {
-    if (isTokenValid()) {
+    if (hasValidToken()) {
       resolve(accessToken);
       return;
     }
@@ -111,3 +111,70 @@ export async function restoreFromDrive() {
   if (!data.workouts) throw new Error('Formato de backup no valido');
   return { success: true, data, modifiedTime: file.modifiedTime };
 }
+
+// === Auto-sync ===
+
+const SYNC_TS_KEY = 'barraLibreLastSync';
+
+function getLocalSyncTime() {
+  return parseInt(localStorage.getItem(SYNC_TS_KEY)) || 0;
+}
+
+function setLocalSyncTime() {
+  localStorage.setItem(SYNC_TS_KEY, Date.now().toString());
+}
+
+let _syncing = false;
+export function isSyncing() { return _syncing; }
+
+export async function silentBackup(db) {
+  if (!hasValidToken() || _syncing) return;
+  try {
+    _syncing = true;
+    await backupToDrive(db);
+    setLocalSyncTime();
+    setSyncStatus('ok');
+  } catch {
+    setSyncStatus('error');
+  } finally {
+    _syncing = false;
+  }
+}
+
+export async function syncOnLoad(db, saveFn) {
+  if (!hasValidToken()) return;
+  try {
+    _syncing = true;
+    setSyncStatus('syncing');
+    const file = await findBackupFile(accessToken);
+    if (!file) {
+      _syncing = false;
+      await silentBackup(db);
+      return;
+    }
+    const driveTime = new Date(file.modifiedTime).getTime();
+    const localTime = getLocalSyncTime();
+    if (driveTime > localTime) {
+      const content = await downloadFile(accessToken, file.id);
+      const data = JSON.parse(content);
+      if (data.workouts) {
+        Object.assign(db, data);
+        saveFn(db);
+        setLocalSyncTime();
+        setSyncStatus('ok');
+        _syncing = false;
+        location.reload();
+        return;
+      }
+    }
+    _syncing = false;
+    await silentBackup(db);
+  } catch {
+    setSyncStatus('error');
+    _syncing = false;
+  }
+}
+
+let _syncStatusCb = null;
+export function onSyncStatus(cb) { _syncStatusCb = cb; }
+function setSyncStatus(status) { if (_syncStatusCb) _syncStatusCb(status); }
