@@ -92,6 +92,13 @@ async function init() {
     }, 200);
     setTimeout(() => clearInterval(checkGIS), 10000);
   }
+
+  // Re-sync when user returns to the app (tab visible, phone unlocked)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isAutoSync() && !isSyncing()) {
+      syncOnLoad(db, saveDB);
+    }
+  });
 }
 
 // === EVENT BINDING ===
@@ -202,7 +209,11 @@ function bindEvents() {
       document.getElementById('driveStatus').textContent = '';
       return;
     }
+    const btn = document.getElementById('autoSyncBtn');
+    const desc = document.getElementById('autoSyncDesc');
     const status = document.getElementById('driveStatus');
+    btn.disabled = true;
+    desc.textContent = 'Activando...';
     try {
       status.textContent = 'Conectando con Google...';
       status.className = 'drive-status';
@@ -216,6 +227,9 @@ function bindEvents() {
         ? 'Inicio de sesión cancelado'
         : `Error: ${e.message}`;
       status.className = 'drive-status drive-error';
+      desc.textContent = 'Desactivada';
+    } finally {
+      btn.disabled = false;
     }
   });
 
