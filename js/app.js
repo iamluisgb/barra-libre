@@ -14,8 +14,10 @@ const db = loadDB();
 const AUTOSYNC_KEY = 'barraLibreAutoSync';
 
 function debounce(fn, ms) {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  let t, lastArgs;
+  const d = (...args) => { clearTimeout(t); lastArgs = args; t = setTimeout(() => { lastArgs = null; fn(...args); }, ms); };
+  d.flush = () => { if (lastArgs) { clearTimeout(t); const a = lastArgs; lastArgs = null; fn(...a); } };
+  return d;
 }
 
 function isAutoSync() { return localStorage.getItem(AUTOSYNC_KEY) === '1'; }
@@ -93,9 +95,11 @@ async function init() {
     setTimeout(() => clearInterval(checkGIS), 10000);
   }
 
-  // Re-sync when user returns to the app (tab visible, phone unlocked)
+  // Flush pending backup when leaving, re-sync when returning
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && isAutoSync() && !isSyncing()) {
+    if (document.visibilityState === 'hidden' && isAutoSync()) {
+      debouncedBackup.flush();
+    } else if (document.visibilityState === 'visible' && isAutoSync() && !isSyncing()) {
       syncOnLoad(db, saveDB);
     }
   });

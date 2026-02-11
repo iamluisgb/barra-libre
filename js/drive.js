@@ -124,11 +124,35 @@ function setLocalSyncTime() {
   localStorage.setItem(SYNC_TS_KEY, Date.now().toString());
 }
 
+function trySilentAuth() {
+  return new Promise((resolve) => {
+    if (hasValidToken()) { resolve(true); return; }
+    if (!tokenClient) { resolve(false); return; }
+    const timeout = setTimeout(() => resolve(false), 5000);
+    tokenClient.callback = (response) => {
+      clearTimeout(timeout);
+      if (response.error) { resolve(false); return; }
+      accessToken = response.access_token;
+      tokenExpiry = Date.now() + (response.expires_in * 1000) - 60000;
+      resolve(true);
+    };
+    tokenClient.error_callback = () => { clearTimeout(timeout); resolve(false); };
+    try {
+      tokenClient.requestAccessToken({ prompt: '' });
+    } catch { clearTimeout(timeout); resolve(false); }
+  });
+}
+
 let _syncing = false;
 export function isSyncing() { return _syncing; }
 
 export async function silentBackup(db) {
-  if (!hasValidToken() || _syncing) return;
+  if (_syncing) return;
+  if (!hasValidToken()) {
+    // Try silent re-auth (works if user has active Google session)
+    const ok = await trySilentAuth();
+    if (!ok) { setSyncStatus('error'); return; }
+  }
   try {
     _syncing = true;
     await backupToDrive(db);
@@ -142,7 +166,10 @@ export async function silentBackup(db) {
 }
 
 export async function syncOnLoad(db, saveFn) {
-  if (!hasValidToken()) return;
+  if (!hasValidToken()) {
+    const ok = await trySilentAuth();
+    if (!ok) { setSyncStatus('error'); return; }
+  }
   try {
     _syncing = true;
     setSyncStatus('syncing');
