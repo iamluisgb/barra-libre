@@ -63,3 +63,11 @@ export function updatePhaseUI(db) {
   updatePhaseDisplay(db);
   renderPhaseModal(db);
 }
+
+export function refreshActiveSection(db) {
+  const sec = document.querySelector('.section.active')?.id;
+  if (sec === 'secHistory') { renderCalendar(db); renderHistory(db); }
+  if (sec === 'secBody') { renderBodyForm(db); renderBodyHistory(db); calcProportions(db); calcCalories(db); }
+  if (sec === 'secSettings') render1RMs(db);
+  if (sec === 'secProgress') initProgress(db);
+}

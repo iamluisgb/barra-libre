@@ -2,7 +2,7 @@ import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from 
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
-import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay } from './ui/nav.js';
+import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
 import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill, startEdit, cancelEdit } from './ui/training.js';
 import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
@@ -142,6 +142,8 @@ function bindEvents() {
     saveDB(db);
     updatePhaseUI(db);
     populateSessions(db);
+    document.getElementById('historyFilter').value = '';
+    refreshActiveSection(db);
   });
 
   // Timer
