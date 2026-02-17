@@ -9,6 +9,7 @@ import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, 
 import { renderProgressChart } from './ui/progress.js';
 import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
 import { initDrive, backupToDrive, restoreFromDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
+import { initToast } from './ui/toast.js';
 
 const db = loadDB();
 const AUTOSYNC_KEY = 'barraLibreAutoSync';
@@ -53,6 +54,7 @@ function seedInitialData() {
 // === INIT ===
 async function init() {
   seedInitialData();
+  initToast();
   await loadPrograms();
 
   // Set active program from saved state + render chips dynamically
@@ -134,6 +136,9 @@ function bindEvents() {
     if (!chip) return;
     const prog = chip.dataset.prog;
     if (prog === getActiveProgram()) return;
+    const progList = getProgramList();
+    const target = progList.find(p => p.id === prog);
+    if (!confirm(`Cambiar a ${target?.name || prog}?`)) return;
     document.querySelectorAll('.prog-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     setActiveProgram(prog);
@@ -156,6 +161,11 @@ function bindEvents() {
   customInput.addEventListener('blur', () => confirmCustomInput());
   customInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') customInput.blur(); });
   document.getElementById('timerResetBtn').addEventListener('click', () => resetStopwatch());
+
+  // Auto-clear prefill styling on user input
+  document.getElementById('exerciseList').addEventListener('input', (e) => {
+    e.target.classList.remove('prefilled');
+  }, true);
 
   // Training section
   document.getElementById('trainSession').addEventListener('change', () => loadSessionTemplate(db, true));

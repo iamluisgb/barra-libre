@@ -1,6 +1,7 @@
 import { saveDB } from '../data.js';
 import { getBodyMeasures } from '../programs.js';
 import { formatDate } from '../utils.js';
+import { toast } from './toast.js';
 
 let editingBodyId = null;
 
@@ -28,8 +29,9 @@ export function saveBodyLog(db) {
     const v = document.getElementById('bm_' + m.id).value;
     if (v) { entry[m.id] = parseFloat(v); has = true; }
   });
-  if (!has) return alert('Introduce al menos una medida');
+  if (!has) { toast('Introduce al menos una medida', 'error'); return; }
 
+  const wasEditing = !!editingBodyId;
   if (editingBodyId) {
     const idx = db.bodyLogs.findIndex(l => l.id === editingBodyId);
     if (idx !== -1) db.bodyLogs[idx] = entry;
@@ -45,10 +47,7 @@ export function saveBodyLog(db) {
   calcProportions(db);
   calcCalories(db);
 
-  const btn = document.querySelector('#secBody .btn.mb2');
-  const o = btn.textContent;
-  btn.textContent = '✓ Guardado'; btn.style.background = 'var(--green)';
-  setTimeout(() => { btn.textContent = o; btn.style.background = ''; }, 1200);
+  toast(wasEditing ? 'Medidas actualizadas' : 'Medidas guardadas');
 }
 
 export function startBodyEdit(logId, db) {
@@ -88,6 +87,7 @@ export function deleteBodyLog(db) {
   if (btn.dataset.confirm === 'true') {
     db.bodyLogs = db.bodyLogs.filter(l => l.id !== editingBodyId);
     saveDB(db);
+    toast('Registro eliminado', 'info');
     clearBodyEditState();
     renderBodyForm(db);
     renderBodyHistory(db);

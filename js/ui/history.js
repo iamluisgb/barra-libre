@@ -2,6 +2,7 @@ import { saveDB } from '../data.js';
 import { formatDate } from '../utils.js';
 import { getActiveProgram } from '../programs.js';
 import { renderCalendar } from './calendar.js';
+import { toast } from './toast.js';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 let detailWorkoutId = null;
@@ -107,6 +108,7 @@ export function deleteWorkout(db) {
   if (btn.dataset.confirm === 'true') {
     db.workouts = db.workouts.filter(w => w.id !== detailWorkoutId);
     saveDB(db);
+    toast('Sesión eliminada', 'info');
     closeDetailModal();
     renderHistory(db);
     renderCalendar(db);
