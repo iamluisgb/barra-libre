@@ -16,6 +16,10 @@
 </head>
 <body>
 <header><h1>Barra <span>Libre</span></h1><div class="sync-indicator" id="syncIndicator"></div><div class="phase-badge">Fase <span id="phaseBadge">I</span></div></header>
+<div class="program-selector" id="programSelector">
+  <button class="prog-chip active" data-prog="barraLibre">Barra Libre</button>
+  <button class="prog-chip" data-prog="kettlebell">Kettlebell</button>
+</div>
 <div class="timer-bar mode-countdown" id="timerBar">
   <div class="timer-mode-toggle">
     <button class="timer-mode active" data-mode="countdown">Descanso</button>
@@ -83,10 +87,7 @@
   <div class="delete-zone"><button class="btn btn-danger">Borrar todos los datos</button></div>
 </div>
 <div class="modal-overlay" id="phaseModal"><div class="modal"><h3>Seleccionar Fase</h3>
-  <div class="phase-option" data-phase="1"><div class="po-num">I</div><div class="po-text"><div class="po-title">Fuerza</div><div class="po-desc">Full-body · 3×5 · Progresión lineal</div></div></div>
-  <div class="phase-option" data-phase="2"><div class="po-num">II</div><div class="po-text"><div class="po-title">Hipertrofia</div><div class="po-desc">Torso-Pierna · Fuerza + Hipertrofia</div></div></div>
-  <div class="phase-option" data-phase="3"><div class="po-num">III</div><div class="po-text"><div class="po-title">Definición Máxima</div><div class="po-desc">Full-body · Complejos · 4 semanas</div></div></div>
-  <div class="phase-option" data-phase="4"><div class="po-num">IV</div><div class="po-text"><div class="po-title">Ajustes</div><div class="po-desc">Densidad · Zonas retrasadas</div></div></div>
+  <div id="phaseOptions"></div>
   <button class="btn btn-outline">Cerrar</button>
 </div></div>
 <div class="modal-overlay detail-modal" id="detailModal"><div class="modal">

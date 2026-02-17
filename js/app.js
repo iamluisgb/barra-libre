@@ -1,5 +1,5 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
-import { loadPrograms } from './programs.js';
+import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI } from './ui/nav.js';
@@ -54,9 +54,17 @@ function seedInitialData() {
 async function init() {
   seedInitialData();
   await loadPrograms();
+
+  // Set active program from saved state
+  setActiveProgram(db.program || 'barraLibre');
+  document.querySelectorAll('.prog-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.prog === (db.program || 'barraLibre'));
+  });
+
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
-  document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV'][db.phase - 1];
+  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  document.getElementById('phaseBadge').textContent = ROMAN[db.phase - 1] || db.phase;
   document.getElementById('calcHeight').value = db.settings?.height || 175;
   document.getElementById('calcAge').value = db.settings?.age || 32;
   document.getElementById('timerBar').classList.add('active');
@@ -114,6 +122,24 @@ function bindEvents() {
 
   // Header phase badge
   document.querySelector('.phase-badge').addEventListener('click', () => openPhaseModal());
+
+  // Program selector
+  document.querySelectorAll('.prog-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const prog = chip.dataset.prog;
+      if (prog === getActiveProgram()) return;
+      document.querySelectorAll('.prog-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      setActiveProgram(prog);
+      db.program = prog;
+      db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
+      saveDB(db);
+      const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+      document.getElementById('phaseBadge').textContent = ROMAN[db.phase - 1] || db.phase;
+      updatePhaseUI(db);
+      populateSessions(db);
+    });
+  });
 
   // Timer
   document.getElementById('timerStartBtn').addEventListener('click', () => toggleTimer());

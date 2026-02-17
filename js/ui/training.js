@@ -1,5 +1,5 @@
 import { saveDB } from '../data.js';
-import { getPrograms } from '../programs.js';
+import { getPrograms, getActiveProgram } from '../programs.js';
 import { formatDate } from '../utils.js';
 
 let editingId = null;
@@ -15,11 +15,14 @@ function clearEditState() {
 export function populateSessions(db) {
   const sel = document.getElementById('trainSession');
   const fsel = document.getElementById('historyFilter');
-  const ss = Object.keys(getPrograms()[db.phase].sessions);
+  const progs = getPrograms();
+  if (!progs[db.phase]) { db.phase = parseInt(Object.keys(progs)[0]) || 1; }
+  const ss = Object.keys(progs[db.phase].sessions);
   sel.innerHTML = ss.map(s => `<option value="${s}">${s}</option>`).join('');
   fsel.innerHTML = '<option value="">Todas</option>' + ss.map(s => `<option value="${s}">${s}</option>`).join('');
 
-  const lastW = db.workouts.filter(w => w.phase === db.phase).sort((a, b) => a.date.localeCompare(b.date)).pop();
+  const prog = getActiveProgram();
+  const lastW = db.workouts.filter(w => w.phase === db.phase && (w.program || 'barraLibre') === prog).sort((a, b) => a.date.localeCompare(b.date)).pop();
   if (lastW && ss.length > 1) {
     const lastIdx = ss.indexOf(lastW.session);
     const nextIdx = (lastIdx + 1) % ss.length;
@@ -31,7 +34,9 @@ export function populateSessions(db) {
 export function loadSessionTemplate(db, autoPrefill) {
   clearEditState();
   const session = document.getElementById('trainSession').value;
-  const exercises = getPrograms()[db.phase].sessions[session];
+  const progs = getPrograms();
+  if (!progs[db.phase]) return;
+  const exercises = progs[db.phase].sessions[session];
   if (!exercises) return;
   const container = document.getElementById('exerciseList');
   const prev = getPrevSession(db, session);
@@ -47,25 +52,120 @@ export function loadSessionTemplate(db, autoPrefill) {
   }
 
   container.innerHTML = exercises.map((ex, i) => {
-    const isH = ex.type === 'hiit' || ex.type === 'density';
     const prevEx = prev ? prev.exercises[i] : null;
-    if (isH) {
-      const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
-      const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
-      return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div style="margin-top:8px"><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo / reps totales" value="${pv}"></div>${pi}</div>`;
+    const mode = ex.mode || (ex.type === 'hiit' || ex.type === 'density' ? 'result' : 'sets');
+    switch (mode) {
+      case 'sets': return renderSetsCard(ex, i, prevEx, shouldPrefill);
+      case 'result': return renderResultCard(ex, i, prevEx, shouldPrefill);
+      case 'interval': return renderIntervalCard(ex, i, prevEx, shouldPrefill);
+      case 'tabata': return renderTabataCard(ex, i, prevEx, shouldPrefill);
+      case 'rounds': return renderRoundsCard(ex, i, prevEx, shouldPrefill);
+      case 'ladder': return renderLadderCard(ex, i, prevEx, shouldPrefill);
+      case 'pyramid': return renderPyramidCard(ex, i, prevEx, shouldPrefill);
+      case 'amrap': return renderAmrapCard(ex, i, prevEx, shouldPrefill);
+      default: return renderResultCard(ex, i, prevEx, shouldPrefill);
     }
-    let sh = `<div class="sets-grid"><div></div><div class="sets-header">Kg</div><div class="sets-header">Reps</div>`;
-    for (let s = 0; s < ex.sets; s++) {
-      const pK = prevEx?.sets[s]?.kg ?? '';
-      const pR = prevEx?.sets[s]?.reps ?? '';
-      const vK = shouldPrefill && pK ? pK : '';
-      const vR = shouldPrefill && pR ? pR : '';
-      sh += `<div class="set-label">S${s + 1}</div><input type="number" data-ex="${i}" data-set="${s}" data-field="kg" placeholder="${pK || '—'}" value="${vK}" step="0.5"><input type="text" data-ex="${i}" data-set="${s}" data-field="reps" placeholder="${pR || ex.reps}" value="${vR}" inputmode="numeric">`;
-    }
-    sh += '</div>';
-    const pi = prevEx ? `<div class="prev-data">Anterior: ${prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ')}</div>` : '';
-    return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div class="ex-target">${ex.sets}×${ex.reps}${ex.type === 'extra' ? ' (extra)' : ''}</div>${sh}${pi}</div>`;
   }).join('');
+}
+
+function renderSetsCard(ex, i, prevEx, shouldPrefill) {
+  let sh = `<div class="sets-grid"><div></div><div class="sets-header">Kg</div><div class="sets-header">Reps</div>`;
+  for (let s = 0; s < ex.sets; s++) {
+    const pK = prevEx?.sets[s]?.kg ?? '';
+    const pR = prevEx?.sets[s]?.reps ?? '';
+    const vK = shouldPrefill && pK ? pK : '';
+    const vR = shouldPrefill && pR ? pR : '';
+    sh += `<div class="set-label">S${s + 1}</div><input type="number" data-ex="${i}" data-set="${s}" data-field="kg" placeholder="${pK || '—'}" value="${vK}" step="0.5"><input type="text" data-ex="${i}" data-set="${s}" data-field="reps" placeholder="${pR || ex.reps}" value="${vR}" inputmode="numeric">`;
+  }
+  sh += '</div>';
+  const pi = prevEx ? `<div class="prev-data">Anterior: ${prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ')}</div>` : '';
+  return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div class="ex-target">${ex.sets}×${ex.reps}${ex.type === 'extra' ? ' (extra)' : ''}</div>${sh}${pi}</div>`;
+}
+
+function renderResultCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div style="margin-top:8px"><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo / reps totales" value="${pv}"></div>${pi}</div>`;
+}
+
+function renderIntervalCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  return `<div class="ex-card">
+    <div class="ex-mode-badge interval">Intervalos</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">${ex.duration} · ${ex.on} on / ${ex.off} off</div>
+    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps o notas" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderTabataCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  const rounds = ex.rounds || [];
+  const grid = `<div class="tabata-grid">${rounds.map((r, ri) => `<div class="tabata-round"><span class="tr-num">R${ri + 1}</span>${r}</div>`).join('')}</div>`;
+  return `<div class="ex-card">
+    <div class="ex-mode-badge tabata">Tabata</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">8 rondas · 20s on / 10s off</div>
+    ${grid}
+    <div><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps totales o notas" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderRoundsCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  const exList = (ex.exercises || []).map(e =>
+    `<div class="round-item"><span class="ri-name">${e.name}</span><span class="ri-reps">${e.reps}</span></div>`
+  ).join('');
+  const countLabel = ex.count > 0 ? `${ex.count} rondas` : 'Max rondas';
+  const restLabel = ex.rest && ex.rest !== '0' ? ` · Desc: ${ex.rest}` : '';
+  return `<div class="ex-card">
+    <div class="ex-mode-badge rounds">Circuito</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">${countLabel}${restLabel}</div>
+    <div class="round-list">${exList}</div>
+    <div><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Rondas, tiempo o notas" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderLadderCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  const exNames = (ex.exercises || []).join(' → ');
+  return `<div class="ex-card">
+    <div class="ex-mode-badge ladder">Escalera</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">${ex.duration} · ${exNames}</div>
+    ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
+    <div><label>Max alcanzado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Nivel o notas" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderPyramidCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  const exNames = (ex.exercises || []).join(' → ');
+  const stepInfo = ex.step ? `De ${ex.step} en ${ex.step}` : '';
+  return `<div class="ex-card">
+    <div class="ex-mode-badge pyramid">Pirámide</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">${ex.duration} · ${exNames}${stepInfo ? ' · ' + stepInfo : ''}</div>
+    ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
+    <div><label>Max alcanzado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Nivel o notas" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderAmrapCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  return `<div class="ex-card">
+    <div class="ex-mode-badge amrap">AMRAP</div>
+    <div class="ex-name">${ex.name}</div>
+    <div class="ex-mode-info">${ex.duration}</div>
+    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps o notas" value="${pv}"></div>
+    ${pi}</div>`;
 }
 
 export function clearPrefill() {
@@ -74,7 +174,8 @@ export function clearPrefill() {
 }
 
 function getPrevSession(db, n) {
-  const f = db.workouts.filter(w => w.session === n && w.phase === db.phase);
+  const prog = getActiveProgram();
+  const f = db.workouts.filter(w => w.session === n && w.phase === db.phase && (w.program || 'barraLibre') === prog);
   return f.length ? f[f.length - 1] : null;
 }
 
@@ -90,26 +191,21 @@ export function getExercisePR(db, name, excludeId) {
 }
 
 export function startEdit(workout, db) {
-  // Switch phase if needed
   if (workout.phase !== db.phase) {
     db.phase = workout.phase;
     saveDB(db);
-    document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV'][db.phase - 1];
+    document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][db.phase - 1] || db.phase;
     populateSessions(db);
   }
 
-  // Set date and session
   document.getElementById('trainDate').value = workout.date;
   document.getElementById('trainSession').value = workout.session;
   document.getElementById('trainNotes').value = workout.notes || '';
 
-  // Render empty template (clears edit state via loadSessionTemplate)
   loadSessionTemplate(db, false);
 
-  // Now activate edit mode
   editingId = workout.id;
 
-  // Fill in the workout data
   workout.exercises.forEach((ex, i) => {
     ex.sets.forEach((set, s) => {
       const kgInput = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="kg"]`);
@@ -119,13 +215,11 @@ export function startEdit(workout, db) {
     });
   });
 
-  // Show edit banner
   const banner = document.getElementById('prefillBanner');
   const dateStr = workout.date.slice(5).replace('-', '/');
   document.getElementById('prefillText').textContent = `✏️ Editando ${workout.session} (${dateStr})`;
   banner.style.display = 'flex';
 
-  // Change save button text
   document.querySelector('#secTrain .btn').textContent = 'Guardar cambios';
 }
 
@@ -138,15 +232,25 @@ export function saveWorkout(db) {
   const date = document.getElementById('trainDate').value;
   const session = document.getElementById('trainSession').value;
   const notes = document.getElementById('trainNotes').value;
-  const exercises = getPrograms()[db.phase].sessions[session];
+  const progs = getPrograms();
+  if (!progs[db.phase]) return;
+  const exercises = progs[db.phase].sessions[session];
+  if (!exercises) return;
+
   const exData = exercises.map((ex, i) => {
-    const sets = [];
-    for (let s = 0; s < ex.sets; s++) {
-      const k = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="kg"]`);
-      const r = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="reps"]`);
-      sets.push({ kg: k ? k.value : '', reps: r ? r.value : '' });
+    const mode = ex.mode || (ex.type === 'hiit' || ex.type === 'density' ? 'result' : 'sets');
+    if (mode === 'sets') {
+      const sets = [];
+      for (let s = 0; s < ex.sets; s++) {
+        const k = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="kg"]`);
+        const r = document.querySelector(`[data-ex="${i}"][data-set="${s}"][data-field="reps"]`);
+        sets.push({ kg: k ? k.value : '', reps: r ? r.value : '' });
+      }
+      return { name: ex.name, sets };
+    } else {
+      const r = document.querySelector(`[data-ex="${i}"][data-set="0"][data-field="reps"]`);
+      return { name: ex.name || ex.mode, sets: [{ kg: '', reps: r ? r.value : '' }] };
     }
-    return { name: ex.name, sets };
   });
 
   const prs = [];
@@ -157,16 +261,18 @@ export function saveWorkout(db) {
     if (maxKg > prevPR) prs.push({ exercise: e.name, kg: maxKg, prevKg: prevPR });
   });
 
+  const prog = getActiveProgram();
+
   if (editingId) {
     const idx = db.workouts.findIndex(w => w.id === editingId);
     if (idx !== -1) {
-      const workout = { id: editingId, date, session, phase: db.phase, notes, exercises: exData };
+      const workout = { id: editingId, date, session, phase: db.phase, program: prog, notes, exercises: exData };
       if (prs.length > 0) workout.prs = prs;
       db.workouts[idx] = workout;
     }
     editingId = null;
   } else {
-    const workout = { id: Date.now(), date, session, phase: db.phase, notes, exercises: exData };
+    const workout = { id: Date.now(), date, session, phase: db.phase, program: prog, notes, exercises: exData };
     if (prs.length > 0) workout.prs = prs;
     db.workouts.push(workout);
   }

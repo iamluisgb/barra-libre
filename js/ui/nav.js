@@ -1,10 +1,13 @@
 import { saveDB } from '../data.js';
+import { getPrograms, getAllPhases } from '../programs.js';
 import { renderCalendar } from './calendar.js';
 import { renderHistory } from './history.js';
 import { renderBodyForm, renderBodyHistory, calcProportions, calcCalories } from './body.js';
 import { render1RMs } from './settings.js';
 import { initProgress } from './progress.js';
 import { populateSessions } from './training.js';
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 export function switchTab(btn, db) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -26,17 +29,28 @@ export function closePhaseModal() {
   document.getElementById('phaseModal').classList.remove('open');
 }
 
+export function renderPhaseModal(db) {
+  const phases = getAllPhases();
+  const container = document.getElementById('phaseOptions');
+  container.innerHTML = phases.map(p => `
+    <div class="phase-option${p.id === db.phase ? ' selected' : ''}" data-phase="${p.id}">
+      <div class="po-num">${ROMAN[p.id - 1] || p.id}</div>
+      <div class="po-text"><div class="po-title">${p.name}</div><div class="po-desc">${p.desc}</div></div>
+    </div>
+  `).join('');
+}
+
 export function selectPhase(n, db) {
   db.phase = n;
   saveDB(db);
-  document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV'][n - 1];
-  updatePhaseUI(db);
+  const phases = getAllPhases();
+  const phase = phases.find(p => p.id === n);
+  document.getElementById('phaseBadge').textContent = ROMAN[n - 1] || n;
+  renderPhaseModal(db);
   populateSessions(db);
   closePhaseModal();
 }
 
 export function updatePhaseUI(db) {
-  document.querySelectorAll('.phase-option').forEach(el =>
-    el.classList.toggle('selected', parseInt(el.dataset.phase) === db.phase)
-  );
+  renderPhaseModal(db);
 }

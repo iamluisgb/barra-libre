@@ -6,9 +6,9 @@ export function setOnSave(fn) { _onSave = fn; }
 export function loadDB() {
   try {
     const d = JSON.parse(localStorage.getItem(SK));
-    return d && d.workouts ? d : { phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
+    return d && d.workouts ? { program: 'barraLibre', ...d } : { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
   } catch {
-    return { phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
+    return { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
   }
 }
 

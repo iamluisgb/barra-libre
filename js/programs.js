@@ -1,20 +1,42 @@
-let PROGRAMS = {};
+let ALL_PROGRAMS = {};
+let activeProgram = 'barraLibre';
 let BODY_MEASURES = [];
 
 export async function loadPrograms() {
-  const res = await fetch('programs.json');
-  const base = await res.json();
+  const [base, kb] = await Promise.all([
+    fetch('programs.json').then(r => r.json()),
+    fetch('kettlebell.json').then(r => r.json())
+  ]);
 
   BODY_MEASURES = base.bodyMeasures || [];
   delete base.bodyMeasures;
+  delete base._meta;
+
+  const kbMeta = kb._meta;
+  delete kb._meta;
 
   const custom = JSON.parse(localStorage.getItem('bl_custom_programs') || '{}');
-  PROGRAMS = { ...base, ...custom };
-  return PROGRAMS;
+
+  ALL_PROGRAMS = {
+    barraLibre: { _meta: { name: 'Barra Libre', desc: 'Fuerza · Hipertrofia · Definición' }, ...base, ...custom },
+    kettlebell: { _meta: kbMeta, ...kb }
+  };
 }
 
+export function setActiveProgram(id) { activeProgram = id; }
+export function getActiveProgram() { return activeProgram; }
+
 export function getPrograms() {
-  return PROGRAMS;
+  const prog = ALL_PROGRAMS[activeProgram];
+  if (!prog) return {};
+  const { _meta, ...phases } = prog;
+  return phases;
+}
+
+export function getProgramList() {
+  return Object.entries(ALL_PROGRAMS).map(([id, p]) => ({
+    id, name: p._meta?.name || id, desc: p._meta?.desc || ''
+  }));
 }
 
 export function getBodyMeasures() {
@@ -22,9 +44,10 @@ export function getBodyMeasures() {
 }
 
 export function getAllPhases() {
-  return Object.keys(PROGRAMS).map(k => ({
+  const progs = getPrograms();
+  return Object.keys(progs).map(k => ({
     id: parseInt(k),
-    name: PROGRAMS[k].name || `Fase ${k}`,
-    desc: PROGRAMS[k].desc || ''
+    name: progs[k].name || `Fase ${k}`,
+    desc: progs[k].desc || ''
   }));
 }

@@ -1,0 +1,312 @@
+{
+  "_meta": { "name": "Efecto Kettlebell", "desc": "10 semanas · Marcos Vázquez" },
+  "1": {
+    "name": "Fundamentos",
+    "desc": "Semanas 1-2 · Swing & Lev. Turco",
+    "sessions": {
+      "S1 Día 1": [
+        { "name": "Squat", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "1/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S1 Día 2": [
+        { "name": "Deadlift", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "1/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S1 Día 3": [
+        { "name": "Squat en Rack", "sets": 3, "reps": "8", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "1/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S1 Práctica": [
+        { "name": "Swing 1 Mano", "sets": 1, "reps": "Práctica", "type": "extra" },
+        { "name": "Clean", "sets": 1, "reps": "Práctica", "type": "extra" },
+        { "name": "Press", "sets": 1, "reps": "Práctica", "type": "extra" }
+      ],
+      "S2 Día 1": [
+        { "name": "Deadlift Maleta", "sets": 3, "reps": "8/lado", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "15", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "2/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S2 Día 2": [
+        { "name": "Squat", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "15", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "2/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S2 Día 3": [
+        { "name": "Deadlift Sumo", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "15", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "2/lado", "type": "main" },
+        { "name": "Swing", "mode": "amrap", "duration": "1min" }
+      ],
+      "S2 Práctica": [
+        { "name": "Clean", "sets": 1, "reps": "Práctica", "type": "extra" },
+        { "name": "Press", "sets": 1, "reps": "Práctica", "type": "extra" },
+        { "name": "Snatch", "sets": 1, "reps": "Práctica", "type": "extra" }
+      ]
+    }
+  },
+  "2": {
+    "name": "Fuerza",
+    "desc": "Semanas 3-4 · Grind + balísticos",
+    "sessions": {
+      "S3 Día 1": [
+        { "name": "Clean & Press", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Row", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 3, "reps": "3/lado", "type": "main" },
+        { "name": "Swing 1 Mano", "sets": 4, "reps": "10/lado", "type": "main" },
+        { "name": "Flexión Bottom-Up", "sets": 3, "reps": "8-10", "type": "assist" }
+      ],
+      "S3 Día 2": [
+        { "name": "Squat", "sets": 5, "reps": "10", "type": "main" },
+        { "name": "Desplante", "sets": 5, "reps": "5/pierna", "type": "main" },
+        { "name": "Squat en Rack", "sets": 3, "reps": "8", "type": "main" },
+        { "name": "Swing", "sets": 4, "reps": "15", "type": "main" },
+        { "name": "Pistol", "sets": 3, "reps": "2/lado", "type": "assist" }
+      ],
+      "S3 Día 3": [
+        { "name": "Press en el Suelo", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Renegade Row", "sets": 4, "reps": "5/lado", "type": "main" },
+        { "name": "Windmill", "sets": 4, "reps": "5/lado", "type": "main" },
+        { "name": "Swing 1 Mano", "sets": 4, "reps": "10/lado", "type": "main" },
+        { "name": "Dominada", "sets": 4, "reps": "8-10", "type": "assist" }
+      ],
+      "S3 Día 4": [
+        { "name": "Deadlift", "sets": 5, "reps": "10", "type": "main" },
+        { "name": "Squat en Rack", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Deadlift con 1 Pierna", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "3/lado", "type": "main" },
+        { "name": "Desplante", "sets": 4, "reps": "5/lado", "type": "assist" }
+      ],
+      "S4 Día 1": [
+        { "name": "Windmill", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Row", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Desplante en Ocho", "sets": 5, "reps": "6/lado", "type": "main" },
+        { "name": "Swing 1 Mano", "sets": 4, "reps": "12/lado", "type": "main" },
+        { "name": "Flexión Bottom-Up", "sets": 3, "reps": "8-10", "type": "assist" }
+      ],
+      "S4 Día 2": [
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "2/lado", "type": "main" },
+        { "name": "Desplante", "sets": 5, "reps": "5/pierna", "type": "main" },
+        { "name": "Squat en Rack", "sets": 5, "reps": "10", "type": "main" },
+        { "name": "Deadlift con 1 Pierna", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Pistol", "sets": 4, "reps": "2/lado", "type": "assist" }
+      ],
+      "S4 Día 3": [
+        { "name": "Press en el Suelo", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Renegade Row", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Windmill", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Press", "sets": 5, "reps": "5/lado", "type": "main" },
+        { "name": "Dominada", "sets": 4, "reps": "8-10", "type": "assist" }
+      ],
+      "S4 Día 4": [
+        { "name": "Deadlift Sumo", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Squat en Rack", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Deadlift Maleta", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Desplante Lateral", "sets": 3, "reps": "5/lado", "type": "main" },
+        { "name": "Pistol", "sets": 4, "reps": "2/lado", "type": "assist" }
+      ]
+    }
+  },
+  "3": {
+    "name": "Potencia",
+    "desc": "Semanas 5-6 · Explosividad",
+    "sessions": {
+      "Día 1": [
+        { "name": "Swing 1 Mano", "sets": 3, "reps": "10/lado", "type": "main" },
+        { "name": "Thruster", "sets": 3, "reps": "10", "type": "main" },
+        { "name": "Dead Clean", "sets": 3, "reps": "8", "type": "main" },
+        { "name": "Snatch", "sets": 3, "reps": "10", "type": "main" },
+        { "name": "Flexión con Palmada", "sets": 4, "reps": "10", "type": "assist" }
+      ],
+      "Día 2": [
+        { "name": "Squat con Salto", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Deadlift High Pull", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Squat en Rack", "sets": 3, "reps": "10", "type": "main" },
+        { "name": "Desplante Lateral", "sets": 3, "reps": "5/lado", "type": "main" },
+        { "name": "Desplante con Salto", "sets": 4, "reps": "10/pierna", "type": "assist" }
+      ],
+      "Día 3": [
+        { "name": "Dead Clean", "sets": 3, "reps": "8/lado", "type": "main" },
+        { "name": "Push Press", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Dead Snatch", "sets": 3, "reps": "5/lado", "type": "main" },
+        { "name": "Burpee & Clean & Press", "sets": 3, "reps": "8/lado", "type": "main" },
+        { "name": "Flexión con Palmada", "sets": 4, "reps": "10", "type": "assist" }
+      ],
+      "Día 4": [
+        { "name": "Power Swing", "sets": 4, "reps": "15", "type": "main" },
+        { "name": "Press en el Suelo", "sets": 4, "reps": "10", "type": "main" },
+        { "name": "Clean & Push Press", "sets": 5, "reps": "5", "type": "main" },
+        { "name": "Thruster", "sets": 3, "reps": "10", "type": "main" },
+        { "name": "Desplante con Salto", "sets": 4, "reps": "10/pierna", "type": "assist" }
+      ]
+    }
+  },
+  "4": {
+    "name": "Acondicionamiento",
+    "desc": "Semanas 7-10 · Circuitos e intervalos",
+    "sessions": {
+      "S7-8 Día 1": [
+        { "name": "Levantamiento Turco", "sets": 5, "reps": "1/lado", "type": "main" },
+        { "name": "Squat en Rack", "mode": "interval", "duration": "4min", "on": "30s", "off": "30s" },
+        { "name": "Snatch", "mode": "interval", "duration": "4min", "on": "30s", "off": "30s" },
+        { "name": "Burpees", "mode": "interval", "duration": "4min", "on": "30s", "off": "30s" }
+      ],
+      "S7-8 Día 2": [
+        { "name": "Swing", "mode": "interval", "duration": "6min", "on": "30s", "off": "30s" },
+        { "name": "Thruster", "mode": "interval", "duration": "6min", "on": "30s", "off": "30s" },
+        { "name": "Clean & Press", "mode": "interval", "duration": "6min", "on": "30s", "off": "30s" }
+      ],
+      "S7-8 Día 3": [
+        {
+          "mode": "rounds", "name": "Tormenta Perfecta", "count": 4, "rest": "30s",
+          "exercises": [
+            { "name": "High Pull", "reps": "30s" },
+            { "name": "Snatch", "reps": "30s" },
+            { "name": "Squat en Rack", "reps": "30s" },
+            { "name": "Swing 1 Mano", "reps": "30s" }
+          ]
+        }
+      ],
+      "S7-8 Día 4": [
+        {
+          "mode": "rounds", "name": "Circuito Completo", "count": 4, "rest": "30s",
+          "exercises": [
+            { "name": "Clean & Press", "reps": "5" },
+            { "name": "Squat en Rack", "reps": "5" },
+            { "name": "Swing 1 Mano", "reps": "5" },
+            { "name": "Clean & Press", "reps": "5" },
+            { "name": "Levantamiento Turco", "reps": "1" }
+          ]
+        }
+      ],
+      "S9 Día 1": [
+        {
+          "mode": "rounds", "name": "Ronda A", "count": 3, "rest": "60s",
+          "exercises": [
+            { "name": "Swing 1 Mano", "reps": "30s/lado" },
+            { "name": "Squat en Rack", "reps": "30s/lado" },
+            { "name": "Snatch", "reps": "30s/lado" }
+          ]
+        },
+        {
+          "mode": "rounds", "name": "Ronda B", "count": 3, "rest": "60s",
+          "exercises": [
+            { "name": "Swing 1 Mano", "reps": "30s/lado" },
+            { "name": "Push Press", "reps": "30s/lado" },
+            { "name": "Row", "reps": "30s/lado" }
+          ]
+        }
+      ],
+      "S9 Día 2": [
+        {
+          "mode": "rounds", "name": "Ronda A", "count": 3, "rest": "60s",
+          "exercises": [
+            { "name": "Swing 1 Mano", "reps": "30s/lado" },
+            { "name": "Squat en Rack", "reps": "30s/lado" },
+            { "name": "Burpees", "reps": "1min" }
+          ]
+        },
+        {
+          "mode": "rounds", "name": "Ronda B", "count": 3, "rest": "60s",
+          "exercises": [
+            { "name": "Squat en Rack", "reps": "30s/lado" },
+            { "name": "Row", "reps": "30s/lado" },
+            { "name": "Thruster", "reps": "30s/lado" }
+          ]
+        }
+      ],
+      "S9 Día 3": [
+        {
+          "mode": "rounds", "name": "AMRAP 5min — Bloque 1", "count": 0, "rest": "0",
+          "exercises": [
+            { "name": "Clean & Press", "reps": "5/lado" },
+            { "name": "Row", "reps": "5/lado" }
+          ]
+        },
+        {
+          "mode": "rounds", "name": "AMRAP 5min — Bloque 2", "count": 0, "rest": "0",
+          "exercises": [
+            { "name": "Squat", "reps": "5" },
+            { "name": "Windmill Bajo", "reps": "5/lado" }
+          ]
+        },
+        {
+          "mode": "rounds", "name": "AMRAP 5min — Bloque 3", "count": 0, "rest": "0",
+          "exercises": [
+            { "name": "Renegade Row", "reps": "5/lado" },
+            { "name": "Swing", "reps": "15" }
+          ]
+        }
+      ],
+      "S9 Día 4": [
+        {
+          "mode": "tabata", "name": "Tabata Swing & Snatch",
+          "rounds": ["Swing", "Snatch Izq", "Swing", "Snatch Dch", "Swing", "Snatch Izq", "Swing", "Snatch Dch"]
+        },
+        { "name": "Deadlift con 1 Pierna", "mode": "amrap", "duration": "1min/pierna" },
+        { "name": "Around the World", "mode": "amrap", "duration": "1min/sentido" }
+      ],
+      "S10 Día 1": [
+        {
+          "mode": "ladder", "name": "Escalera Clean & Press & Squat", "duration": "10min",
+          "exercises": ["Clean", "Press", "Squat en Rack"],
+          "desc": "Sube reps de un ejercicio a la vez: 1→2→3→... Cambia de mano entre peldaños."
+        }
+      ],
+      "S10 Día 2": [
+        {
+          "mode": "rounds", "name": "Circuito", "count": 5, "rest": "30s",
+          "exercises": [
+            { "name": "Clean", "reps": "4" },
+            { "name": "Press", "reps": "2" },
+            { "name": "Squat en Rack", "reps": "6" }
+          ]
+        },
+        { "name": "Around the World & Ocho", "mode": "amrap", "duration": "1min/sentido" },
+        {
+          "mode": "rounds", "name": "Circuito B", "count": 3, "rest": "30s",
+          "exercises": [
+            { "name": "Thruster", "reps": "5" },
+            { "name": "Deadlift Maleta", "reps": "8" }
+          ]
+        },
+        { "name": "Renegade Row", "sets": 1, "reps": "4/lado", "type": "main" }
+      ],
+      "S10 Día 3": [
+        {
+          "mode": "rounds", "name": "Circuito", "count": 3, "rest": "30s",
+          "exercises": [
+            { "name": "Burpee & Clean & Press", "reps": "5/lado" },
+            { "name": "Deadlift Sumo", "reps": "10" }
+          ]
+        },
+        {
+          "mode": "pyramid", "name": "Pirámide Swing & Thruster", "duration": "5min",
+          "step": 2, "exercises": ["Swing", "Thruster"],
+          "desc": "2-4-6-8... sube hasta que no puedas, luego baja. Descansa los mismos segundos que reps."
+        },
+        { "name": "Deadlift con 1 Pierna", "mode": "amrap", "duration": "1min/pierna" },
+        { "name": "Around the World", "mode": "amrap", "duration": "1min/sentido" }
+      ],
+      "S10 Día 4": [
+        {
+          "mode": "tabata", "name": "Tabata Swing & Snatch",
+          "rounds": ["Swing", "Snatch Izq", "Swing", "Snatch Dch", "Swing", "Snatch Izq", "Swing", "Snatch Dch"]
+        },
+        { "name": "Thruster", "mode": "amrap", "duration": "30s/lado" },
+        {
+          "mode": "tabata", "name": "Tabata Power Swing",
+          "rounds": ["Power Swing", "Power Swing", "Power Swing", "Power Swing", "Power Swing", "Power Swing", "Power Swing", "Power Swing"]
+        },
+        { "name": "Around the World", "mode": "amrap", "duration": "1min/sentido" }
+      ]
+    }
+  }
+}
