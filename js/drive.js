@@ -8,7 +8,37 @@ let tokenClient = null;
 let accessToken = null;
 let tokenExpiry = 0;
 
+const TOKEN_KEY = 'barraLibreToken';
+const EXPIRY_KEY = 'barraLibreTokenExpiry';
+
+function persistToken() {
+  try {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(EXPIRY_KEY, tokenExpiry.toString());
+  } catch { /* localStorage full or unavailable */ }
+}
+
+export function clearStoredToken() {
+  accessToken = null;
+  tokenExpiry = 0;
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(EXPIRY_KEY);
+}
+
+function restoreToken() {
+  const t = localStorage.getItem(TOKEN_KEY);
+  const e = parseInt(localStorage.getItem(EXPIRY_KEY)) || 0;
+  if (t && Date.now() < e) {
+    accessToken = t;
+    tokenExpiry = e;
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
+  }
+}
+
 export function initDrive() {
+  restoreToken();
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPE,
@@ -33,10 +63,20 @@ function ensureAuth() {
       }
       accessToken = response.access_token;
       tokenExpiry = Date.now() + (response.expires_in * 1000) - 60000;
+      persistToken();
       resolve(accessToken);
     };
     tokenClient.requestAccessToken();
   });
+}
+
+async function driveFetch(res, context) {
+  if (res.ok) return res;
+  if (res.status === 401) {
+    clearStoredToken();
+    throw new Error('token_expired');
+  }
+  throw new Error(`${context}: ${res.status}`);
 }
 
 async function findBackupFile(token) {
@@ -49,7 +89,7 @@ async function findBackupFile(token) {
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  if (!res.ok) throw new Error(`Error al buscar backup: ${res.status}`);
+  await driveFetch(res, 'Error al buscar backup');
   const data = await res.json();
   return data.files && data.files.length > 0 ? data.files[0] : null;
 }
@@ -81,7 +121,7 @@ async function uploadFile(token, content, existingFileId) {
     },
     body,
   });
-  if (!res.ok) throw new Error(`Error al subir backup: ${res.status}`);
+  await driveFetch(res, 'Error al subir backup');
   return res.json();
 }
 
@@ -90,7 +130,7 @@ async function downloadFile(token, fileId) {
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
     { headers: { 'Authorization': `Bearer ${token}` } }
   );
-  if (!res.ok) throw new Error(`Error al descargar backup: ${res.status}`);
+  await driveFetch(res, 'Error al descargar backup');
   return res.text();
 }
 
@@ -128,8 +168,7 @@ let _syncing = false;
 export function isSyncing() { return _syncing; }
 
 export async function silentBackup(db) {
-  if (_syncing) return;
-  if (!hasValidToken()) { setSyncStatus('error'); return; }
+  if (_syncing || !hasValidToken()) return;
   try {
     _syncing = true;
     await backupToDrive(db);
@@ -143,7 +182,7 @@ export async function silentBackup(db) {
 }
 
 export async function syncOnLoad(db, saveFn) {
-  if (!hasValidToken()) { setSyncStatus('error'); return; }
+  if (!hasValidToken()) return;
   try {
     _syncing = true;
     setSyncStatus('syncing');

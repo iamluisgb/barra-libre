@@ -8,7 +8,7 @@ import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
 import { renderProgressChart } from './ui/progress.js';
 import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
-import { initDrive, backupToDrive, restoreFromDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing } from './drive.js';
+import { initDrive, backupToDrive, restoreFromDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
 
 const db = loadDB();
 const AUTOSYNC_KEY = 'barraLibreAutoSync';
@@ -209,6 +209,7 @@ function bindEvents() {
   document.getElementById('autoSyncBtn').addEventListener('click', async () => {
     if (isAutoSync()) {
       localStorage.removeItem(AUTOSYNC_KEY);
+      clearStoredToken();
       updateSyncUI();
       document.getElementById('driveStatus').textContent = '';
       return;
