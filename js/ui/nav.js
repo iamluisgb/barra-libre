@@ -9,6 +9,16 @@ import { populateSessions } from './training.js';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
+export function updatePhaseDisplay(db) {
+  const phases = getAllPhases();
+  const phase = phases.find(p => p.id === db.phase);
+  const roman = ROMAN[db.phase - 1] || db.phase;
+  const name = phase ? phase.name : '';
+  document.getElementById('phaseName').textContent = name
+    ? `Fase ${roman} · ${name}`
+    : `Fase ${roman}`;
+}
+
 export function switchTab(btn, db) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -43,14 +53,13 @@ export function renderPhaseModal(db) {
 export function selectPhase(n, db) {
   db.phase = n;
   saveDB(db);
-  const phases = getAllPhases();
-  const phase = phases.find(p => p.id === n);
-  document.getElementById('phaseBadge').textContent = ROMAN[n - 1] || n;
+  updatePhaseDisplay(db);
   renderPhaseModal(db);
   populateSessions(db);
   closePhaseModal();
 }
 
 export function updatePhaseUI(db) {
+  updatePhaseDisplay(db);
   renderPhaseModal(db);
 }

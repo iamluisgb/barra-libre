@@ -1,22 +1,26 @@
 import { saveDB } from '../data.js';
 import { formatDate } from '../utils.js';
+import { getActiveProgram } from '../programs.js';
 import { renderCalendar } from './calendar.js';
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 let detailWorkoutId = null;
 
 export function renderHistory(db, dateFilter) {
   const filter = document.getElementById('historyFilter').value;
+  const prog = getActiveProgram();
   let items = [...db.workouts].reverse();
+  items = items.filter(w => (w.program || 'barraLibre') === prog);
   if (filter) items = items.filter(w => w.session === filter);
   if (dateFilter) items = items.filter(w => w.date === dateFilter);
   document.getElementById('historyList').innerHTML = items.length === 0
     ? '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:40px 0">Sin registros aún</p>'
     : items.map(w => {
       const summary = w.exercises.filter(e => e.sets.some(s => s.kg)).map(e => `${e.name}: ${e.sets.map(s => `${s.kg || '—'}×${s.reps || '—'}`).join(', ')}`).join(' · ');
-      const hs = w.exercises.filter(e => !e.sets.some(s => s.kg) && e.sets[0]?.reps).map(e => e.sets[0].reps).join(' · ');
+      const hs = w.exercises.filter(e => !e.sets.some(s => s.kg) && e.sets[0]?.reps).map(e => `${e.name}: ${e.sets[0].reps}`).join(' · ');
       const hasPR = w.prs && w.prs.length > 0;
       const prBadge = hasPR ? '<span style="font-size:.55rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:6px">🏆 PR</span>' : '';
-      return `<div class="history-item" data-id="${w.id}"><div class="hi-date">${formatDate(w.date)}</div><div class="hi-session">Fase ${['I', 'II', 'III', 'IV'][w.phase - 1]} · ${w.session}${prBadge}</div><div class="hi-summary">${summary || hs || '—'}</div></div>`;
+      return `<div class="history-item" data-id="${w.id}"><div class="hi-date">${formatDate(w.date)}</div><div class="hi-session">Fase ${ROMAN[w.phase - 1] || w.phase} · ${w.session}${prBadge}</div><div class="hi-summary">${summary || hs || '—'}</div></div>`;
     }).join('');
 }
 
@@ -34,18 +38,19 @@ export function showDetail(id, db) {
   document.getElementById('detailPhase').style.fontSize = fs(.68);
   document.getElementById('detailDate').textContent = formatDate(w.date);
   document.getElementById('detailSession').textContent = w.session;
-  document.getElementById('detailPhase').textContent = 'Fase ' + ['I', 'II', 'III', 'IV'][w.phase - 1];
+  document.getElementById('detailPhase').textContent = 'Fase ' + (ROMAN[w.phase - 1] || w.phase);
 
   let totalVol = 0, totalSets = 0, maxKg = 0;
   const prNames = new Set((w.prs || []).map(p => p.exercise));
   const exHtml = w.exercises.map(e => {
     const isPR = prNames.has(e.name);
     const prTag = isPR ? `<span style="font-size:${fs(.55)};background:var(--accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:4px">🏆 PR</span>` : '';
-    const setsHtml = e.sets.map((s, i) => {
+    const hasKg = e.sets.some(s => parseFloat(s.kg) > 0);
+    const setsHtml = hasKg ? e.sets.map((s, i) => {
       const kg = parseFloat(s.kg) || 0, reps = parseInt(s.reps) || 0;
       totalVol += kg * reps; totalSets++; if (kg > maxKg) maxKg = kg;
       return `<div style="display:flex;align-items:center;justify-content:center;gap:${gap(10)};font-size:${fs(.9)}"><span style="color:var(--text3);font-weight:600;width:22px;text-align:right">S${i + 1}</span><span style="color:var(--text);font-weight:600;min-width:52px;text-align:right">${s.kg || '—'} kg</span><span style="color:var(--text2)">× ${s.reps || '—'}</span></div>`;
-    }).join('');
+    }).join('') : `<div style="font-size:${fs(.85)};color:var(--text);text-align:center;font-weight:600">${e.sets[0]?.reps || '—'}</div>`;
     return `<div><div style="font-size:${fs(.88)};font-weight:700;color:var(--accent);margin-bottom:${gap(6)};display:flex;align-items:center;justify-content:center;gap:6px"><span style="width:3px;height:${gap(14)};background:var(--accent);border-radius:2px;display:inline-block"></span>${e.name}${prTag}</div><div style="display:flex;flex-direction:column;gap:${gap(4)};align-items:center">${setsHtml}</div></div>`;
   }).join('');
   const exContainer = document.getElementById('detailExercises');
@@ -56,11 +61,11 @@ export function showDetail(id, db) {
   if (w.notes) { notesEl.textContent = '💬 ' + w.notes; notesEl.style.display = 'block'; notesEl.style.fontSize = fs(.75); }
   else { notesEl.style.display = 'none'; }
 
-  const statsHtml = [
+  const statsHtml = totalVol > 0 ? [
     { label: 'Volumen', value: totalVol > 1000 ? (totalVol / 1000).toFixed(1) + 't' : Math.round(totalVol) + 'kg' },
     { label: 'Series', value: totalSets },
     { label: 'Máx peso', value: maxKg + 'kg' }
-  ].map(s => `<div style="flex:1;text-align:center"><div style="font-size:${fs(1.4)};font-weight:800;color:var(--text);letter-spacing:-.02em">${s.value}</div><div style="font-size:${fs(.65)};color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${s.label}</div></div>`).join('');
+  ].map(s => `<div style="flex:1;text-align:center"><div style="font-size:${fs(1.4)};font-weight:800;color:var(--text);letter-spacing:-.02em">${s.value}</div><div style="font-size:${fs(.65)};color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${s.label}</div></div>`).join('') : `<div style="flex:1;text-align:center"><div style="font-size:${fs(1.4)};font-weight:800;color:var(--text)">${w.exercises.length}</div><div style="font-size:${fs(.65)};color:var(--text3);font-weight:600;text-transform:uppercase;margin-top:2px">Ejercicios</div></div>`;
   document.getElementById('detailStats').innerHTML = statsHtml;
 
   document.querySelectorAll('.card-brand,.card-url').forEach(el => el.style.fontSize = fs(.68));

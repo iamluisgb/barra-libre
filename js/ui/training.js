@@ -1,6 +1,5 @@
 import { saveDB } from '../data.js';
-import { getPrograms, getActiveProgram } from '../programs.js';
-import { formatDate } from '../utils.js';
+import { getPrograms, getActiveProgram, getAllPhases } from '../programs.js';
 
 let editingId = null;
 
@@ -194,7 +193,11 @@ export function startEdit(workout, db) {
   if (workout.phase !== db.phase) {
     db.phase = workout.phase;
     saveDB(db);
-    document.getElementById('phaseBadge').textContent = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][db.phase - 1] || db.phase;
+    const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    const phases = getAllPhases();
+    const phase = phases.find(p => p.id === db.phase);
+    const roman = ROMAN[db.phase - 1] || db.phase;
+    document.getElementById('phaseName').textContent = phase ? `Fase ${roman} · ${phase.name}` : `Fase ${roman}`;
     populateSessions(db);
   }
 

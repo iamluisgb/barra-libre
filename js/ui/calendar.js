@@ -1,5 +1,6 @@
 import { showDetail } from './history.js';
 import { renderHistory } from './history.js';
+import { getActiveProgram } from '../programs.js';
 
 let calViewDate = new Date();
 
@@ -13,8 +14,10 @@ export function renderCalendar(db) {
   const panel = document.getElementById('calendarPanel');
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const prog = getActiveProgram();
+  const filtered = db.workouts.filter(w => (w.program || 'barraLibre') === prog);
   const wd = {};
-  db.workouts.forEach(w => { if (!wd[w.date]) wd[w.date] = []; wd[w.date].push(w.session); });
+  filtered.forEach(w => { if (!wd[w.date]) wd[w.date] = []; wd[w.date].push(w.session); });
   const vm = new Date(calViewDate.getFullYear(), calViewDate.getMonth(), 1);
   let html = '';
   const DOW = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -44,7 +47,8 @@ export function renderCalendar(db) {
 }
 
 export function calDayClick(ds, db) {
-  const ws = db.workouts.filter(w => w.date === ds);
+  const prog = getActiveProgram();
+  const ws = db.workouts.filter(w => w.date === ds && (w.program || 'barraLibre') === prog);
   if (ws.length === 1) showDetail(ws[0].id, db);
   else if (ws.length > 1) {
     document.getElementById('historyFilter').value = '';

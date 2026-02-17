@@ -2,7 +2,7 @@ import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from 
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
-import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI } from './ui/nav.js';
+import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay } from './ui/nav.js';
 import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill, startEdit, cancelEdit } from './ui/training.js';
 import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
@@ -63,8 +63,7 @@ async function init() {
 
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
-  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-  document.getElementById('phaseBadge').textContent = ROMAN[db.phase - 1] || db.phase;
+  updatePhaseDisplay(db);
   document.getElementById('calcHeight').value = db.settings?.height || 175;
   document.getElementById('calcAge').value = db.settings?.age || 32;
   document.getElementById('timerBar').classList.add('active');
@@ -120,8 +119,8 @@ function bindEvents() {
     btn.addEventListener('click', () => switchTab(btn, db));
   });
 
-  // Header phase badge
-  document.querySelector('.phase-badge').addEventListener('click', () => openPhaseModal());
+  // Phase context (opens phase modal)
+  document.getElementById('phaseContext').addEventListener('click', () => openPhaseModal());
 
   // Program selector
   document.querySelectorAll('.prog-chip').forEach(chip => {
@@ -134,8 +133,6 @@ function bindEvents() {
       db.program = prog;
       db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
       saveDB(db);
-      const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-      document.getElementById('phaseBadge').textContent = ROMAN[db.phase - 1] || db.phase;
       updatePhaseUI(db);
       populateSessions(db);
     });
