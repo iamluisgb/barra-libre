@@ -118,28 +118,28 @@
     "name": "Potencia",
     "desc": "Semanas 5-6 · Explosividad",
     "sessions": {
-      "Día 1": [
+      "S5-6 Día 1": [
         { "name": "Swing 1 Mano", "sets": 3, "reps": "10/lado", "type": "main" },
         { "name": "Thruster", "sets": 3, "reps": "10", "type": "main" },
         { "name": "Dead Clean", "sets": 3, "reps": "8", "type": "main" },
         { "name": "Snatch", "sets": 3, "reps": "10", "type": "main" },
         { "name": "Flexión con Palmada", "sets": 4, "reps": "10", "type": "assist" }
       ],
-      "Día 2": [
+      "S5-6 Día 2": [
         { "name": "Squat con Salto", "sets": 4, "reps": "10", "type": "main" },
         { "name": "Deadlift High Pull", "sets": 4, "reps": "10", "type": "main" },
         { "name": "Squat en Rack", "sets": 3, "reps": "10", "type": "main" },
         { "name": "Desplante Lateral", "sets": 3, "reps": "5/lado", "type": "main" },
         { "name": "Desplante con Salto", "sets": 4, "reps": "10/pierna", "type": "assist" }
       ],
-      "Día 3": [
+      "S5-6 Día 3": [
         { "name": "Dead Clean", "sets": 3, "reps": "8/lado", "type": "main" },
         { "name": "Push Press", "sets": 5, "reps": "5", "type": "main" },
         { "name": "Dead Snatch", "sets": 3, "reps": "5/lado", "type": "main" },
         { "name": "Burpee & Clean & Press", "sets": 3, "reps": "8/lado", "type": "main" },
         { "name": "Flexión con Palmada", "sets": 4, "reps": "10", "type": "assist" }
       ],
-      "Día 4": [
+      "S5-6 Día 4": [
         { "name": "Power Swing", "sets": 4, "reps": "15", "type": "main" },
         { "name": "Press en el Suelo", "sets": 4, "reps": "10", "type": "main" },
         { "name": "Clean & Push Press", "sets": 5, "reps": "5", "type": "main" },

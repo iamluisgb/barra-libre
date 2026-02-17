@@ -94,7 +94,7 @@ function renderIntervalCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-mode-badge interval">Intervalos</div>
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">${ex.duration} · ${ex.on} on / ${ex.off} off</div>
-    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps o notas" value="${pv}"></div>
+    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 30" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
@@ -108,7 +108,7 @@ function renderTabataCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">8 rondas · 20s on / 10s off</div>
     ${grid}
-    <div><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps totales o notas" value="${pv}"></div>
+    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 64" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
@@ -125,7 +125,7 @@ function renderRoundsCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">${countLabel}${restLabel}</div>
     <div class="round-list">${exList}</div>
-    <div><label>Resultado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Rondas, tiempo o notas" value="${pv}"></div>
+    <div><label>Rondas completadas</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 4" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
@@ -138,7 +138,7 @@ function renderLadderCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">${ex.duration} · ${exNames}</div>
     ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
-    <div><label>Max alcanzado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Nivel o notas" value="${pv}"></div>
+    <div><label>Peldaño máximo</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 5" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
@@ -152,7 +152,7 @@ function renderPyramidCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">${ex.duration} · ${exNames}${stepInfo ? ' · ' + stepInfo : ''}</div>
     ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
-    <div><label>Max alcanzado</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Nivel o notas" value="${pv}"></div>
+    <div><label>Nivel máximo</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 8" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
@@ -163,7 +163,7 @@ function renderAmrapCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-mode-badge amrap">AMRAP</div>
     <div class="ex-name">${ex.name}</div>
     <div class="ex-mode-info">${ex.duration}</div>
-    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="Reps o notas" value="${pv}"></div>
+    <div><label>Reps totales</label><input type="text" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 45" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
