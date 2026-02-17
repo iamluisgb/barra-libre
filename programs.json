@@ -1,120 +1,9 @@
 {
-  "_meta": { "name": "Barra Libre", "desc": "Fuerza · Hipertrofia · Definición" },
-  "1": {
-    "name": "Fuerza",
-    "desc": "Full-body · 3×5 · Progresión lineal",
-    "sessions": {
-      "Sesión A": [
-        { "name": "Sentadilla", "sets": 3, "reps": "5", "type": "main" },
-        { "name": "Press de Banca", "sets": 3, "reps": "5", "type": "main" },
-        { "name": "Peso Muerto", "sets": 2, "reps": "5", "type": "main" },
-        { "name": "Dominada Prono", "sets": 3, "reps": "F", "type": "assist" },
-        { "name": "Plancha Abdominal", "sets": 2, "reps": "2min", "type": "assist" }
-      ],
-      "Sesión B": [
-        { "name": "Sentadilla", "sets": 3, "reps": "5", "type": "main" },
-        { "name": "Press Militar", "sets": 3, "reps": "5", "type": "main" },
-        { "name": "Clean", "sets": 5, "reps": "3", "type": "main" },
-        { "name": "Dominada Supino", "sets": 3, "reps": "F", "type": "assist" },
-        { "name": "Plancha Lateral", "sets": 2, "reps": "1min/lado", "type": "assist" }
-      ],
-      "HIIT-1": [{ "name": "3 Rondas: 10 dom + 20 flex + 30 sent + 40 escaladores + 50 saltos", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "HIIT-2": [{ "name": "5 Rondas: Sent 1min + Flex 1min + Burpees 1min + Desc 1min", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "HIIT-3 (KB)": [{ "name": "3 Rondas: 10 thrusters + 15 swings + 20 flex + 30 sent + 15 burpees + 10 snatches", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "HIIT-4 (KB)": [{ "name": "3 Rondas: 5 snatch/l + 5 thruster/l + 10 flex + 5 high pull/l + 10 dom + 5 squat rack/l + 5 swing/l + 10 burpees + 5 C&P/l + 10 fondos", "sets": 1, "reps": "Tiempo", "type": "hiit" }]
-    }
-  },
-  "2": {
-    "name": "Hipertrofia",
-    "desc": "Torso-Pierna · Fuerza + Hipertrofia",
-    "sessions": {
-      "Torso Fuerza": [
-        { "name": "Press Banca", "sets": 3, "reps": "3-5", "type": "main" },
-        { "name": "Press Militar", "sets": 3, "reps": "3-5", "type": "main" },
-        { "name": "Remo con Barra", "sets": 3, "reps": "3-5", "type": "main" },
-        { "name": "Press Jabalina", "sets": 3, "reps": "3-5/lado", "type": "main" },
-        { "name": "Dominada Supino", "sets": 3, "reps": "5-8", "type": "assist" },
-        { "name": "Fondos Paralelas", "sets": 3, "reps": "5-8", "type": "assist" },
-        { "name": "Encogimientos", "sets": 2, "reps": "8-10", "type": "extra" }
-      ],
-      "Pierna Fuerza": [
-        { "name": "Sentadilla", "sets": 3, "reps": "3-5", "type": "main" },
-        { "name": "Peso Muerto", "sets": 3, "reps": "3-5", "type": "main" },
-        { "name": "Elev. Piernas a Barra", "sets": 3, "reps": "8-10", "type": "assist" },
-        { "name": "Sit-up con Barra", "sets": 3, "reps": "5", "type": "assist" },
-        { "name": "Sentadilla 1 pierna", "sets": 2, "reps": "5/lado", "type": "extra" }
-      ],
-      "Torso Hipertrofia": [
-        { "name": "Press Militar", "sets": 4, "reps": "8-10", "type": "main" },
-        { "name": "Press Banca", "sets": 4, "reps": "8-10", "type": "main" },
-        { "name": "Dominada Prono", "sets": 3, "reps": "F", "type": "assist" },
-        { "name": "Flexiones con Palmada", "sets": 4, "reps": "15", "type": "assist" },
-        { "name": "Curl con Barra", "sets": 4, "reps": "10-12", "type": "assist" },
-        { "name": "Curl Invertido", "sets": 2, "reps": "10-12", "type": "extra" }
-      ],
-      "Pierna Hipertrofia": [
-        { "name": "Sentadilla Frontal", "sets": 4, "reps": "8-10", "type": "main" },
-        { "name": "Peso Muerto Rumano", "sets": 4, "reps": "8-10", "type": "main" },
-        { "name": "Desplantes con Barra", "sets": 4, "reps": "8-10", "type": "main" },
-        { "name": "Elevación Talones", "sets": 4, "reps": "10-15", "type": "assist" },
-        { "name": "Roll-out", "sets": 4, "reps": "10", "type": "assist" },
-        { "name": "PM Unilateral", "sets": 2, "reps": "6-8/lado", "type": "extra" }
-      ],
-      "Potencia + HIIT": [
-        { "name": "Clean", "sets": 5, "reps": "3", "type": "main" },
-        { "name": "HIIT (rotar 1-4)", "sets": 1, "reps": "Tiempo", "type": "hiit" }
-      ]
-    }
-  },
-  "3": {
-    "name": "Definición Máxima",
-    "desc": "Full-body · Complejos · 4 semanas",
-    "sessions": {
-      "Sesión A": [
-        { "name": "Peso Muerto", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Press de Banca", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Press Militar", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Dominadas", "sets": 4, "reps": "F", "type": "assist" },
-        { "name": "Sit-ups con Barra", "sets": 3, "reps": "5", "type": "extra" }
-      ],
-      "Sesión B": [
-        { "name": "Sentadilla", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Remo con Barra", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Sentadilla Frontal", "sets": 3, "reps": "4-6", "type": "main" },
-        { "name": "Fondos Paralelas", "sets": 4, "reps": "F", "type": "assist" },
-        { "name": "Roll-out con Barra", "sets": 3, "reps": "10", "type": "extra" }
-      ],
-      "COM-1": [{ "name": "4 Rondas: 5 rows + 5 cleans + 5 sent frontal + 5 push press + 5 sent", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "COM-2": [{ "name": "4 Rondas: 6 PM rumano + 6 rows + 6 cleans + 6 push press + 6 desplantes", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "GUERR-1": [{ "name": "COM-1 + 20min cardio + HIIT calistenia", "sets": 1, "reps": "Tiempo", "type": "hiit" }],
-      "GUERR-2": [{ "name": "COM-2 + 20min cardio + HIIT calistenia", "sets": 1, "reps": "Tiempo", "type": "hiit" }]
-    }
-  },
-  "4": {
-    "name": "Ajustes",
-    "desc": "Densidad · Zonas retrasadas",
-    "sessions": {
-      "Densidad A": [
-        { "name": "Bloque 1 (10min): Press Militar + Dominada", "sets": 1, "reps": "Total reps", "type": "density" },
-        { "name": "Bloque 2 (10min): Press Banca + Remo Invertido", "sets": 1, "reps": "Total reps", "type": "density" },
-        { "name": "Retraso Zona 1 - Ej.1", "sets": 4, "reps": "8-12", "type": "main" },
-        { "name": "Retraso Zona 1 - Ej.2", "sets": 4, "reps": "8-12", "type": "main" },
-        { "name": "Retraso Zona 1 - Ej.3", "sets": 4, "reps": "8-12", "type": "extra" }
-      ],
-      "Densidad B": [
-        { "name": "Bloque 1 (5min): Peso Muerto o Sentadilla", "sets": 1, "reps": "Total reps", "type": "density" },
-        { "name": "Bloque 2 (10min): Sent Frontal + Swing/Elev Piernas", "sets": 1, "reps": "Total reps", "type": "density" },
-        { "name": "Retraso Zona 2 - Ej.1", "sets": 4, "reps": "8-12", "type": "main" },
-        { "name": "Retraso Zona 2 - Ej.2", "sets": 4, "reps": "8-12", "type": "main" },
-        { "name": "Retraso Zona 2 - Ej.3", "sets": 4, "reps": "8-12", "type": "extra" }
-      ]
-    }
-  },
   "bodyMeasures": [
     { "id": "peso", "label": "Peso (kg)" },
     { "id": "grasa", "label": "% Grasa" },
-    { "id": "muneca", "label": "Muñeca" },
-    { "id": "biceps", "label": "Bíceps" },
+    { "id": "muneca", "label": "Mu\u00f1eca" },
+    { "id": "biceps", "label": "B\u00edceps" },
     { "id": "pecho", "label": "Pecho" },
     { "id": "hombros", "label": "Hombros" },
     { "id": "cintura", "label": "Cintura" },
@@ -122,5 +11,9 @@
     { "id": "muslo", "label": "Muslo" },
     { "id": "rodilla", "label": "Rodilla" },
     { "id": "pantorrilla", "label": "Pantorrilla" }
+  ],
+  "catalog": [
+    { "id": "barraLibre", "file": "programs/barra-libre.json" },
+    { "id": "kettlebell", "file": "programs/kettlebell.json" }
   ]
 }

@@ -2,25 +2,31 @@ let ALL_PROGRAMS = {};
 let activeProgram = 'barraLibre';
 let BODY_MEASURES = [];
 
+async function fetchJSON(url) {
+  try {
+    const r = await fetch(url);
+    if (r.ok) return r.json();
+  } catch {}
+  // Offline fallback: try cache directly
+  const cached = await caches.match(url);
+  if (cached) return cached.json();
+  return null;
+}
+
 export async function loadPrograms() {
-  const [base, kb] = await Promise.all([
-    fetch('programs.json').then(r => r.json()),
-    fetch('kettlebell.json').then(r => r.json())
-  ]);
+  const index = await fetchJSON('programs.json');
+  if (!index) return;
 
-  BODY_MEASURES = base.bodyMeasures || [];
-  delete base.bodyMeasures;
-  delete base._meta;
+  BODY_MEASURES = index.bodyMeasures || [];
 
-  const kbMeta = kb._meta;
-  delete kb._meta;
+  const entries = await Promise.all(
+    (index.catalog || []).map(async p => {
+      const data = await fetchJSON(p.file);
+      return data ? [p.id, data] : null;
+    })
+  );
 
-  const custom = JSON.parse(localStorage.getItem('bl_custom_programs') || '{}');
-
-  ALL_PROGRAMS = {
-    barraLibre: { _meta: { name: 'Barra Libre', desc: 'Fuerza · Hipertrofia · Definición' }, ...base, ...custom },
-    kettlebell: { _meta: kbMeta, ...kb }
-  };
+  ALL_PROGRAMS = Object.fromEntries(entries.filter(Boolean));
 }
 
 export function setActiveProgram(id) { activeProgram = id; }

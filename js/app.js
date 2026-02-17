@@ -1,5 +1,5 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
-import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms } from './programs.js';
+import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
 import { today } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay } from './ui/nav.js';
@@ -55,11 +55,17 @@ async function init() {
   seedInitialData();
   await loadPrograms();
 
-  // Set active program from saved state
+  // Set active program from saved state + render chips dynamically
   setActiveProgram(db.program || 'barraLibre');
-  document.querySelectorAll('.prog-chip').forEach(c => {
-    c.classList.toggle('active', c.dataset.prog === (db.program || 'barraLibre'));
-  });
+  const selector = document.getElementById('programSelector');
+  const progList = getProgramList();
+  if (progList.length > 1) {
+    selector.innerHTML = progList.map(p =>
+      `<button class="prog-chip${p.id === (db.program || 'barraLibre') ? ' active' : ''}" data-prog="${p.id}">${p.name}</button>`
+    ).join('');
+  } else {
+    selector.style.display = 'none';
+  }
 
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
@@ -122,20 +128,20 @@ function bindEvents() {
   // Phase context (opens phase modal)
   document.getElementById('phaseContext').addEventListener('click', () => openPhaseModal());
 
-  // Program selector
-  document.querySelectorAll('.prog-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const prog = chip.dataset.prog;
-      if (prog === getActiveProgram()) return;
-      document.querySelectorAll('.prog-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      setActiveProgram(prog);
-      db.program = prog;
-      db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
-      saveDB(db);
-      updatePhaseUI(db);
-      populateSessions(db);
-    });
+  // Program selector (event delegation for dynamic chips)
+  document.getElementById('programSelector').addEventListener('click', (e) => {
+    const chip = e.target.closest('.prog-chip');
+    if (!chip) return;
+    const prog = chip.dataset.prog;
+    if (prog === getActiveProgram()) return;
+    document.querySelectorAll('.prog-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    setActiveProgram(prog);
+    db.program = prog;
+    db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
+    saveDB(db);
+    updatePhaseUI(db);
+    populateSessions(db);
   });
 
   // Timer

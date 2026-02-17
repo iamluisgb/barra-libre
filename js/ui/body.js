@@ -110,10 +110,13 @@ export function renderBodyHistory(db) {
 }
 
 function getLatestBodyData(db) {
-  const r = {};
+  const r = {}, dates = {};
   [...db.bodyLogs].reverse().forEach(l => {
-    getBodyMeasures().forEach(m => { if (!r[m.id] && l[m.id]) r[m.id] = l[m.id]; });
+    getBodyMeasures().forEach(m => {
+      if (!r[m.id] && l[m.id]) { r[m.id] = l[m.id]; dates[m.id] = l.date; }
+    });
   });
+  r._dates = dates;
   return r;
 }
 
@@ -130,7 +133,12 @@ export function calcProportions(db) {
     { label: 'Pantorrilla ≈ Bíceps', current: last.pantorrilla, target: last.biceps, tl: `${last.biceps || '—'}cm`, has: !!(last.pantorrilla && last.biceps) },
     { label: 'Muslo / Rodilla', current: last.muslo, target: last.rodilla * 1.618, tl: `${((last.rodilla || 0) * 1.618).toFixed(1)}cm (φ)`, has: !!(last.muslo && last.rodilla) }
   ];
-  document.getElementById('proportionsPanel').innerHTML = ps.map(p => {
+  const usedIds = ['muneca', 'biceps', 'pecho', 'hombros', 'cintura', 'pantorrilla', 'muslo', 'rodilla'];
+  const usedDates = new Set(usedIds.filter(id => last[id]).map(id => last._dates[id]));
+  const dateWarning = usedDates.size > 1
+    ? `<p style="color:var(--text3);font-size:.68rem;text-align:center;margin-bottom:8px">Datos de ${usedDates.size} fechas distintas — registra todas las medidas el mismo día para mayor precisión</p>`
+    : '';
+  document.getElementById('proportionsPanel').innerHTML = dateWarning + ps.map(p => {
     if (!p.has) return `<div class="proportion-card"><div class="p-label">${p.label}</div><div class="p-value" style="color:var(--text3);font-size:.8rem">Faltan medidas</div></div>`;
     const pct = Math.min((p.current / p.target) * 100, 120);
     const color = pct >= 95 && pct <= 105 ? 'var(--green)' : pct < 95 ? 'var(--accent)' : 'var(--teal)';
