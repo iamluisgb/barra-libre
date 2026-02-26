@@ -208,6 +208,8 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .toast.visible{opacity:1;transform:translateY(0)}
 .toast-success{background:var(--green);color:#fff}
 .toast-error{background:var(--red);color:#fff}
+.update-banner{position:fixed;top:0;left:0;right:0;background:var(--accent);color:#fff;font-family:var(--font);font-size:.82rem;font-weight:600;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;z-index:300;gap:12px}
+.update-banner button{background:#fff;color:var(--accent);border:none;border-radius:8px;padding:6px 16px;font-family:var(--font);font-size:.78rem;font-weight:700;cursor:pointer;flex-shrink:0}
 .toast-info{background:var(--text);color:var(--bg)}
 
 /* Prefilled inputs */

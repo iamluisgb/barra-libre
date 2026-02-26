@@ -444,9 +444,33 @@ function bindEvents() {
 
 init();
 
-// Register Service Worker
+// Register Service Worker + prompt update
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log('SW registered'))
-    .catch(e => console.log('SW failed', e));
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner(newSW);
+        }
+      });
+    });
+  }).catch(e => console.log('SW failed', e));
+
+  // Reload when new SW takes over
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; location.reload(); }
+  });
+}
+
+function showUpdateBanner(worker) {
+  const banner = document.createElement('div');
+  banner.className = 'update-banner';
+  banner.innerHTML = 'Nueva versión disponible <button>Actualizar</button>';
+  banner.querySelector('button').addEventListener('click', () => {
+    worker.postMessage('skipWaiting');
+    banner.remove();
+  });
+  document.body.appendChild(banner);
 }

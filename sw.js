@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v17';
+const CACHE_NAME = 'barra-libre-v18';
 const ASSETS = [
   './',
   './app.html',
@@ -35,7 +35,7 @@ const ASSETS = [
   './js/drive.js'
 ];
 
-// Install: cache all assets
+// Install: cache all assets and activate immediately
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -44,7 +44,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: clean old caches
+// Activate: clean old caches and take control
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -53,32 +53,45 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: cache-first, fallback to network
+// Fetch: stale-while-revalidate for same-origin, network-only for external APIs
 self.addEventListener('fetch', event => {
   const url = event.request.url;
-  // Only handle http/https requests
   if (!url.startsWith('http')) return;
+
   // Never cache Google API / auth requests
   if (url.includes('accounts.google.com') || url.includes('googleapis.com')) {
     event.respondWith(fetch(event.request));
     return;
   }
+
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cache new successful requests
-        if (response.ok && event.request.method === 'GET') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(event.request).then(cached => {
+        const networkFetch = fetch(event.request).then(response => {
+          if (response.ok && event.request.method === 'GET') {
+            cache.put(event.request, response.clone());
+          }
+          return response;
+        }).catch(() => null);
+
+        // Return cached immediately, update in background
+        if (cached) {
+          // Fire-and-forget revalidation
+          networkFetch;
+          return cached;
         }
-        return response;
-      });
-    }).catch(() => {
-      // Offline fallback
+        // No cache: wait for network
+        return networkFetch.then(r => r || new Response('Offline', { status: 503 }));
+      })
+    ).catch(() => {
       if (event.request.destination === 'document') {
         return caches.match('./app.html');
       }
     })
   );
+});
+
+// Listen for update messages from the app
+self.addEventListener('message', event => {
+  if (event.data === 'skipWaiting') self.skipWaiting();
 });
