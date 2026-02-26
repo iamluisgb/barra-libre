@@ -82,6 +82,7 @@
   <div id="driveStatus" class="drive-status"></div>
   <button class="btn btn-outline mb" id="driveBackupBtn">Copia de seguridad en Drive</button>
   <button class="btn btn-outline mb" id="driveRestoreBtn">Cargar de Drive</button>
+  <button class="btn btn-outline mb" id="driveRevisionsBtn">Recuperar versión anterior</button>
   <div class="sec-title sec-title-accent sec-title-mt">Datos</div>
   <button class="btn btn-outline mb" id="exportBtn">Exportar JSON</button>
   <button class="btn btn-outline mb" id="importBtn">Importar JSON</button>
@@ -145,6 +146,19 @@
   <button data-sec="secBody"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4zM8 10v4l-3 8M16 10v4l3 8M10 14h4"/></svg><span>Cuerpo</span></button>
   <button data-sec="secSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>Más</span></button>
 </nav>
+<div class="modal-overlay" id="revisionsModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
+  <h3>Versiones anteriores en Drive</h3>
+  <div id="revisionsList"></div>
+  <div id="revisionPreview" style="display:none">
+    <h4 id="revisionPreviewTitle"></h4>
+    <div id="revisionPreviewContent"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-outline" style="flex:1" id="revisionBackBtn">Volver</button>
+      <button class="btn" style="flex:1" id="revisionRestoreBtn">Restaurar esta versión</button>
+    </div>
+  </div>
+  <button class="btn btn-outline" id="revisionsCloseBtn" style="margin-top:12px">Cerrar</button>
+</div></div>
 <div id="toastContainer" class="toast-container"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

@@ -8,7 +8,7 @@ import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
 import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
 import { renderProgressChart } from './ui/progress.js';
 import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
-import { initDrive, backupToDrive, restoreFromDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
+import { initDrive, backupToDrive, restoreFromDrive, listRevisions, downloadRevision, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
 import { initToast } from './ui/toast.js';
 
 const db = loadDB();
@@ -334,6 +334,102 @@ function bindEvents() {
       btn.disabled = false;
       btn.textContent = originalText;
     }
+  });
+
+  // Drive revision recovery
+  let _revFileId = null;
+  let _revData = null;
+
+  document.getElementById('driveRevisionsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('driveRevisionsBtn');
+    const status = document.getElementById('driveStatus');
+    btn.disabled = true;
+    btn.textContent = 'Cargando revisiones...';
+    try {
+      const result = await listRevisions();
+      if (!result.success) {
+        status.textContent = 'No hay copia de seguridad en Drive';
+        status.className = 'drive-status drive-error';
+        return;
+      }
+      _revFileId = result.fileId;
+      const list = document.getElementById('revisionsList');
+      const revs = result.revisions.sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
+      if (revs.length === 0) {
+        list.innerHTML = '<p>No hay versiones anteriores disponibles.</p>';
+      } else {
+        list.innerHTML = revs.map(r => {
+          const date = new Date(r.modifiedTime).toLocaleString('es');
+          const size = r.size ? `${(parseInt(r.size) / 1024).toFixed(1)} KB` : '';
+          return `<div class="history-item" data-rev="${r.id}" style="cursor:pointer"><div class="hi-main"><div class="hi-date">${date}</div><div class="hi-session">${size}</div></div></div>`;
+        }).join('');
+      }
+      document.getElementById('revisionPreview').style.display = 'none';
+      document.getElementById('revisionsList').style.display = '';
+      document.getElementById('revisionsCloseBtn').style.display = '';
+      document.getElementById('revisionsModal').classList.add('open');
+    } catch (e) {
+      status.textContent = e.message === 'popup_closed_by_user'
+        ? 'Inicio de sesión cancelado'
+        : `Error: ${e.message}`;
+      status.className = 'drive-status drive-error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Recuperar versión anterior';
+    }
+  });
+
+  document.getElementById('revisionsList').addEventListener('click', async (e) => {
+    const item = e.target.closest('[data-rev]');
+    if (!item) return;
+    const revId = item.dataset.rev;
+    item.style.opacity = '0.5';
+    try {
+      _revData = await downloadRevision(_revFileId, revId);
+      const workouts = (_revData.workouts || []).sort((a, b) => b.date.localeCompare(a.date));
+      const preview = document.getElementById('revisionPreviewContent');
+      document.getElementById('revisionPreviewTitle').textContent =
+        `${workouts.length} sesiones encontradas`;
+      preview.innerHTML = workouts.slice(0, 20).map(w => {
+        const exList = (w.exercises || []).map(ex =>
+          `${ex.name}: ${ex.sets.map(s => `${s.kg || '-'}kg×${s.reps}`).join(', ')}`
+        ).join('<br>');
+        return `<div class="history-item"><div class="hi-main"><div class="hi-date">${w.date}</div><div class="hi-session">${w.session || ''} · ${w.program || 'barraLibre'} · Fase ${w.phase || '?'}</div></div><div class="hi-detail" style="font-size:12px;color:#666;margin-top:4px">${exList}</div></div>`;
+      }).join('');
+      if (workouts.length > 20) {
+        preview.innerHTML += `<p style="color:#666;font-size:13px">... y ${workouts.length - 20} sesiones más</p>`;
+      }
+      document.getElementById('revisionsList').style.display = 'none';
+      document.getElementById('revisionsCloseBtn').style.display = 'none';
+      document.getElementById('revisionPreview').style.display = '';
+    } catch (err) {
+      alert('Error al descargar revisión: ' + err.message);
+    } finally {
+      item.style.opacity = '';
+    }
+  });
+
+  document.getElementById('revisionBackBtn').addEventListener('click', () => {
+    document.getElementById('revisionPreview').style.display = 'none';
+    document.getElementById('revisionsList').style.display = '';
+    document.getElementById('revisionsCloseBtn').style.display = '';
+    _revData = null;
+  });
+
+  document.getElementById('revisionRestoreBtn').addEventListener('click', () => {
+    if (!_revData) return;
+    if (!confirm('¿Restaurar esta versión? Se reemplazarán los datos actuales.')) return;
+    Object.assign(db, _revData);
+    saveDB(db);
+    location.reload();
+  });
+
+  document.getElementById('revisionsCloseBtn').addEventListener('click', () => {
+    document.getElementById('revisionsModal').classList.remove('open');
+  });
+  document.getElementById('revisionsModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('revisionsModal'))
+      document.getElementById('revisionsModal').classList.remove('open');
   });
 
   // Settings section

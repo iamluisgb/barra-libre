@@ -152,6 +152,32 @@ export async function restoreFromDrive() {
   return { success: true, data, modifiedTime: file.modifiedTime };
 }
 
+// === Revision history (recovery) ===
+
+export async function listRevisions() {
+  const token = await ensureAuth();
+  const file = await findBackupFile(token);
+  if (!file) return { success: false, reason: 'no_backup' };
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${file.id}/revisions?fields=revisions(id,modifiedTime,size)`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  await driveFetch(res, 'Error al listar revisiones');
+  const data = await res.json();
+  return { success: true, fileId: file.id, revisions: data.revisions || [] };
+}
+
+export async function downloadRevision(fileId, revisionId) {
+  const token = await ensureAuth();
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}/revisions/${revisionId}?alt=media`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  await driveFetch(res, 'Error al descargar revisión');
+  const content = await res.text();
+  return JSON.parse(content);
+}
+
 // === Auto-sync ===
 
 const SYNC_TS_KEY = 'barraLibreLastSync';
