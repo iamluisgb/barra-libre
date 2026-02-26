@@ -5,13 +5,20 @@ const SK = 'barraLibre';
 let _onSave = null;
 export function setOnSave(fn) { _onSave = fn; }
 
+const DEFAULTS = { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], settings: { height: 175, age: 32 } };
+
 export function loadDB() {
   try {
     const d = JSON.parse(localStorage.getItem(SK));
-    return d && d.workouts ? { program: 'barraLibre', ...d } : { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
+    return d && d.workouts ? { ...DEFAULTS, ...d } : { ...DEFAULTS };
   } catch {
-    return { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], settings: { height: 175, age: 32 } };
+    return { ...DEFAULTS };
   }
+}
+
+export function markDeleted(db, id) {
+  if (!db.deletedIds) db.deletedIds = [];
+  if (!db.deletedIds.includes(id)) db.deletedIds.push(id);
 }
 
 export function saveDB(db) {

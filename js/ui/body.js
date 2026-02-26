@@ -1,4 +1,4 @@
-import { saveDB } from '../data.js';
+import { saveDB, markDeleted } from '../data.js';
 import { getBodyMeasures } from '../programs.js';
 import { formatDate } from '../utils.js';
 import { toast } from './toast.js';
@@ -85,6 +85,7 @@ export function cancelBodyEdit(db) {
 export function deleteBodyLog(db) {
   const btn = document.getElementById('bodyDeleteBtn');
   if (btn.dataset.confirm === 'true') {
+    markDeleted(db, editingBodyId);
     db.bodyLogs = db.bodyLogs.filter(l => l.id !== editingBodyId);
     saveDB(db);
     toast('Registro eliminado', 'info');

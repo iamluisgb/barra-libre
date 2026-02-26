@@ -1,4 +1,4 @@
-import { saveDB } from '../data.js';
+import { saveDB, markDeleted } from '../data.js';
 import { formatDate } from '../utils.js';
 import { getActiveProgram } from '../programs.js';
 import { renderCalendar } from './calendar.js';
@@ -106,6 +106,7 @@ export function getDetailWorkout(db) {
 export function deleteWorkout(db) {
   const btn = document.getElementById('deleteBtn');
   if (btn.dataset.confirm === 'true') {
+    markDeleted(db, detailWorkoutId);
     db.workouts = db.workouts.filter(w => w.id !== detailWorkoutId);
     saveDB(db);
     toast('Sesión eliminada', 'info');
