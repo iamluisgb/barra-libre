@@ -1,3 +1,5 @@
+import { mergeDB } from './utils.js';
+
 // Google Drive backup/restore via GIS implicit flow + REST API
 
 const CLIENT_ID = '146475241021-2sschmrutnqdeug5fo6onc772im94ltt.apps.googleusercontent.com';
@@ -224,11 +226,13 @@ export async function syncOnLoad(db, saveFn) {
       const content = await downloadFile(accessToken, file.id);
       const data = JSON.parse(content);
       if (data.workouts) {
-        Object.assign(db, data);
+        const merged = mergeDB(db, data);
+        Object.assign(db, merged);
         saveFn(db);
         setLocalSyncTime();
         setSyncStatus('ok');
         _syncing = false;
+        await silentBackup(db);
         location.reload();
         return;
       }

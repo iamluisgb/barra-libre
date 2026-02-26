@@ -1,3 +1,5 @@
+import { mergeDB } from './utils.js';
+
 const SK = 'barraLibre';
 
 let _onSave = null;
@@ -33,7 +35,7 @@ export function importData(event, db, onSuccess) {
     try {
       const d = JSON.parse(r.result);
       if (d.workouts) {
-        Object.assign(db, d);
+        Object.assign(db, mergeDB(db, d));
         saveDB(db);
         alert('Datos importados');
         location.reload();

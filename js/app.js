@@ -1,6 +1,6 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
-import { today } from './utils.js';
+import { today, mergeDB } from './utils.js';
 import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
 import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
 import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill, startEdit, cancelEdit } from './ui/training.js';
@@ -315,12 +315,12 @@ function bindEvents() {
         return;
       }
       const when = new Date(result.modifiedTime).toLocaleString('es');
-      if (!confirm(`Restaurar copia del ${when}?\nSe reemplazaran los datos actuales.`)) {
+      if (!confirm(`Restaurar copia del ${when}?\nLos datos se fusionarán con los actuales.`)) {
         status.textContent = 'Restauracion cancelada';
         status.className = 'drive-status';
         return;
       }
-      Object.assign(db, result.data);
+      Object.assign(db, mergeDB(db, result.data));
       saveDB(db);
       status.textContent = 'Datos restaurados correctamente';
       status.className = 'drive-status drive-success';
@@ -418,8 +418,8 @@ function bindEvents() {
 
   document.getElementById('revisionRestoreBtn').addEventListener('click', () => {
     if (!_revData) return;
-    if (!confirm('¿Restaurar esta versión? Se reemplazarán los datos actuales.')) return;
-    Object.assign(db, _revData);
+    if (!confirm('¿Restaurar esta versión? Los datos se fusionarán con los actuales.')) return;
+    Object.assign(db, mergeDB(db, _revData));
     saveDB(db);
     location.reload();
   });
