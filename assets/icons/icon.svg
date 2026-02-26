@@ -6,7 +6,7 @@
     </linearGradient>
   </defs>
   <!-- Rounded square background -->
-  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#bg)"/>
 
   <!-- Barbell - centered, clean geometric design -->
   <g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
