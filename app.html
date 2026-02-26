@@ -73,21 +73,70 @@
   <div class="sec-title sec-title-accent sec-title-mt">Historial Corporal</div><div id="bodyHistory"></div>
 </div>
 <div class="section" id="secSettings">
-  <div class="sec-title sec-title-accent">1RM Estimados</div><div id="rmPanel"></div>
+  <div class="sec-title sec-title-accent">Records personales</div>
+  <div id="rmPanel"></div>
+
   <div class="sec-title sec-title-accent sec-title-mt">Google Drive</div>
-  <div class="drive-sync-toggle">
-    <div><div class="dst-label">Sincronización automática</div><div class="dst-desc" id="autoSyncDesc">Desactivada</div></div>
-    <button class="toggle-btn" id="autoSyncBtn"></button>
+  <div class="settings-card">
+    <div class="sc-row sc-row-toggle">
+      <div class="sc-row-content">
+        <div class="sc-row-label">Sincronización automática</div>
+        <div class="sc-row-desc" id="autoSyncDesc">Desactivada</div>
+      </div>
+      <button class="toggle-btn" id="autoSyncBtn"></button>
+    </div>
+    <div id="driveStatus" class="drive-status"></div>
+    <button class="sc-row sc-row-action" id="driveBackupBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </span>
+      <span>Subir copia de seguridad</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+    <button class="sc-row sc-row-action" id="driveRestoreBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </span>
+      <span>Restaurar desde Drive</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+    <button class="sc-row sc-row-action" id="driveRevisionsBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v4l3 3M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </span>
+      <span>Recuperar versión anterior</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
   </div>
-  <div id="driveStatus" class="drive-status"></div>
-  <button class="btn btn-outline mb" id="driveBackupBtn">Copia de seguridad en Drive</button>
-  <button class="btn btn-outline mb" id="driveRestoreBtn">Cargar de Drive</button>
-  <button class="btn btn-outline mb" id="driveRevisionsBtn">Recuperar versión anterior</button>
+
   <div class="sec-title sec-title-accent sec-title-mt">Datos</div>
-  <button class="btn btn-outline mb" id="exportBtn">Exportar JSON</button>
-  <button class="btn btn-outline mb" id="importBtn">Importar JSON</button>
-  <input type="file" id="importFile" accept=".json">
-  <div class="delete-zone"><button class="btn btn-danger">Borrar todos los datos</button></div>
+  <div class="settings-card">
+    <button class="sc-row sc-row-action" id="exportBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </span>
+      <span>Exportar JSON</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+    <button class="sc-row sc-row-action" id="importBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+      </span>
+      <span>Importar JSON</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+    <input type="file" id="importFile" accept=".json">
+  </div>
+
+  <div class="settings-card settings-card-danger">
+    <button class="sc-row sc-row-action sc-row-danger">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </span>
+      <span>Borrar todos los datos</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+  </div>
 </div>
 <div class="modal-overlay" id="phaseModal"><div class="modal"><h3>Seleccionar Fase</h3>
   <div id="phaseOptions"></div>

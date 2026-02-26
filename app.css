@@ -103,6 +103,23 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .phase-option .po-title{font-weight:700;margin-bottom:1px}
 .phase-option .po-desc{color:var(--text2);font-size:.68rem}
 .delete-zone{margin-top:24px;padding-top:16px;border-top:.5px solid var(--border)}
+.settings-card{background:var(--surface);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px}
+.sc-row{display:flex;align-items:center;padding:14px 16px;border-bottom:.5px solid var(--border);gap:12px}
+.sc-row:last-child,.sc-row:last-of-type{border-bottom:none}
+.sc-row-toggle{gap:12px}
+.sc-row-content{flex:1}
+.sc-row-label{font-size:.85rem;font-weight:600}
+.sc-row-desc{font-size:.7rem;color:var(--text2);margin-top:2px}
+.sc-row-action{background:none;border:none;border-bottom:.5px solid var(--border);width:100%;text-align:left;font-family:var(--font);font-size:.85rem;color:var(--text);cursor:pointer;transition:background .15s}
+.sc-row-action:active{background:var(--surface2)}
+.sc-row-action:last-child{border-bottom:none}
+.sc-row-action span:nth-child(2){flex:1}
+.sc-row-icon{width:28px;height:28px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-row-icon svg{width:16px;height:16px;stroke:#fff}
+.sc-row-chevron{color:var(--text3);font-size:1.2rem;font-weight:300;flex-shrink:0}
+.sc-row-danger{color:var(--red)}
+.sc-row-danger .sc-row-icon{background:var(--red)}
+.settings-card-danger{margin-top:24px}
 ::-webkit-scrollbar{width:0}
 @media(min-width:500px){body{max-width:500px;margin:0 auto}nav{max-width:500px;left:50%;transform:translateX(-50%)}}
 
@@ -117,7 +134,7 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .sec-title-mt{margin-top:20px}
 #importFile{display:none}
 .drive-sync-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
-.dst-label{font-size:.85rem;font-weight:600}.dst-desc{font-size:.7rem;color:var(--text2);margin-top:2px}
+.dst-label,.sc-row-label{font-size:.85rem;font-weight:600}.dst-desc{font-size:.7rem;color:var(--text2);margin-top:2px}
 .toggle-btn{width:50px;height:30px;border-radius:15px;border:none;background:var(--surface2);position:relative;cursor:pointer;transition:background .25s}
 .toggle-btn::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .25s}
 .toggle-btn.active{background:var(--green)}.toggle-btn.active::after{transform:translateX(20px)}
@@ -128,11 +145,11 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .sync-indicator.ok{color:var(--green)}
 .sync-indicator.error{color:var(--red)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.drive-status{font-size:.75rem;padding:8px 12px;border-radius:var(--radius);margin-bottom:10px;text-align:center}
+.drive-status{font-size:.75rem;padding:8px 16px;margin:0;text-align:center;border-bottom:.5px solid var(--border)}
 .drive-status:empty{display:none}
 .drive-success{background:rgba(52,199,89,.1);color:var(--green)}
 .drive-error{background:rgba(255,59,48,.1);color:var(--red)}
-#driveBackupBtn:disabled,#driveRestoreBtn:disabled{opacity:.5;pointer-events:none}
+#driveBackupBtn:disabled,#driveRestoreBtn:disabled,#driveRevisionsBtn:disabled{opacity:.5;pointer-events:none}
 
 /* Share card (detail modal) */
 .detail-modal .modal{padding:0;overflow:hidden;width:100%;max-width:100%;max-height:100vh;display:flex;flex-direction:column;border-radius:0}

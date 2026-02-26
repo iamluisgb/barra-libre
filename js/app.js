@@ -279,13 +279,18 @@ function bindEvents() {
     }
   });
 
+  // Helper: get/set label text inside settings row buttons
+  const btnLabel = (btn) => btn.querySelector('span:nth-child(2)') || btn;
+  const getBtnText = (btn) => btnLabel(btn).textContent;
+  const setBtnText = (btn, text) => { btnLabel(btn).textContent = text; };
+
   // Google Drive manual buttons
   document.getElementById('driveBackupBtn').addEventListener('click', async () => {
     const btn = document.getElementById('driveBackupBtn');
     const status = document.getElementById('driveStatus');
-    const originalText = btn.textContent;
+    const originalText = getBtnText(btn);
     btn.disabled = true;
-    btn.textContent = 'Guardando...';
+    setBtnText(btn, 'Guardando...');
     try {
       await backupToDrive(db);
       status.textContent = `Copia guardada en Drive (${new Date().toLocaleString('es')})`;
@@ -297,16 +302,16 @@ function bindEvents() {
       status.className = 'drive-status drive-error';
     } finally {
       btn.disabled = false;
-      btn.textContent = originalText;
+      setBtnText(btn, originalText);
     }
   });
 
   document.getElementById('driveRestoreBtn').addEventListener('click', async () => {
     const btn = document.getElementById('driveRestoreBtn');
     const status = document.getElementById('driveStatus');
-    const originalText = btn.textContent;
+    const originalText = getBtnText(btn);
     btn.disabled = true;
-    btn.textContent = 'Cargando...';
+    setBtnText(btn, 'Cargando...');
     try {
       const result = await restoreFromDrive();
       if (!result.success) {
@@ -332,7 +337,7 @@ function bindEvents() {
       status.className = 'drive-status drive-error';
     } finally {
       btn.disabled = false;
-      btn.textContent = originalText;
+      setBtnText(btn, originalText);
     }
   });
 
@@ -344,7 +349,7 @@ function bindEvents() {
     const btn = document.getElementById('driveRevisionsBtn');
     const status = document.getElementById('driveStatus');
     btn.disabled = true;
-    btn.textContent = 'Cargando revisiones...';
+    setBtnText(btn, 'Cargando revisiones...');
     try {
       const result = await listRevisions();
       if (!result.success) {
@@ -375,7 +380,7 @@ function bindEvents() {
       status.className = 'drive-status drive-error';
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Recuperar versión anterior';
+      setBtnText(btn, 'Recuperar versión anterior');
     }
   });
 
@@ -436,7 +441,7 @@ function bindEvents() {
   document.getElementById('exportBtn').addEventListener('click', () => exportData(db));
   document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
   document.getElementById('importFile').addEventListener('change', (e) => importData(e, db));
-  document.querySelector('#secSettings .btn-danger').addEventListener('click', () => clearAllData());
+  document.querySelector('#secSettings .sc-row-danger').addEventListener('click', () => clearAllData());
 
   // PR celebration dismiss
   document.getElementById('prCelebration').addEventListener('click', function () { this.style.display = 'none'; });
