@@ -1,9 +1,20 @@
 let audioCtx = null;
 let timerInterval = null;
-let timerSeconds = 120;
 let timerRunning = false;
 let timerDuration = 120;
 let timerMode = 'countdown';
+
+// Wall-clock timing — survives background suspension
+let startedAt = 0;
+let elapsedBase = 0;
+
+function getElapsed() {
+  return elapsedBase + Math.floor((Date.now() - startedAt) / 1000);
+}
+
+function getRemaining() {
+  return Math.max(0, timerDuration - Math.floor((Date.now() - startedAt) / 1000));
+}
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -32,55 +43,53 @@ export function playAlarm() {
   } catch (e) { }
 }
 
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 function updateTimerDisplay() {
-  const m = Math.floor(timerSeconds / 60), s = timerSeconds % 60;
   const d = document.getElementById('timerDisplay');
-  d.textContent = `${m}:${s.toString().padStart(2, '0')}`;
   if (timerMode === 'countdown') {
-    d.classList.toggle('warning', timerSeconds <= 10 && timerSeconds > 0);
+    const remaining = timerRunning ? getRemaining() : timerDuration;
+    d.textContent = formatTime(remaining);
+    d.classList.toggle('warning', timerRunning && remaining <= 10 && remaining > 0);
+  } else {
+    const elapsed = timerRunning ? getElapsed() : elapsedBase;
+    d.textContent = formatTime(elapsed);
+  }
+}
+
+function tick() {
+  updateTimerDisplay();
+  if (timerMode === 'countdown' && timerRunning && getRemaining() <= 0) {
+    stopTimer();
+    const d = document.getElementById('timerDisplay');
+    d.classList.add('done'); d.textContent = '¡GO!';
+    playAlarm();
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    setTimeout(() => { d.classList.remove('done'); updateTimerDisplay(); }, 3000);
   }
 }
 
 function startTimer() {
-  if (timerMode === 'countdown') {
-    timerSeconds = timerDuration;
-  }
+  startedAt = Date.now();
+  if (timerMode === 'countdown') elapsedBase = 0;
   timerRunning = true;
   const btn = document.getElementById('timerStartBtn');
   btn.textContent = '⏹'; btn.classList.add('running');
   updateTimerDisplay();
-
-  if (timerMode === 'countdown') {
-    timerInterval = setInterval(() => {
-      timerSeconds--;
-      updateTimerDisplay();
-      if (timerSeconds <= 0) {
-        stopTimer();
-        const d = document.getElementById('timerDisplay');
-        d.classList.add('done'); d.textContent = '¡GO!';
-        playAlarm();
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-        setTimeout(() => { d.classList.remove('done'); timerSeconds = timerDuration; updateTimerDisplay(); }, 3000);
-      }
-    }, 1000);
-  } else {
-    timerInterval = setInterval(() => {
-      timerSeconds++;
-      updateTimerDisplay();
-    }, 1000);
-  }
+  timerInterval = setInterval(tick, 250);
 }
 
 function stopTimer() {
+  if (timerMode === 'stopwatch' && timerRunning) elapsedBase = getElapsed();
   clearInterval(timerInterval);
   timerRunning = false;
   const btn = document.getElementById('timerStartBtn');
   btn.textContent = '▶'; btn.classList.remove('running');
-  if (timerMode === 'countdown') {
-    timerSeconds = timerDuration;
-    updateTimerDisplay();
-  }
   document.getElementById('timerDisplay').classList.remove('warning', 'done');
+  updateTimerDisplay();
 }
 
 export function toggleTimer() {
@@ -101,11 +110,7 @@ export function setTimerMode(mode) {
   document.getElementById('timerCustomInput').classList.remove('visible');
   document.getElementById('timerDisplay').style.display = '';
 
-  if (mode === 'stopwatch') {
-    timerSeconds = 0;
-  } else {
-    timerSeconds = timerDuration;
-  }
+  elapsedBase = 0;
   updateTimerDisplay();
 }
 
@@ -135,7 +140,6 @@ export function confirmCustomInput() {
 
   if (seconds > 0) {
     timerDuration = seconds;
-    timerSeconds = timerDuration;
     document.querySelectorAll('.timer-btn[data-dur]').forEach(b => b.classList.remove('active-dur'));
   }
 
@@ -146,7 +150,7 @@ export function confirmCustomInput() {
 
 export function resetStopwatch() {
   if (timerRunning) stopTimer();
-  timerSeconds = 0;
+  elapsedBase = 0;
   updateTimerDisplay();
 }
 
@@ -156,8 +160,13 @@ export function initTimer() {
       document.querySelectorAll('.timer-btn[data-dur]').forEach(b => b.classList.remove('active-dur'));
       btn.classList.add('active-dur');
       timerDuration = parseInt(btn.dataset.dur);
-      if (!timerRunning) { timerSeconds = timerDuration; updateTimerDisplay(); }
+      if (!timerRunning) updateTimerDisplay();
     });
+  });
+
+  // Catch up immediately when returning from background
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && timerRunning) tick();
   });
 
   document.addEventListener('touchstart', function u() {
