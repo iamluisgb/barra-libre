@@ -16,6 +16,31 @@ function getRemaining() {
   return Math.max(0, timerDuration - Math.floor((Date.now() - startedAt) / 1000));
 }
 
+// --- Notification helpers ---
+
+function swPost(msg) {
+  if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage(msg);
+}
+
+function showTimerNotification() {
+  if (Notification.permission !== 'granted' || !timerRunning) return;
+  if (timerMode === 'countdown') {
+    const r = getRemaining();
+    swPost({ type: 'timer-show', title: 'Descanso', body: formatTime(r) + ' restantes' });
+  } else {
+    swPost({ type: 'timer-show', title: 'Cronómetro', body: formatTime(getElapsed()) });
+  }
+}
+
+function clearTimerNotification() {
+  swPost({ type: 'timer-clear' });
+}
+
+function showAlarmNotification() {
+  if (Notification.permission !== 'granted') return;
+  swPost({ type: 'timer-alarm' });
+}
+
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
@@ -63,12 +88,19 @@ function updateTimerDisplay() {
 function tick() {
   updateTimerDisplay();
   if (timerMode === 'countdown' && timerRunning && getRemaining() <= 0) {
+    if (document.visibilityState === 'hidden') showAlarmNotification();
     stopTimer();
     const d = document.getElementById('timerDisplay');
     d.classList.add('done'); d.textContent = '¡GO!';
     playAlarm();
     if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
     setTimeout(() => { d.classList.remove('done'); updateTimerDisplay(); }, 3000);
+  }
+}
+
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
 }
 
@@ -80,6 +112,7 @@ function startTimer() {
   btn.textContent = '⏹'; btn.classList.add('running');
   updateTimerDisplay();
   timerInterval = setInterval(tick, 250);
+  requestNotifPermission();
 }
 
 function stopTimer() {
@@ -90,6 +123,7 @@ function stopTimer() {
   btn.textContent = '▶'; btn.classList.remove('running');
   document.getElementById('timerDisplay').classList.remove('warning', 'done');
   updateTimerDisplay();
+  clearTimerNotification();
 }
 
 export function toggleTimer() {
@@ -164,9 +198,14 @@ export function initTimer() {
     });
   });
 
-  // Catch up immediately when returning from background
+  // Catch up immediately when returning from background; manage notifications
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && timerRunning) tick();
+    if (document.visibilityState === 'hidden' && timerRunning) {
+      showTimerNotification();
+    } else if (document.visibilityState === 'visible') {
+      clearTimerNotification();
+      if (timerRunning) tick();
+    }
   });
 
   document.addEventListener('touchstart', function u() {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v19';
+const CACHE_NAME = 'barra-libre-v20';
 const ASSETS = [
   './',
   './app.html',
@@ -91,7 +91,44 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Listen for update messages from the app
+// Listen for messages from the app
 self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') self.skipWaiting();
+  if (event.data === 'skipWaiting') { self.skipWaiting(); return; }
+
+  // Timer notifications
+  if (event.data?.type === 'timer-show') {
+    self.registration.showNotification(event.data.title, {
+      body: event.data.body,
+      icon: './assets/icons/icon-192.png',
+      badge: './assets/icons/icon-192.png',
+      tag: 'barra-libre-timer',
+      requireInteraction: true,
+      silent: true,
+    });
+  }
+  if (event.data?.type === 'timer-alarm') {
+    self.registration.showNotification('¡Tiempo!', {
+      body: 'Descanso completado',
+      icon: './assets/icons/icon-192.png',
+      badge: './assets/icons/icon-192.png',
+      tag: 'barra-libre-timer',
+      vibrate: [200, 100, 200, 100, 200],
+      requireInteraction: true,
+    });
+  }
+  if (event.data?.type === 'timer-clear') {
+    self.registration.getNotifications({ tag: 'barra-libre-timer' })
+      .then(ns => ns.forEach(n => n.close()));
+  }
+});
+
+// Tap notification → focus app
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      if (list.length > 0) { list[0].focus(); return; }
+      clients.openWindow('./app.html');
+    })
+  );
 });
