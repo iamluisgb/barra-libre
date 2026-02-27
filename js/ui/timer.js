@@ -24,12 +24,13 @@ function swPost(msg) {
 
 function showTimerNotification() {
   if (Notification.permission !== 'granted' || !timerRunning) return;
-  if (timerMode === 'countdown') {
-    const r = getRemaining();
-    swPost({ type: 'timer-show', title: 'Descanso', body: formatTime(r) + ' restantes' });
-  } else {
-    swPost({ type: 'timer-show', title: 'Cronómetro', body: formatTime(getElapsed()) });
-  }
+  swPost({
+    type: 'timer-start-live',
+    mode: timerMode,
+    startedAt,
+    duration: timerDuration,
+    elapsedBase,
+  });
 }
 
 function clearTimerNotification() {

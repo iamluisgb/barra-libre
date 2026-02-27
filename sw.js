@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v20';
+const CACHE_NAME = 'barra-libre-v21';
 const ASSETS = [
   './',
   './app.html',
@@ -91,14 +91,49 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Listen for messages from the app
-self.addEventListener('message', event => {
-  if (event.data === 'skipWaiting') { self.skipWaiting(); return; }
+// === Live timer notification ===
 
-  // Timer notifications
-  if (event.data?.type === 'timer-show') {
-    self.registration.showNotification(event.data.title, {
-      body: event.data.body,
+let timerInterval = null;
+let timerState = null;
+
+function fmtTime(seconds) {
+  const m = Math.floor(seconds / 60), s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateTimerNotification() {
+  if (!timerState) return;
+  const now = Date.now();
+  const elapsed = Math.floor((now - timerState.startedAt) / 1000);
+
+  if (timerState.mode === 'countdown') {
+    const remaining = Math.max(0, timerState.duration - elapsed);
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerState = null;
+      self.registration.showNotification('¡Tiempo!', {
+        body: 'Descanso completado',
+        icon: './assets/icons/icon-192.png',
+        badge: './assets/icons/icon-192.png',
+        tag: 'barra-libre-timer',
+        vibrate: [200, 100, 200, 100, 200],
+        requireInteraction: true,
+      });
+      return;
+    }
+    self.registration.showNotification('Descanso', {
+      body: fmtTime(remaining) + ' restantes',
+      icon: './assets/icons/icon-192.png',
+      badge: './assets/icons/icon-192.png',
+      tag: 'barra-libre-timer',
+      requireInteraction: true,
+      silent: true,
+    });
+  } else {
+    const total = timerState.elapsedBase + elapsed;
+    self.registration.showNotification('Cronómetro', {
+      body: fmtTime(total),
       icon: './assets/icons/icon-192.png',
       badge: './assets/icons/icon-192.png',
       tag: 'barra-libre-timer',
@@ -106,7 +141,32 @@ self.addEventListener('message', event => {
       silent: true,
     });
   }
+}
+
+function stopTimerNotification() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerState = null;
+  self.registration.getNotifications({ tag: 'barra-libre-timer' })
+    .then(ns => ns.forEach(n => n.close()));
+}
+
+// Listen for messages from the app
+self.addEventListener('message', event => {
+  if (event.data === 'skipWaiting') { self.skipWaiting(); return; }
+
+  if (event.data?.type === 'timer-start-live') {
+    timerState = {
+      mode: event.data.mode,
+      startedAt: event.data.startedAt,
+      duration: event.data.duration,
+      elapsedBase: event.data.elapsedBase,
+    };
+    updateTimerNotification();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimerNotification, 1000);
+  }
   if (event.data?.type === 'timer-alarm') {
+    stopTimerNotification();
     self.registration.showNotification('¡Tiempo!', {
       body: 'Descanso completado',
       icon: './assets/icons/icon-192.png',
@@ -117,8 +177,7 @@ self.addEventListener('message', event => {
     });
   }
   if (event.data?.type === 'timer-clear') {
-    self.registration.getNotifications({ tag: 'barra-libre-timer' })
-      .then(ns => ns.forEach(n => n.close()));
+    stopTimerNotification();
   }
 });
 
