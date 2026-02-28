@@ -76,6 +76,8 @@ export function loadSessionTemplate(db, autoPrefill) {
       case 'ladder': return renderLadderCard(ex, i, prevEx, shouldPrefill);
       case 'pyramid': return renderPyramidCard(ex, i, prevEx, shouldPrefill);
       case 'amrap': return renderAmrapCard(ex, i, prevEx, shouldPrefill);
+      case 'emom': return renderEmomCard(ex, i, prevEx, shouldPrefill);
+      case 'superset': return renderSupersetCard(ex, i, prevEx, shouldPrefill);
       default: return renderResultCard(ex, i, prevEx, shouldPrefill);
     }
   }).join('');
@@ -188,6 +190,47 @@ function renderAmrapCard(ex, i, prevEx, shouldPrefill) {
     <div class="ex-mode-info">${ex.duration}</div>
     <div><label>Reps totales</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 45" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
+}
+
+function renderEmomCard(ex, i, prevEx, shouldPrefill) {
+  const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
+  const cp = pv ? ' prefilled' : '';
+  const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+  const exList = (ex.exercises || []).map(e => `${esc(e.name || e)}: ${e.reps || ''}`).join(' + ');
+  return `<div class="ex-card">
+    <div class="ex-mode-badge emom">EMOM</div>
+    <div class="ex-name">${esc(ex.name)}</div>
+    <div class="ex-mode-info">${ex.duration || ''}${exList ? ' · ' + exList : ''}</div>
+    ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
+    <div><label>Rondas completadas</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 10" inputmode="numeric" value="${pv}"></div>
+    ${pi}</div>`;
+}
+
+function renderSupersetCard(ex, i, prevEx, shouldPrefill) {
+  const exercises = ex.exercises || [];
+  const numSets = ex.sets || 3;
+  const setsHtml = [];
+  for (let s = 0; s < numSets; s++) {
+    const setRows = exercises.map((subEx, subIdx) => {
+      const prevSet = prevEx?.sets?.[s * exercises.length + subIdx];
+      const pvKg = shouldPrefill && prevSet ? prevSet.kg || '' : '';
+      const pvReps = shouldPrefill && prevSet ? prevSet.reps || '' : '';
+      const cpKg = pvKg ? ' prefilled' : '';
+      const cpReps = pvReps ? ' prefilled' : '';
+      return `<div style="display:flex;align-items:center;gap:6px;font-size:.8rem">
+        <span style="color:var(--text2);font-weight:600;min-width:60px;font-size:.7rem">${esc(subEx.name)}</span>
+        <input type="number" class="mini-input${cpKg}" data-ex="${i}" data-set="${s * exercises.length + subIdx}" data-field="kg" step="0.5" placeholder="kg" inputmode="decimal" value="${pvKg}" style="width:55px">
+        <span style="color:var(--text3)">x</span>
+        <input type="text" class="mini-input${cpReps}" data-ex="${i}" data-set="${s * exercises.length + subIdx}" data-field="reps" placeholder="${subEx.reps || '—'}" inputmode="numeric" value="${pvReps}" style="width:45px">
+      </div>`;
+    }).join('');
+    setsHtml.push(`<div style="margin-bottom:8px"><div style="font-size:.65rem;color:var(--text3);font-weight:600;margin-bottom:4px">Serie ${s + 1}</div>${setRows}</div>`);
+  }
+  return `<div class="ex-card">
+    <div class="ex-mode-badge superset">Superserie</div>
+    <div class="ex-name">${esc(ex.name)}</div>
+    ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
+    ${setsHtml.join('')}</div>`;
 }
 
 export function clearPrefill() {

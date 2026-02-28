@@ -210,6 +210,8 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .ex-mode-badge.rounds{background:rgba(0,85,255,.08);color:var(--accent)}
 .ex-mode-badge.ladder,.ex-mode-badge.pyramid{background:rgba(255,159,10,.12);color:#e67e00}
 .ex-mode-badge.amrap{background:rgba(52,199,89,.1);color:var(--green)}
+.ex-mode-badge.emom{background:rgba(175,82,222,.1);color:#af52de}
+.ex-mode-badge.superset{background:rgba(255,149,0,.1);color:#ff9500}
 .ex-mode-info{font-size:.7rem;color:var(--text2);margin-bottom:8px;line-height:1.4}
 .ex-mode-desc{font-size:.68rem;color:var(--text3);margin-bottom:8px;line-height:1.4;font-style:italic}
 .round-list{margin:6px 0 10px;padding-left:0;list-style:none}
@@ -234,3 +236,19 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 /* Prefilled inputs */
 input.prefilled{background:rgba(0,85,255,.06);border:.5px dashed rgba(0,85,255,.25)}
 input.prefilled:focus{background:var(--surface);border:none}
+
+/* Custom programs list */
+.custom-prog-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:.5px solid var(--border)}
+.custom-prog-item:last-child{border-bottom:none}
+.custom-prog-name{flex:1;font-size:.8rem;font-weight:600;color:var(--text)}
+.custom-prog-desc{font-size:.65rem;color:var(--text3)}
+.custom-prog-badge{font-size:.55rem;background:var(--teal);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700}
+.custom-prog-del{background:none;border:none;color:var(--red);font-size:.75rem;font-weight:600;cursor:pointer;padding:4px 8px;font-family:var(--font)}
+.create-plan-link{display:block;text-align:center;font-size:.72rem;color:var(--accent);font-weight:600;margin-top:8px;text-decoration:none}
+
+/* Program selector modal */
+.prog-modal-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius);cursor:pointer;transition:background .15s}
+.prog-modal-item:active{background:var(--surface2)}
+.prog-modal-item.active{background:rgba(0,85,255,.08);border:1px solid rgba(0,85,255,.2)}
+.prog-modal-name{font-size:.85rem;font-weight:700;color:var(--text)}
+.prog-modal-desc{font-size:.68rem;color:var(--text3);margin-top:2px}
