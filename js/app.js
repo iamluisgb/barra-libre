@@ -1,5 +1,5 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
-import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
+import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
 import { today, mergeDB, esc } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
@@ -9,7 +9,7 @@ import { initCalendar } from './ui/calendar.js';
 import { initHistory } from './ui/history.js';
 import { initBody } from './ui/body.js';
 import { initDrive, backupToDrive, restoreFromDrive, listRevisions, downloadRevision, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
-import { initToast } from './ui/toast.js';
+import { initToast, toast } from './ui/toast.js';
 
 const db = loadDB();
 const AUTOSYNC_KEY = 'barraLibreAutoSync';
@@ -35,6 +35,41 @@ function updateSyncUI() {
   }
 }
 
+function renderCustomProgramsList() {
+  const list = document.getElementById('customProgramsList');
+  const customs = getCustomPrograms();
+  if (customs.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = customs.map(p => {
+    const name = esc(p._meta?.name || 'Sin nombre');
+    const desc = esc(p._meta?.desc || '');
+    return `<div class="custom-prog-item">
+      <div style="flex:1"><div class="custom-prog-name">${name}</div>${desc ? `<div class="custom-prog-desc">${desc}</div>` : ''}</div>
+      <span class="custom-prog-badge">Custom</span>
+      <button class="custom-prog-del" data-prog-id="${esc(p._customId)}">Eliminar</button>
+    </div>`;
+  }).join('');
+}
+
+function renderProgramSelector() {
+  const progList = getProgramList();
+  const active = db.program || 'barraLibre';
+  const activeProg = progList.find(p => p.id === active);
+  document.getElementById('activeProgramName').textContent = activeProg?.name || active;
+
+  const modal = document.getElementById('programModal');
+  const options = document.getElementById('programOptions');
+  options.innerHTML = progList.map(p => {
+    const isCustom = !isBuiltinProgram(p.id);
+    const badge = isCustom ? '<span class="custom-prog-badge" style="margin-left:6px">Custom</span>' : '';
+    return `<div class="prog-modal-item${p.id === active ? ' active' : ''}" data-prog="${esc(p.id)}">
+      <div style="flex:1"><div class="prog-modal-name">${esc(p.name)}${badge}</div><div class="prog-modal-desc">${esc(p.desc)}</div></div>
+    </div>`;
+  }).join('');
+}
+
 // === SEED ===
 function seedInitialData() {
   if (db.workouts.length > 0) return;
@@ -57,17 +92,9 @@ async function init() {
   initToast();
   await loadPrograms();
 
-  // Set active program from saved state + render chips dynamically
+  // Set active program from saved state + render selector
   setActiveProgram(db.program || 'barraLibre');
-  const selector = document.getElementById('programSelector');
-  const progList = getProgramList();
-  if (progList.length > 1) {
-    selector.innerHTML = progList.map(p =>
-      `<button class="prog-chip${p.id === (db.program || 'barraLibre') ? ' active' : ''}" data-prog="${p.id}">${p.name}</button>`
-    ).join('');
-  } else {
-    selector.style.display = 'none';
-  }
+  renderProgramSelector();
 
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
@@ -143,25 +170,33 @@ function bindEvents() {
   });
   initBody(db);
 
-  // Program selector (event delegation for dynamic chips)
-  document.getElementById('programSelector').addEventListener('click', (e) => {
-    const chip = e.target.closest('.prog-chip');
-    if (!chip) return;
-    const prog = chip.dataset.prog;
-    if (prog === getActiveProgram()) return;
-    const progList = getProgramList();
-    const target = progList.find(p => p.id === prog);
-    if (!confirm(`Cambiar a ${target?.name || prog}?`)) return;
-    document.querySelectorAll('.prog-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
+  // Program selector modal
+  document.getElementById('programContext').addEventListener('click', () => {
+    renderProgramSelector();
+    document.getElementById('programModal').classList.add('open');
+  });
+  document.getElementById('programModalClose').addEventListener('click', () => {
+    document.getElementById('programModal').classList.remove('open');
+  });
+  document.getElementById('programModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('programModal'))
+      document.getElementById('programModal').classList.remove('open');
+  });
+  document.getElementById('programOptions').addEventListener('click', (e) => {
+    const item = e.target.closest('.prog-modal-item');
+    if (!item) return;
+    const prog = item.dataset.prog;
+    if (prog === getActiveProgram()) { document.getElementById('programModal').classList.remove('open'); return; }
     setActiveProgram(prog);
     db.program = prog;
     db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
     saveDB(db);
     updatePhaseUI(db);
     populateSessions(db);
+    renderProgramSelector();
     document.getElementById('historyFilter').value = '';
     refreshActiveSection(db);
+    document.getElementById('programModal').classList.remove('open');
   });
 
   // Auto-sync toggle
@@ -353,6 +388,46 @@ function bindEvents() {
   document.getElementById('revisionsModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('revisionsModal'))
       document.getElementById('revisionsModal').classList.remove('open');
+  });
+
+  // Custom programs
+  renderCustomProgramsList();
+  document.getElementById('importProgramBtn').addEventListener('click', () => document.getElementById('importProgramFile').click());
+  document.getElementById('importProgramFile').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        const err = validateProgram(data);
+        if (err) { alert('Plan no válido: ' + err); return; }
+        importCustomProgram(data);
+        renderCustomProgramsList();
+        renderProgramSelector();
+        toast('Plan importado: ' + (data._meta?.name || 'Sin nombre'));
+      } catch { alert('Error al leer el archivo JSON'); }
+    };
+    r.readAsText(f);
+    e.target.value = '';
+  });
+  document.getElementById('customProgramsList').addEventListener('click', (e) => {
+    const btn = e.target.closest('.custom-prog-del');
+    if (!btn) return;
+    const id = btn.dataset.progId;
+    if (!confirm('¿Eliminar este plan?')) return;
+    deleteCustomProgram(id);
+    if (db.program === id) {
+      db.program = 'barraLibre';
+      setActiveProgram('barraLibre');
+      db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
+      saveDB(db);
+      updatePhaseUI(db);
+      populateSessions(db);
+    }
+    renderCustomProgramsList();
+    renderProgramSelector();
+    toast('Plan eliminado', 'info');
   });
 
   // Settings section

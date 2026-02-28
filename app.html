@@ -18,7 +18,9 @@
 <div class="offline-banner" id="offlineBanner">Sin conexión — los datos se guardan localmente</div>
 <header><h1>Barra <span>Libre</span></h1><div class="sync-indicator" id="syncIndicator"></div></header>
 <div class="context-bar">
-  <div class="program-selector" id="programSelector"></div>
+  <div class="phase-context" id="programContext">
+    <span id="activeProgramName">Barra Libre</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
+  </div>
   <div class="phase-context" id="phaseContext">
     <span id="phaseName">Fase I</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
   </div>
@@ -76,6 +78,20 @@
 <div class="section" id="secSettings">
   <div class="sec-title sec-title-accent">Records personales</div>
   <div id="rmPanel"></div>
+
+  <div class="sec-title sec-title-accent sec-title-mt">Mis Planes</div>
+  <div class="settings-card">
+    <div id="customProgramsList"></div>
+    <button class="sc-row sc-row-action" id="importProgramBtn">
+      <span class="sc-row-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </span>
+      <span>Importar plan (.json)</span>
+      <span class="sc-row-chevron">›</span>
+    </button>
+    <input type="file" id="importProgramFile" accept=".json" style="display:none">
+  </div>
+  <a href="blog/crear-plan.html" class="create-plan-link">No tienes un plan? Aprende a crear uno</a>
 
   <div class="sec-title sec-title-accent sec-title-mt">Google Drive</div>
   <div class="settings-card">
@@ -141,6 +157,10 @@
 
   <div id="appVersion" style="text-align:center;padding:24px 0 8px;font-size:.7rem;color:var(--text3);font-weight:500"></div>
 </div>
+<div class="modal-overlay" id="programModal"><div class="modal"><h3>Seleccionar Programa</h3>
+  <div id="programOptions"></div>
+  <button class="btn btn-outline" id="programModalClose">Cerrar</button>
+</div></div>
 <div class="modal-overlay" id="phaseModal"><div class="modal"><h3>Seleccionar Fase</h3>
   <div id="phaseOptions"></div>
   <button class="btn btn-outline">Cerrar</button>
