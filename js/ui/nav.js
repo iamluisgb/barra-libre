@@ -71,7 +71,10 @@ export function initNav(db) {
   document.querySelectorAll('nav button[data-sec]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn, db));
   });
-  document.getElementById('phaseContext').addEventListener('click', () => openPhaseModal());
+  document.getElementById('phaseContext').addEventListener('click', () => {
+    renderPhaseModal(db);
+    openPhaseModal();
+  });
   document.getElementById('phaseModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('phaseModal')) closePhaseModal();
     const option = e.target.closest('.phase-option[data-phase]');

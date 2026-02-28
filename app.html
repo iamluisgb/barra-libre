@@ -18,11 +18,12 @@
 <div class="offline-banner" id="offlineBanner">Sin conexión — los datos se guardan localmente</div>
 <header><h1>Barra <span>Libre</span></h1><div class="sync-indicator" id="syncIndicator"></div></header>
 <div class="context-bar">
-  <div class="phase-context" id="programContext">
-    <span id="activeProgramName">Barra Libre</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
+  <div class="context-selector" id="programContext">
+    <span class="context-label" id="activeProgramName">Barra Libre</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
   </div>
-  <div class="phase-context" id="phaseContext">
-    <span id="phaseName">Fase I</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
+  <span class="context-sep">·</span>
+  <div class="context-selector context-phase" id="phaseContext">
+    <span class="context-label" id="phaseName">Fase I</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
   </div>
 </div>
 <div class="timer-bar mode-countdown" id="timerBar">
