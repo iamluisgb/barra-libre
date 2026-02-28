@@ -6,6 +6,19 @@ import { toast } from './toast.js';
 let editingId = null;
 let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList;
 
+function cacheSelectors() {
+  if ($trainSession) return;
+  $exerciseList = document.getElementById('exerciseList');
+  $trainSession = document.getElementById('trainSession');
+  $trainDate = document.getElementById('trainDate');
+  $trainNotes = document.getElementById('trainNotes');
+  $prefillBanner = document.getElementById('prefillBanner');
+  $prefillText = document.getElementById('prefillText');
+  $saveBtn = document.querySelector('#secTrain .btn');
+  $prCelebration = document.getElementById('prCelebration');
+  $prList = document.getElementById('prList');
+}
+
 function clearEditState() {
   if (!editingId) return;
   editingId = null;
@@ -15,6 +28,7 @@ function clearEditState() {
 
 /** Populate session select dropdowns based on active phase */
 export function populateSessions(db) {
+  cacheSelectors();
   const progs = getPrograms();
   if (!progs[db.phase]) { db.phase = parseInt(Object.keys(progs)[0]) || 1; }
   const ss = Object.keys(progs[db.phase].sessions);
@@ -317,15 +331,7 @@ export function saveWorkout(db) {
 
 /** Initialize training section: cache selectors and bind events */
 export function initTraining(db, { onCancelEdit }) {
-  $exerciseList = document.getElementById('exerciseList');
-  $trainSession = document.getElementById('trainSession');
-  $trainDate = document.getElementById('trainDate');
-  $trainNotes = document.getElementById('trainNotes');
-  $prefillBanner = document.getElementById('prefillBanner');
-  $prefillText = document.getElementById('prefillText');
-  $saveBtn = document.querySelector('#secTrain .btn');
-  $prCelebration = document.getElementById('prCelebration');
-  $prList = document.getElementById('prList');
+  cacheSelectors();
 
   $exerciseList.addEventListener('input', (e) => {
     e.target.classList.remove('prefilled');
