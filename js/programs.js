@@ -1,9 +1,10 @@
+import { saveDB } from './data.js';
+
 let ALL_PROGRAMS = {};
 let BUILTIN_IDS = new Set();
 let activeProgram = 'barraLibre';
 let BODY_MEASURES = [];
 
-const CUSTOM_KEY = 'customPrograms';
 const VALID_MODES = new Set(['sets', 'result', 'interval', 'tabata', 'rounds', 'ladder', 'pyramid', 'amrap', 'emom', 'superset']);
 
 async function fetchJSON(url) {
@@ -18,7 +19,7 @@ async function fetchJSON(url) {
 }
 
 /** Fetch program catalog + body measures from JSON config */
-export async function loadPrograms() {
+export async function loadPrograms(db) {
   const index = await fetchJSON('programs.json');
   if (!index) return;
 
@@ -34,8 +35,8 @@ export async function loadPrograms() {
   ALL_PROGRAMS = Object.fromEntries(entries.filter(Boolean));
   BUILTIN_IDS = new Set(Object.keys(ALL_PROGRAMS));
 
-  // Load custom programs from localStorage
-  for (const cp of getCustomPrograms()) {
+  // Load custom programs from db
+  for (const cp of getCustomPrograms(db)) {
     ALL_PROGRAMS[cp._customId] = cp;
   }
 }
@@ -78,10 +79,9 @@ export function getAllPhases() {
 /** @returns {boolean} Whether a program ID is built-in (not custom) */
 export function isBuiltinProgram(id) { return BUILTIN_IDS.has(id); }
 
-/** @returns {Array} Custom programs stored in localStorage */
-export function getCustomPrograms() {
-  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || []; }
-  catch { return []; }
+/** @returns {Array} Custom programs stored in db */
+export function getCustomPrograms(db) {
+  return Array.isArray(db.customPrograms) ? db.customPrograms : [];
 }
 
 /** Validate that a JSON object is a valid program */
@@ -104,24 +104,24 @@ export function validateProgram(data) {
   return null; // null = valid
 }
 
-/** Import a custom program and persist to localStorage */
-export function importCustomProgram(data) {
+/** Import a custom program and persist to db */
+export function importCustomProgram(db, data) {
   const slug = data._meta.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30);
   const id = `custom_${slug}_${Date.now()}`;
   data._customId = id;
 
-  const list = getCustomPrograms();
-  list.push(data);
-  localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+  if (!Array.isArray(db.customPrograms)) db.customPrograms = [];
+  db.customPrograms.push(data);
+  saveDB(db);
 
   ALL_PROGRAMS[id] = data;
   return id;
 }
 
 /** Delete a custom program by ID */
-export function deleteCustomProgram(id) {
-  const list = getCustomPrograms().filter(p => p._customId !== id);
-  localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+export function deleteCustomProgram(db, id) {
+  db.customPrograms = (db.customPrograms || []).filter(p => p._customId !== id);
+  saveDB(db);
   delete ALL_PROGRAMS[id];
 
   if (activeProgram === id) {

@@ -37,10 +37,10 @@ export function today() {
 
 const safeArr = v => Array.isArray(v) ? v : [];
 
-function mergeById(local, remote, deleted) {
+function mergeById(local, remote, deleted, key = 'id') {
   const map = new Map();
-  for (const item of local) { if (item?.id != null) map.set(item.id, item); }
-  for (const item of remote) { if (item?.id != null) map.set(item.id, item); }
+  for (const item of local) { if (item?.[key] != null) map.set(item[key], item); }
+  for (const item of remote) { if (item?.[key] != null) map.set(item[key], item); }
   for (const id of deleted) map.delete(id);
   return [...map.values()];
 }
@@ -56,5 +56,6 @@ export function mergeDB(local, remote) {
   merged.workouts = mergeById(safeArr(local.workouts), safeArr(remote.workouts), allDeleted);
   merged.bodyLogs = mergeById(safeArr(local.bodyLogs), safeArr(remote.bodyLogs), allDeleted);
   merged.deletedIds = allDeleted;
+  merged.customPrograms = mergeById(safeArr(local.customPrograms), safeArr(remote.customPrograms), [], '_customId');
   return merged;
 }

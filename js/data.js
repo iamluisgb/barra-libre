@@ -6,7 +6,7 @@ let _onSave = null;
 /** @param {Function} fn - Callback invoked after every saveDB */
 export function setOnSave(fn) { _onSave = fn; }
 
-const DEFAULTS = { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], settings: { height: 175, age: 32 } };
+const DEFAULTS = { program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], settings: { height: 175, age: 32 } };
 
 /** Load database from localStorage, falling back to defaults */
 export function loadDB() {

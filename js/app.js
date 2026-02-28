@@ -37,7 +37,7 @@ function updateSyncUI() {
 
 function renderCustomProgramsList() {
   const list = document.getElementById('customProgramsList');
-  const customs = getCustomPrograms();
+  const customs = getCustomPrograms(db);
   if (customs.length === 0) {
     list.innerHTML = '';
     return;
@@ -90,7 +90,21 @@ function seedInitialData() {
 async function init() {
   seedInitialData();
   initToast();
-  await loadPrograms();
+
+  // Migrate custom programs from old localStorage key to db
+  const oldCustom = localStorage.getItem('customPrograms');
+  if (oldCustom) {
+    try {
+      const programs = JSON.parse(oldCustom);
+      if (Array.isArray(programs) && programs.length > 0) {
+        db.customPrograms = programs;
+        saveDB(db);
+      }
+    } catch { /* ignore corrupt data */ }
+    localStorage.removeItem('customPrograms');
+  }
+
+  await loadPrograms(db);
 
   // Set active program from saved state + render selector
   setActiveProgram(db.program || 'barraLibre');
@@ -402,7 +416,7 @@ function bindEvents() {
         const data = JSON.parse(r.result);
         const err = validateProgram(data);
         if (err) { alert('Plan no válido: ' + err); return; }
-        importCustomProgram(data);
+        importCustomProgram(db, data);
         renderCustomProgramsList();
         renderProgramSelector();
         toast('Plan importado: ' + (data._meta?.name || 'Sin nombre'));
@@ -416,7 +430,7 @@ function bindEvents() {
     if (!btn) return;
     const id = btn.dataset.progId;
     if (!confirm('¿Eliminar este plan?')) return;
-    deleteCustomProgram(id);
+    deleteCustomProgram(db, id);
     if (db.program === id) {
       db.program = 'barraLibre';
       setActiveProgram('barraLibre');
