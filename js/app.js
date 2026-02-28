@@ -98,7 +98,7 @@ async function init() {
 
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
-  updatePhaseDisplay(db);
+  updatePhaseUI(db);
   document.getElementById('calcHeight').value = db.settings?.height || DEFAULT_HEIGHT;
   document.getElementById('calcAge').value = db.settings?.age || DEFAULT_AGE;
   document.getElementById('timerBar').classList.add('active');

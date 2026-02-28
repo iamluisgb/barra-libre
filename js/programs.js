@@ -49,7 +49,7 @@ export function getActiveProgram() { return activeProgram; }
 export function getPrograms() {
   const prog = ALL_PROGRAMS[activeProgram];
   if (!prog) return {};
-  const { _meta, ...phases } = prog;
+  const { _meta, _customId, ...phases } = prog;
   return phases;
 }
 
