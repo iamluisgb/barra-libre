@@ -1,13 +1,13 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
-import { today, mergeDB } from './utils.js';
-import { initTimer, toggleTimer, setTimerMode, showCustomInput, confirmCustomInput, resetStopwatch } from './ui/timer.js';
-import { switchTab, openPhaseModal, closePhaseModal, selectPhase, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
-import { populateSessions, loadSessionTemplate, saveWorkout, clearPrefill, startEdit, cancelEdit } from './ui/training.js';
-import { renderCalendar, calNav, calDayClick } from './ui/calendar.js';
-import { renderHistory, showDetail, shareCard, closeDetailModal, deleteWorkout, getDetailWorkout } from './ui/history.js';
-import { renderProgressChart } from './ui/progress.js';
-import { saveBodyLog, calcCalories, startBodyEdit, cancelBodyEdit, deleteBodyLog } from './ui/body.js';
+import { today, mergeDB, esc } from './utils.js';
+import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT } from './constants.js';
+import { initTimer } from './ui/timer.js';
+import { initNav, switchTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
+import { initTraining, populateSessions, startEdit, cancelEdit } from './ui/training.js';
+import { initCalendar } from './ui/calendar.js';
+import { initHistory } from './ui/history.js';
+import { initBody } from './ui/body.js';
 import { initDrive, backupToDrive, restoreFromDrive, listRevisions, downloadRevision, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
 import { initToast } from './ui/toast.js';
 
@@ -72,8 +72,8 @@ async function init() {
   document.getElementById('trainDate').value = today();
   document.getElementById('bodyDate').value = today();
   updatePhaseDisplay(db);
-  document.getElementById('calcHeight').value = db.settings?.height || 175;
-  document.getElementById('calcAge').value = db.settings?.age || 32;
+  document.getElementById('calcHeight').value = db.settings?.height || DEFAULT_HEIGHT;
+  document.getElementById('calcAge').value = db.settings?.age || DEFAULT_AGE;
   document.getElementById('timerBar').classList.add('active');
   initTimer();
   populateSessions(db);
@@ -84,11 +84,11 @@ async function init() {
   onSyncStatus(status => {
     syncEl.className = 'sync-indicator visible ' + status;
     syncEl.textContent = status === 'syncing' ? '' : status === 'ok' ? '✓' : '✗';
-    if (status !== 'syncing') setTimeout(() => syncEl.classList.remove('visible'), 3000);
+    if (status !== 'syncing') setTimeout(() => syncEl.classList.remove('visible'), SYNC_INDICATOR_MS);
   });
 
   // Auto-sync: debounced backup on every saveDB
-  const debouncedBackup = debounce((d) => silentBackup(d), 3000);
+  const debouncedBackup = debounce((d) => silentBackup(d), DEBOUNCE_BACKUP_MS);
   setOnSave((d) => { if (isAutoSync() && !isSyncing()) debouncedBackup(d); });
 
   updateSyncUI();
@@ -106,8 +106,8 @@ async function init() {
         clearInterval(checkGIS);
         startDrive();
       }
-    }, 200);
-    setTimeout(() => clearInterval(checkGIS), 10000);
+    }, GIS_CHECK_INTERVAL_MS);
+    setTimeout(() => clearInterval(checkGIS), GIS_CHECK_TIMEOUT_MS);
   }
 
   // Flush pending backup when leaving, re-sync when returning
@@ -118,17 +118,29 @@ async function init() {
       syncOnLoad(db, saveDB);
     }
   });
+
+  // Offline indicator
+  const offlineBanner = document.getElementById('offlineBanner');
+  const updateOnline = () => { offlineBanner.classList.toggle('visible', !navigator.onLine); };
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+  updateOnline();
 }
 
 // === EVENT BINDING ===
 function bindEvents() {
-  // Bottom nav tabs
-  document.querySelectorAll('nav button[data-sec]').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn, db));
+  // Delegate to UI modules
+  initNav(db);
+  initTraining(db, { onCancelEdit: () => cancelEdit(db) });
+  initCalendar(db);
+  initHistory(db, {
+    onEdit: (workout) => {
+      const trainBtn = document.querySelector('nav button[data-sec="secTrain"]');
+      switchTab(trainBtn, db);
+      startEdit(workout, db);
+    }
   });
-
-  // Phase context (opens phase modal)
-  document.getElementById('phaseContext').addEventListener('click', () => openPhaseModal());
+  initBody(db);
 
   // Program selector (event delegation for dynamic chips)
   document.getElementById('programSelector').addEventListener('click', (e) => {
@@ -150,101 +162,6 @@ function bindEvents() {
     document.getElementById('historyFilter').value = '';
     refreshActiveSection(db);
   });
-
-  // Timer
-  document.getElementById('timerStartBtn').addEventListener('click', () => toggleTimer());
-  document.querySelectorAll('.timer-mode[data-mode]').forEach(btn => {
-    btn.addEventListener('click', () => setTimerMode(btn.dataset.mode));
-  });
-  document.getElementById('timerCustomBtn').addEventListener('click', () => showCustomInput());
-  const customInput = document.getElementById('timerCustomInput');
-  customInput.addEventListener('blur', () => confirmCustomInput());
-  customInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') customInput.blur(); });
-  document.getElementById('timerResetBtn').addEventListener('click', () => resetStopwatch());
-
-  // Auto-clear prefill styling on user input
-  document.getElementById('exerciseList').addEventListener('input', (e) => {
-    e.target.classList.remove('prefilled');
-  }, true);
-
-  // Training section
-  document.getElementById('trainSession').addEventListener('change', () => loadSessionTemplate(db, true));
-  document.querySelector('#secTrain .btn').addEventListener('click', () => saveWorkout(db));
-  document.getElementById('prefillBanner').addEventListener('click', (e) => {
-    if (e.target.closest('.prefill-clear')) {
-      cancelEdit(db);
-      clearPrefill();
-    }
-  });
-
-  // Calendar nav
-  document.querySelector('.cal-nav').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    if (btn.classList.contains('cal-nav-today')) calNav(0, db);
-    else if (btn.previousElementSibling === null) calNav(-1, db);
-    else calNav(1, db);
-  });
-
-  // Calendar day clicks (event delegation)
-  document.getElementById('calendarPanel').addEventListener('click', (e) => {
-    const day = e.target.closest('.cal-day[data-date]');
-    if (day) calDayClick(day.dataset.date, db);
-  });
-
-  // History filter
-  document.getElementById('historyFilter').addEventListener('change', () => renderHistory(db));
-
-  // History item clicks (event delegation)
-  document.getElementById('historyList').addEventListener('click', (e) => {
-    const item = e.target.closest('.history-item[data-id]');
-    if (item) showDetail(parseInt(item.dataset.id), db);
-  });
-
-  // Detail modal
-  document.getElementById('detailModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('detailModal')) closeDetailModal();
-  });
-
-  // Detail buttons
-  document.querySelector('.detail-close-btn').addEventListener('click', () => closeDetailModal());
-  document.getElementById('editBtn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const workout = getDetailWorkout(db);
-    if (!workout) return;
-    closeDetailModal();
-    const trainBtn = document.querySelector('nav button[data-sec="secTrain"]');
-    switchTab(trainBtn, db);
-    startEdit(workout, db);
-  });
-  document.querySelector('.detail-share-btn').addEventListener('click', (e) => { e.stopPropagation(); shareCard(); });
-  document.getElementById('deleteBtn').addEventListener('click', (e) => { e.stopPropagation(); deleteWorkout(db); });
-
-  // Phase modal
-  document.getElementById('phaseModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('phaseModal')) closePhaseModal();
-    const option = e.target.closest('.phase-option[data-phase]');
-    if (option) selectPhase(parseInt(option.dataset.phase), db);
-  });
-  document.querySelector('#phaseModal .btn-outline').addEventListener('click', () => closePhaseModal());
-
-  // Progress exercise selector
-  document.getElementById('progressExercise').addEventListener('change', () => renderProgressChart(db));
-
-  // Body section
-  document.querySelector('#secBody .btn.mb2').addEventListener('click', () => saveBodyLog(db));
-  document.getElementById('bodyHistory').addEventListener('click', (e) => {
-    const btn = e.target.closest('.hi-edit-btn');
-    if (!btn) return;
-    const item = btn.closest('.history-item[data-body-id]');
-    if (item) startBodyEdit(parseInt(item.dataset.bodyId), db);
-  });
-  document.getElementById('bodyEditBanner').addEventListener('click', (e) => {
-    if (e.target.closest('.body-edit-cancel')) cancelBodyEdit(db);
-  });
-  document.getElementById('bodyDeleteBtn').addEventListener('click', () => deleteBodyLog(db));
-  document.getElementById('calcHeight').addEventListener('change', () => calcCalories(db));
-  document.getElementById('calcAge').addEventListener('change', () => calcCalories(db));
 
   // Auto-sync toggle
   document.getElementById('autoSyncBtn').addEventListener('click', async () => {
@@ -293,7 +210,7 @@ function bindEvents() {
     setBtnText(btn, 'Guardando...');
     try {
       await backupToDrive(db);
-      status.textContent = `Copia guardada en Drive (${new Date().toLocaleString('es')})`;
+      status.textContent = `Copia guardada en Drive (${new Date().toLocaleString(LOCALE)})`;
       status.className = 'drive-status drive-success';
     } catch (e) {
       status.textContent = e.message === 'popup_closed_by_user'
@@ -319,7 +236,7 @@ function bindEvents() {
         status.className = 'drive-status drive-error';
         return;
       }
-      const when = new Date(result.modifiedTime).toLocaleString('es');
+      const when = new Date(result.modifiedTime).toLocaleString(LOCALE);
       if (!confirm(`Restaurar copia del ${when}?\nLos datos se fusionarán con los actuales.`)) {
         status.textContent = 'Restauracion cancelada';
         status.className = 'drive-status';
@@ -364,7 +281,7 @@ function bindEvents() {
         list.innerHTML = '<p>No hay versiones anteriores disponibles.</p>';
       } else {
         list.innerHTML = revs.map(r => {
-          const date = new Date(r.modifiedTime).toLocaleString('es');
+          const date = new Date(r.modifiedTime).toLocaleString(LOCALE);
           const size = r.size ? `${(parseInt(r.size) / 1024).toFixed(1)} KB` : '';
           return `<div class="history-item" data-rev="${r.id}" style="cursor:pointer"><div class="hi-main"><div class="hi-date">${date}</div><div class="hi-session">${size}</div></div></div>`;
         }).join('');
@@ -395,14 +312,14 @@ function bindEvents() {
       const preview = document.getElementById('revisionPreviewContent');
       document.getElementById('revisionPreviewTitle').textContent =
         `${workouts.length} sesiones encontradas`;
-      preview.innerHTML = workouts.slice(0, 20).map(w => {
+      preview.innerHTML = workouts.slice(0, REVISION_PREVIEW_LIMIT).map(w => {
         const exList = (w.exercises || []).map(ex =>
-          `${ex.name}: ${ex.sets.map(s => `${s.kg || '-'}kg×${s.reps}`).join(', ')}`
+          `${esc(ex.name)}: ${ex.sets.map(s => `${esc(s.kg) || '-'}kg×${esc(s.reps)}`).join(', ')}`
         ).join('<br>');
         return `<div class="history-item"><div class="hi-main"><div class="hi-date">${w.date}</div><div class="hi-session">${w.session || ''} · ${w.program || 'barraLibre'} · Fase ${w.phase || '?'}</div></div><div class="hi-detail" style="font-size:12px;color:#666;margin-top:4px">${exList}</div></div>`;
       }).join('');
-      if (workouts.length > 20) {
-        preview.innerHTML += `<p style="color:#666;font-size:13px">... y ${workouts.length - 20} sesiones más</p>`;
+      if (workouts.length > REVISION_PREVIEW_LIMIT) {
+        preview.innerHTML += `<p style="color:#666;font-size:13px">... y ${workouts.length - REVISION_PREVIEW_LIMIT} sesiones más</p>`;
       }
       document.getElementById('revisionsList').style.display = 'none';
       document.getElementById('revisionsCloseBtn').style.display = 'none';
@@ -442,9 +359,6 @@ function bindEvents() {
   document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
   document.getElementById('importFile').addEventListener('change', (e) => importData(e, db));
   document.querySelector('#secSettings .sc-row-danger').addEventListener('click', () => clearAllData());
-
-  // PR celebration dismiss
-  document.getElementById('prCelebration').addEventListener('click', function () { this.style.display = 'none'; });
 }
 
 init();

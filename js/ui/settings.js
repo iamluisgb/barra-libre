@@ -1,4 +1,4 @@
-import { formatDate } from '../utils.js';
+import { formatDate, esc } from '../utils.js';
 import { getActiveProgram } from '../programs.js';
 
 function normLift(name) {
@@ -12,6 +12,7 @@ function normLift(name) {
   return null;
 }
 
+/** Render estimated 1RMs or personal records panel */
 export function render1RMs(db) {
   const prog = getActiveProgram();
   const title = document.querySelector('#secSettings .sec-title');
@@ -40,7 +41,7 @@ export function render1RMs(db) {
     return;
   }
   p.innerHTML = k.map(n =>
-    `<div class="calc-result"><div class="cr-label">${n}</div><div class="cr-value">${lifts[n].rm.toFixed(1)} kg</div><div class="cr-sub">Basado en ${lifts[n].kg}kg × ${lifts[n].reps} (${formatDate(lifts[n].date)})</div></div>`
+    `<div class="calc-result"><div class="cr-label">${esc(n)}</div><div class="cr-value">${lifts[n].rm.toFixed(1)} kg</div><div class="cr-sub">Basado en ${lifts[n].kg}kg × ${lifts[n].reps} (${formatDate(lifts[n].date)})</div></div>`
   ).join('');
 }
 
@@ -73,6 +74,6 @@ function renderRecords(db, prog) {
     const sub = r.maxKg > 0
       ? `Mejor peso (${formatDate(r.kgDate)})`
       : (r.resDate ? `Mejor resultado (${formatDate(r.resDate)})` : '');
-    return `<div class="calc-result"><div class="cr-label">${name}<span style="font-size:.6rem;color:var(--text3);margin-left:6px">${r.count}×</span></div><div class="cr-value">${val}</div>${sub ? `<div class="cr-sub">${sub}</div>` : ''}</div>`;
+    return `<div class="calc-result"><div class="cr-label">${esc(name)}<span style="font-size:.6rem;color:var(--text3);margin-left:6px">${r.count}×</span></div><div class="cr-value">${esc(val)}</div>${sub ? `<div class="cr-sub">${sub}</div>` : ''}</div>`;
   }).join('');
 }

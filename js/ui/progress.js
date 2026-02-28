@@ -1,6 +1,16 @@
 import { getActiveProgram } from '../programs.js';
+import { esc } from '../utils.js';
 
+let _bound = false;
+let _chartCache = { name: null, count: 0 };
+
+/** Initialize progress section: populate exercise select and render chart */
 export function initProgress(db) {
+  _chartCache = { name: null, count: 0 };
+  if (!_bound) {
+    document.getElementById('progressExercise').addEventListener('change', () => renderProgressChart(db));
+    _bound = true;
+  }
   const sel = document.getElementById('progressExercise');
   const prog = getActiveProgram();
   const exercises = new Set();
@@ -9,13 +19,17 @@ export function initProgress(db) {
     .forEach(w => w.exercises.forEach(e => exercises.add(e.name)));
   const sorted = [...exercises].sort();
   const prev = sel.value;
-  sel.innerHTML = sorted.map(n => `<option value="${n}">${n}</option>`).join('');
+  sel.innerHTML = sorted.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
   if (prev && sorted.includes(prev)) sel.value = prev;
   renderProgressChart(db);
 }
 
+/** Render SVG chart + stats + history for the selected exercise */
 export function renderProgressChart(db) {
   const name = document.getElementById('progressExercise').value;
+  const wCount = db.workouts.length;
+  if (_chartCache.name === name && _chartCache.count === wCount) return;
+  _chartCache = { name, count: wCount };
   if (!name) {
     document.getElementById('progressChart').innerHTML = '<p style="color:var(--text3);text-align:center;padding:60px 0;font-size:.85rem">Sin datos aún</p>';
     document.getElementById('progressStats').innerHTML = '';
@@ -120,7 +134,7 @@ export function renderProgressChart(db) {
   ].map(s => `<div style="flex:1;background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:10px 8px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:${s.color}">${s.value}</div><div style="font-size:.6rem;color:var(--text3);font-weight:600;text-transform:uppercase;margin-top:2px">${s.label}</div></div>`).join('');
 
   // History list
-  document.getElementById('progressHistory').innerHTML = `<div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:8px">Historial de ${name}</div>` +
+  document.getElementById('progressHistory').innerHTML = `<div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:8px">Historial de ${esc(name)}</div>` +
     points.slice().reverse().map(p => {
       const isPR = p[metric] === pr;
       const mainVal = hasKg ? `${p.maxKg} kg` : `${p.maxReps} reps`;

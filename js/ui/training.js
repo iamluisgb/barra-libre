@@ -1,57 +1,56 @@
 import { saveDB } from '../data.js';
 import { getPrograms, getActiveProgram, getAllPhases } from '../programs.js';
+import { esc } from '../utils.js';
 import { toast } from './toast.js';
 
 let editingId = null;
+let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList;
 
 function clearEditState() {
   if (!editingId) return;
   editingId = null;
-  const btn = document.querySelector('#secTrain .btn');
-  btn.textContent = 'Guardar sesión';
-  btn.style.background = '';
+  $saveBtn.textContent = 'Guardar sesión';
+  $saveBtn.style.background = '';
 }
 
+/** Populate session select dropdowns based on active phase */
 export function populateSessions(db) {
-  const sel = document.getElementById('trainSession');
-  const fsel = document.getElementById('historyFilter');
   const progs = getPrograms();
   if (!progs[db.phase]) { db.phase = parseInt(Object.keys(progs)[0]) || 1; }
   const ss = Object.keys(progs[db.phase].sessions);
-  sel.innerHTML = ss.map(s => `<option value="${s}">${s}</option>`).join('');
-  fsel.innerHTML = '<option value="">Todas</option>' + ss.map(s => `<option value="${s}">${s}</option>`).join('');
+  $trainSession.innerHTML = ss.map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById('historyFilter').innerHTML = '<option value="">Todas</option>' + ss.map(s => `<option value="${s}">${s}</option>`).join('');
 
   const prog = getActiveProgram();
   const lastW = db.workouts.filter(w => w.phase === db.phase && (w.program || 'barraLibre') === prog).sort((a, b) => a.date.localeCompare(b.date)).pop();
   if (lastW && ss.length > 1) {
     const lastIdx = ss.indexOf(lastW.session);
     const nextIdx = (lastIdx + 1) % ss.length;
-    sel.value = ss[nextIdx];
+    $trainSession.value = ss[nextIdx];
   }
   loadSessionTemplate(db, true);
 }
 
+/** Render exercise cards for the selected session template */
 export function loadSessionTemplate(db, autoPrefill) {
   clearEditState();
-  const session = document.getElementById('trainSession').value;
+  const session = $trainSession.value;
   const progs = getPrograms();
   if (!progs[db.phase]) return;
   const exercises = progs[db.phase].sessions[session];
   if (!exercises) return;
-  const container = document.getElementById('exerciseList');
   const prev = getPrevSession(db, session);
-  const prefillBanner = document.getElementById('prefillBanner');
   const shouldPrefill = autoPrefill && prev;
 
   if (shouldPrefill) {
     const prevDate = prev.date.slice(5).replace('-', '/');
-    document.getElementById('prefillText').textContent = `📋 Cargada tu última ${session} (${prevDate})`;
-    prefillBanner.style.display = 'flex';
+    $prefillText.textContent = `📋 Cargada tu última ${session} (${prevDate})`;
+    $prefillBanner.style.display = 'flex';
   } else {
-    prefillBanner.style.display = 'none';
+    $prefillBanner.style.display = 'none';
   }
 
-  container.innerHTML = exercises.map((ex, i) => {
+  $exerciseList.innerHTML = exercises.map((ex, i) => {
     const prevEx = prev ? prev.exercises[i] : null;
     const mode = ex.mode || (ex.type === 'hiit' || ex.type === 'density' ? 'result' : 'sets');
     switch (mode) {
@@ -81,14 +80,14 @@ function renderSetsCard(ex, i, prevEx, shouldPrefill) {
   }
   sh += '</div>';
   const pi = prevEx ? `<div class="prev-data">Anterior: ${prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ')}</div>` : '';
-  return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div class="ex-target">${ex.sets}×${ex.reps}${ex.type === 'extra' ? ' (extra)' : ''}</div>${sh}${pi}</div>`;
+  return `<div class="ex-card"><div class="ex-name">${esc(ex.name)}</div><div class="ex-target">${ex.sets}×${ex.reps}${ex.type === 'extra' ? ' (extra)' : ''}</div>${sh}${pi}</div>`;
 }
 
 function renderResultCard(ex, i, prevEx, shouldPrefill) {
   const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
   const cp = pv ? ' prefilled' : '';
   const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
-  return `<div class="ex-card"><div class="ex-name">${ex.name}</div><div style="margin-top:8px"><label>Resultado</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo / reps totales" value="${pv}"></div>${pi}</div>`;
+  return `<div class="ex-card"><div class="ex-name">${esc(ex.name)}</div><div style="margin-top:8px"><label>Resultado</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo / reps totales" value="${pv}"></div>${pi}</div>`;
 }
 
 function renderIntervalCard(ex, i, prevEx, shouldPrefill) {
@@ -97,7 +96,7 @@ function renderIntervalCard(ex, i, prevEx, shouldPrefill) {
   const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
   return `<div class="ex-card">
     <div class="ex-mode-badge interval">Intervalos</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">${ex.duration} · ${ex.on} on / ${ex.off} off</div>
     <div><label>Reps totales</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 30" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
@@ -111,7 +110,7 @@ function renderTabataCard(ex, i, prevEx, shouldPrefill) {
   const grid = `<div class="tabata-grid">${rounds.map((r, ri) => `<div class="tabata-round"><span class="tr-num">R${ri + 1}</span>${r}</div>`).join('')}</div>`;
   return `<div class="ex-card">
     <div class="ex-mode-badge tabata">Tabata</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">8 rondas · 20s on / 10s off</div>
     ${grid}
     <div><label>Reps totales</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 64" inputmode="numeric" value="${pv}"></div>
@@ -129,7 +128,7 @@ function renderRoundsCard(ex, i, prevEx, shouldPrefill) {
   const restLabel = ex.rest && ex.rest !== '0' ? ` · Desc: ${ex.rest}` : '';
   return `<div class="ex-card">
     <div class="ex-mode-badge rounds">Circuito</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">${countLabel}${restLabel}</div>
     <div class="round-list">${exList}</div>
     <div><label>Rondas completadas</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 4" inputmode="numeric" value="${pv}"></div>
@@ -143,7 +142,7 @@ function renderLadderCard(ex, i, prevEx, shouldPrefill) {
   const exNames = (ex.exercises || []).join(' → ');
   return `<div class="ex-card">
     <div class="ex-mode-badge ladder">Escalera</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">${ex.duration} · ${exNames}</div>
     ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
     <div><label>Peldaño máximo</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 5" inputmode="numeric" value="${pv}"></div>
@@ -158,7 +157,7 @@ function renderPyramidCard(ex, i, prevEx, shouldPrefill) {
   const stepInfo = ex.step ? `De ${ex.step} en ${ex.step}` : '';
   return `<div class="ex-card">
     <div class="ex-mode-badge pyramid">Pirámide</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">${ex.duration} · ${exNames}${stepInfo ? ' · ' + stepInfo : ''}</div>
     ${ex.desc ? `<div class="ex-mode-desc">${ex.desc}</div>` : ''}
     <div><label>Nivel máximo</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 8" inputmode="numeric" value="${pv}"></div>
@@ -171,15 +170,15 @@ function renderAmrapCard(ex, i, prevEx, shouldPrefill) {
   const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
   return `<div class="ex-card">
     <div class="ex-mode-badge amrap">AMRAP</div>
-    <div class="ex-name">${ex.name}</div>
+    <div class="ex-name">${esc(ex.name)}</div>
     <div class="ex-mode-info">${ex.duration}</div>
     <div><label>Reps totales</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="ej: 45" inputmode="numeric" value="${pv}"></div>
     ${pi}</div>`;
 }
 
 export function clearPrefill() {
-  document.getElementById('prefillBanner').style.display = 'none';
-  document.querySelectorAll('#exerciseList input').forEach(inp => inp.value = '');
+  $prefillBanner.style.display = 'none';
+  $exerciseList.querySelectorAll('input').forEach(inp => inp.value = '');
 }
 
 function getPrevSession(db, n) {
@@ -188,6 +187,7 @@ function getPrevSession(db, n) {
   return f.length ? f[f.length - 1] : null;
 }
 
+/** Get highest kg ever lifted for an exercise */
 export function getExercisePR(db, name, excludeId) {
   let max = 0;
   db.workouts.forEach(w => {
@@ -199,6 +199,7 @@ export function getExercisePR(db, name, excludeId) {
   return max;
 }
 
+/** Pre-fill the training form for editing an existing workout */
 export function startEdit(workout, db) {
   if (workout.phase !== db.phase) {
     db.phase = workout.phase;
@@ -211,9 +212,9 @@ export function startEdit(workout, db) {
     populateSessions(db);
   }
 
-  document.getElementById('trainDate').value = workout.date;
-  document.getElementById('trainSession').value = workout.session;
-  document.getElementById('trainNotes').value = workout.notes || '';
+  $trainDate.value = workout.date;
+  $trainSession.value = workout.session;
+  $trainNotes.value = workout.notes || '';
 
   loadSessionTemplate(db, false);
 
@@ -228,12 +229,11 @@ export function startEdit(workout, db) {
     });
   });
 
-  const banner = document.getElementById('prefillBanner');
   const dateStr = workout.date.slice(5).replace('-', '/');
-  document.getElementById('prefillText').textContent = `✏️ Editando ${workout.session} (${dateStr})`;
-  banner.style.display = 'flex';
+  $prefillText.textContent = `✏️ Editando ${workout.session} (${dateStr})`;
+  $prefillBanner.style.display = 'flex';
 
-  document.querySelector('#secTrain .btn').textContent = 'Guardar cambios';
+  $saveBtn.textContent = 'Guardar cambios';
 }
 
 export function cancelEdit(db) {
@@ -241,10 +241,11 @@ export function cancelEdit(db) {
   loadSessionTemplate(db, true);
 }
 
+/** Save or update a workout from the training form data */
 export function saveWorkout(db) {
-  const date = document.getElementById('trainDate').value;
-  const session = document.getElementById('trainSession').value;
-  const notes = document.getElementById('trainNotes').value;
+  const date = $trainDate.value;
+  const session = $trainSession.value;
+  const notes = $trainNotes.value;
   const progs = getPrograms();
   if (!progs[db.phase]) return;
   const exercises = progs[db.phase].sessions[session];
@@ -299,18 +300,43 @@ export function saveWorkout(db) {
   saveDB(db);
 
   if (prs.length > 0) {
-    document.getElementById('prList').innerHTML = prs.map(p =>
+    $prList.innerHTML = prs.map(p =>
       `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,85,255,.06);border-radius:var(--radius);margin-bottom:6px">
-        <div style="font-size:.75rem;font-weight:700;color:var(--accent);flex:1">${p.exercise}</div>
+        <div style="font-size:.75rem;font-weight:700;color:var(--accent);flex:1">${esc(p.exercise)}</div>
         <div style="font-size:.7rem;color:var(--text3);text-decoration:line-through">${p.prevKg > 0 ? p.prevKg + 'kg' : '—'}</div>
         <div style="font-size:.85rem;font-weight:800;color:var(--green)">${p.kg}kg</div>
       </div>`
     ).join('');
-    const cel = document.getElementById('prCelebration');
-    cel.style.display = 'flex';
+    $prCelebration.style.display = 'flex';
   }
 
-  document.getElementById('trainNotes').value = '';
+  $trainNotes.value = '';
   loadSessionTemplate(db, true);
   toast(wasEditing ? 'Cambios guardados' : 'Sesión guardada');
+}
+
+/** Initialize training section: cache selectors and bind events */
+export function initTraining(db, { onCancelEdit }) {
+  $exerciseList = document.getElementById('exerciseList');
+  $trainSession = document.getElementById('trainSession');
+  $trainDate = document.getElementById('trainDate');
+  $trainNotes = document.getElementById('trainNotes');
+  $prefillBanner = document.getElementById('prefillBanner');
+  $prefillText = document.getElementById('prefillText');
+  $saveBtn = document.querySelector('#secTrain .btn');
+  $prCelebration = document.getElementById('prCelebration');
+  $prList = document.getElementById('prList');
+
+  $exerciseList.addEventListener('input', (e) => {
+    e.target.classList.remove('prefilled');
+  }, true);
+  $trainSession.addEventListener('change', () => loadSessionTemplate(db, true));
+  $saveBtn.addEventListener('click', () => saveWorkout(db));
+  $prefillBanner.addEventListener('click', (e) => {
+    if (e.target.closest('.prefill-clear')) {
+      onCancelEdit();
+      clearPrefill();
+    }
+  });
+  $prCelebration.addEventListener('click', function () { this.style.display = 'none'; });
 }

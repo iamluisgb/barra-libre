@@ -1,30 +1,66 @@
 import { saveDB, markDeleted } from '../data.js';
-import { formatDate } from '../utils.js';
+import { formatDate, esc, confirmDanger } from '../utils.js';
 import { getActiveProgram } from '../programs.js';
 import { renderCalendar } from './calendar.js';
 import { toast } from './toast.js';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const PAGE_SIZE = 50;
 let detailWorkoutId = null;
+let historyPage = 0;
+let _currentDb = null;
 
+function renderItem(w) {
+  const summary = w.exercises.filter(e => e.sets.some(s => s.kg)).map(e => `${esc(e.name)}: ${e.sets.map(s => `${esc(s.kg) || '—'}×${esc(s.reps) || '—'}`).join(', ')}`).join(' · ');
+  const hs = w.exercises.filter(e => !e.sets.some(s => s.kg) && e.sets[0]?.reps).map(e => `${esc(e.name)}: ${esc(e.sets[0].reps)}`).join(' · ');
+  const hasPR = w.prs && w.prs.length > 0;
+  const prBadge = hasPR ? '<span style="font-size:.55rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:6px">🏆 PR</span>' : '';
+  return `<div class="history-item" data-id="${w.id}"><div class="hi-date">${formatDate(w.date)}</div><div class="hi-session">Fase ${ROMAN[w.phase - 1] || w.phase} · ${w.session}${prBadge}</div><div class="hi-summary">${summary || hs || '—'}</div></div>`;
+}
+
+/** Render paginated workout history list */
 export function renderHistory(db, dateFilter) {
+  _currentDb = db;
+  historyPage = 0;
   const filter = document.getElementById('historyFilter').value;
   const prog = getActiveProgram();
   let items = [...db.workouts].reverse();
   items = items.filter(w => (w.program || 'barraLibre') === prog);
   if (filter) items = items.filter(w => w.session === filter);
   if (dateFilter) items = items.filter(w => w.date === dateFilter);
-  document.getElementById('historyList').innerHTML = items.length === 0
-    ? '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:40px 0">Sin registros aún</p>'
-    : items.map(w => {
-      const summary = w.exercises.filter(e => e.sets.some(s => s.kg)).map(e => `${e.name}: ${e.sets.map(s => `${s.kg || '—'}×${s.reps || '—'}`).join(', ')}`).join(' · ');
-      const hs = w.exercises.filter(e => !e.sets.some(s => s.kg) && e.sets[0]?.reps).map(e => `${e.name}: ${e.sets[0].reps}`).join(' · ');
-      const hasPR = w.prs && w.prs.length > 0;
-      const prBadge = hasPR ? '<span style="font-size:.55rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:6px;font-weight:700;margin-left:6px">🏆 PR</span>' : '';
-      return `<div class="history-item" data-id="${w.id}"><div class="hi-date">${formatDate(w.date)}</div><div class="hi-session">Fase ${ROMAN[w.phase - 1] || w.phase} · ${w.session}${prBadge}</div><div class="hi-summary">${summary || hs || '—'}</div></div>`;
-    }).join('');
+
+  const list = document.getElementById('historyList');
+  if (items.length === 0) {
+    list.innerHTML = '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:40px 0">Sin registros aún</p>';
+    return;
+  }
+
+  const slice = items.slice(0, PAGE_SIZE);
+  list.innerHTML = slice.map(renderItem).join('');
+  if (items.length > PAGE_SIZE) {
+    list.innerHTML += `<button class="load-more-btn" data-total="${items.length}">Cargar más (${items.length - PAGE_SIZE} restantes)</button>`;
+  }
 }
 
+function loadMore() {
+  if (!_currentDb) return;
+  historyPage++;
+  const filter = document.getElementById('historyFilter').value;
+  const prog = getActiveProgram();
+  let items = [..._currentDb.workouts].reverse();
+  items = items.filter(w => (w.program || 'barraLibre') === prog);
+  if (filter) items = items.filter(w => w.session === filter);
+
+  const end = (historyPage + 1) * PAGE_SIZE;
+  const slice = items.slice(0, end);
+  const list = document.getElementById('historyList');
+  list.innerHTML = slice.map(renderItem).join('');
+  if (end < items.length) {
+    list.innerHTML += `<button class="load-more-btn" data-total="${items.length}">Cargar más (${items.length - end} restantes)</button>`;
+  }
+}
+
+/** Open the workout detail modal for a given workout ID */
 export function showDetail(id, db) {
   detailWorkoutId = id;
   const w = db.workouts.find(x => x.id === id);
@@ -52,7 +88,7 @@ export function showDetail(id, db) {
       totalVol += kg * reps; totalSets++; if (kg > maxKg) maxKg = kg;
       return `<div style="display:flex;align-items:center;justify-content:center;gap:${gap(10)};font-size:${fs(.9)}"><span style="color:var(--text3);font-weight:600;width:22px;text-align:right">S${i + 1}</span><span style="color:var(--text);font-weight:600;min-width:52px;text-align:right">${s.kg || '—'} kg</span><span style="color:var(--text2)">× ${s.reps || '—'}</span></div>`;
     }).join('') : `<div style="font-size:${fs(.85)};color:var(--text);text-align:center;font-weight:600">${e.sets[0]?.reps || '—'}</div>`;
-    return `<div><div style="font-size:${fs(.88)};font-weight:700;color:var(--accent);margin-bottom:${gap(6)};display:flex;align-items:center;justify-content:center;gap:6px"><span style="width:3px;height:${gap(14)};background:var(--accent);border-radius:2px;display:inline-block"></span>${e.name}${prTag}</div><div style="display:flex;flex-direction:column;gap:${gap(4)};align-items:center">${setsHtml}</div></div>`;
+    return `<div><div style="font-size:${fs(.88)};font-weight:700;color:var(--accent);margin-bottom:${gap(6)};display:flex;align-items:center;justify-content:center;gap:6px"><span style="width:3px;height:${gap(14)};background:var(--accent);border-radius:2px;display:inline-block"></span>${esc(e.name)}${prTag}</div><div style="display:flex;flex-direction:column;gap:${gap(4)};align-items:center">${setsHtml}</div></div>`;
   }).join('');
   const exContainer = document.getElementById('detailExercises');
   exContainer.style.gap = gap(10);
@@ -103,9 +139,31 @@ export function getDetailWorkout(db) {
   return db.workouts.find(x => x.id === detailWorkoutId) || null;
 }
 
+/** Initialize history section: bind filter, list clicks, and detail modal */
+export function initHistory(db, { onEdit }) {
+  document.getElementById('historyFilter').addEventListener('change', () => renderHistory(db));
+  document.getElementById('historyList').addEventListener('click', (e) => {
+    if (e.target.closest('.load-more-btn')) { loadMore(); return; }
+    const item = e.target.closest('.history-item[data-id]');
+    if (item) showDetail(parseInt(item.dataset.id), db);
+  });
+  document.getElementById('detailModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('detailModal')) closeDetailModal();
+  });
+  document.querySelector('.detail-close-btn').addEventListener('click', () => closeDetailModal());
+  document.getElementById('editBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const workout = getDetailWorkout(db);
+    if (!workout) return;
+    closeDetailModal();
+    onEdit(workout);
+  });
+  document.querySelector('.detail-share-btn').addEventListener('click', (e) => { e.stopPropagation(); shareCard(); });
+  document.getElementById('deleteBtn').addEventListener('click', (e) => { e.stopPropagation(); deleteWorkout(db); });
+}
+
 export function deleteWorkout(db) {
-  const btn = document.getElementById('deleteBtn');
-  if (btn.dataset.confirm === 'true') {
+  confirmDanger(document.getElementById('deleteBtn'), () => {
     markDeleted(db, detailWorkoutId);
     db.workouts = db.workouts.filter(w => w.id !== detailWorkoutId);
     saveDB(db);
@@ -113,8 +171,5 @@ export function deleteWorkout(db) {
     closeDetailModal();
     renderHistory(db);
     renderCalendar(db);
-  } else {
-    btn.dataset.confirm = 'true'; btn.textContent = '¿Seguro?'; btn.style.width = '80px';
-    setTimeout(() => { btn.dataset.confirm = 'false'; btn.textContent = 'Borrar'; btn.style.width = '70px'; }, 3000);
-  }
+  });
 }
