@@ -17,9 +17,10 @@ function persistToken() {
   try {
     localStorage.setItem(TOKEN_KEY, accessToken);
     localStorage.setItem(EXPIRY_KEY, tokenExpiry.toString());
-  } catch { /* localStorage full or unavailable */ }
+  } catch (e) { console.warn('persistToken: localStorage unavailable', e); }
 }
 
+/** Remove stored OAuth token from memory and localStorage */
 export function clearStoredToken() {
   accessToken = null;
   tokenExpiry = 0;
@@ -39,6 +40,7 @@ function restoreToken() {
   }
 }
 
+/** Initialize Google Identity Services token client */
 export function initDrive() {
   restoreToken();
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -136,6 +138,7 @@ async function downloadFile(token, fileId) {
   return res.text();
 }
 
+/** Upload db to Google Drive appData folder */
 export async function backupToDrive(db) {
   const token = await ensureAuth();
   const content = JSON.stringify(db, null, 2);
@@ -144,18 +147,21 @@ export async function backupToDrive(db) {
   return { success: true, updated: !!existing };
 }
 
+/** Download and parse backup from Drive */
 export async function restoreFromDrive() {
   const token = await ensureAuth();
   const file = await findBackupFile(token);
   if (!file) return { success: false, reason: 'no_backup' };
   const content = await downloadFile(token, file.id);
-  const data = JSON.parse(content);
+  let data;
+  try { data = JSON.parse(content); } catch { throw new Error('Backup corrupto (JSON inválido)'); }
   if (!data.workouts) throw new Error('Formato de backup no valido');
   return { success: true, data, modifiedTime: file.modifiedTime };
 }
 
 // === Revision history (recovery) ===
 
+/** List all Drive file revisions for version recovery */
 export async function listRevisions() {
   const token = await ensureAuth();
   const file = await findBackupFile(token);
@@ -169,6 +175,7 @@ export async function listRevisions() {
   return { success: true, fileId: file.id, revisions: data.revisions || [] };
 }
 
+/** Download and parse a specific Drive file revision */
 export async function downloadRevision(fileId, revisionId) {
   const token = await ensureAuth();
   const res = await fetch(
@@ -177,7 +184,7 @@ export async function downloadRevision(fileId, revisionId) {
   );
   await driveFetch(res, 'Error al descargar revisión');
   const content = await res.text();
-  return JSON.parse(content);
+  try { return JSON.parse(content); } catch { throw new Error('Revisión corrupta (JSON inválido)'); }
 }
 
 // === Auto-sync ===
@@ -195,6 +202,7 @@ function setLocalSyncTime() {
 let _syncing = false;
 export function isSyncing() { return _syncing; }
 
+/** Auto-backup to Drive without user interaction */
 export async function silentBackup(db) {
   if (_syncing || !hasValidToken()) return;
   try {
@@ -202,13 +210,15 @@ export async function silentBackup(db) {
     await backupToDrive(db);
     setLocalSyncTime();
     setSyncStatus('ok');
-  } catch {
+  } catch (e) {
+    console.warn('silentBackup failed:', e);
     setSyncStatus('error');
   } finally {
     _syncing = false;
   }
 }
 
+/** Sync local db with Drive on app load (merge if remote is newer) */
 export async function syncOnLoad(db, saveFn) {
   if (!hasValidToken()) return;
   try {
@@ -224,7 +234,8 @@ export async function syncOnLoad(db, saveFn) {
     const localTime = getLocalSyncTime();
     if (driveTime > localTime) {
       const content = await downloadFile(accessToken, file.id);
-      const data = JSON.parse(content);
+      let data;
+      try { data = JSON.parse(content); } catch { console.warn('syncOnLoad: corrupt JSON from Drive'); _syncing = false; return; }
       if (data.workouts) {
         const merged = mergeDB(db, data);
         Object.assign(db, merged);
@@ -239,12 +250,14 @@ export async function syncOnLoad(db, saveFn) {
     }
     _syncing = false;
     await silentBackup(db);
-  } catch {
+  } catch (e) {
+    console.warn('syncOnLoad failed:', e);
     setSyncStatus('error');
     _syncing = false;
   }
 }
 
 let _syncStatusCb = null;
+/** @param {Function} cb - Called with 'syncing' | 'ok' | 'error' */
 export function onSyncStatus(cb) { _syncStatusCb = cb; }
 function setSyncStatus(status) { if (_syncStatusCb) _syncStatusCb(status); }
