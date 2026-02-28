@@ -9,6 +9,7 @@ import { populateSessions } from './training.js';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
+/** Update the phase name in the context bar */
 export function updatePhaseDisplay(db) {
   const phases = getAllPhases();
   const phase = phases.find(p => p.id === db.phase);
@@ -19,6 +20,7 @@ export function updatePhaseDisplay(db) {
     : `Fase ${roman}`;
 }
 
+/** Switch active section and render its content */
 export function switchTab(btn, db) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -64,6 +66,21 @@ export function updatePhaseUI(db) {
   renderPhaseModal(db);
 }
 
+/** Initialize navigation: tab switching and phase modal */
+export function initNav(db) {
+  document.querySelectorAll('nav button[data-sec]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn, db));
+  });
+  document.getElementById('phaseContext').addEventListener('click', () => openPhaseModal());
+  document.getElementById('phaseModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('phaseModal')) closePhaseModal();
+    const option = e.target.closest('.phase-option[data-phase]');
+    if (option) selectPhase(parseInt(option.dataset.phase), db);
+  });
+  document.querySelector('#phaseModal .btn-outline').addEventListener('click', () => closePhaseModal());
+}
+
+/** Re-render the currently active section */
 export function refreshActiveSection(db) {
   const sec = document.querySelector('.section.active')?.id;
   if (sec === 'secHistory') { renderCalendar(db); renderHistory(db); }

@@ -1,33 +1,37 @@
 import { saveDB, markDeleted } from '../data.js';
 import { getBodyMeasures } from '../programs.js';
-import { formatDate } from '../utils.js';
+import { formatDate, safeNum, confirmDanger } from '../utils.js';
+import { DEFAULT_HEIGHT, DEFAULT_AGE } from '../constants.js';
 import { toast } from './toast.js';
 
 let editingBodyId = null;
+let $bodyDate, $bodyMeasures, $bodyHistory, $bodyEditBanner, $bodyEditText, $bodyDeleteBtn, $bodySaveBtn;
+let $calcHeight, $calcAge, $proportionsPanel, $caloriesPanel;
 
 function clearBodyEditState() {
   editingBodyId = null;
-  const btn = document.querySelector('#secBody .btn.mb2');
-  btn.textContent = 'Guardar medidas';
-  btn.style.background = '';
-  document.getElementById('bodyEditBanner').style.display = 'none';
-  document.getElementById('bodyDeleteBtn').style.display = 'none';
+  $bodySaveBtn.textContent = 'Guardar medidas';
+  $bodySaveBtn.style.background = '';
+  $bodyEditBanner.style.display = 'none';
+  $bodyDeleteBtn.style.display = 'none';
 }
 
+/** Render body measurement input fields with last-value placeholders */
 export function renderBodyForm(db) {
   const last = db.bodyLogs.length ? db.bodyLogs[db.bodyLogs.length - 1] : {};
-  document.getElementById('bodyMeasures').innerHTML = getBodyMeasures().map(m =>
+  $bodyMeasures.innerHTML = getBodyMeasures().map(m =>
     `<div class="measure-row"><label>${m.label}</label><input type="number" id="bm_${m.id}" step="0.1" placeholder="${last[m.id] || '—'}"></div>`
   ).join('');
 }
 
+/** Save or update a body measurement log entry */
 export function saveBodyLog(db) {
-  const date = document.getElementById('bodyDate').value;
+  const date = $bodyDate.value;
   const entry = { date, id: editingBodyId || Date.now() };
   let has = false;
   getBodyMeasures().forEach(m => {
     const v = document.getElementById('bm_' + m.id).value;
-    if (v) { entry[m.id] = parseFloat(v); has = true; }
+    if (v) { const n = safeNum(v, 0.1, 500); if (n !== null) { entry[m.id] = n; has = true; } }
   });
   if (!has) { toast('Introduce al menos una medida', 'error'); return; }
 
@@ -57,24 +61,52 @@ export function startBodyEdit(logId, db) {
   editingBodyId = logId;
 
   // Fill form
-  document.getElementById('bodyDate').value = log.date;
+  $bodyDate.value = log.date;
   getBodyMeasures().forEach(m => {
     const input = document.getElementById('bm_' + m.id);
     input.value = log[m.id] || '';
   });
 
   // Show edit banner
-  const banner = document.getElementById('bodyEditBanner');
   const dateStr = log.date.slice(5).replace('-', '/');
-  document.getElementById('bodyEditText').textContent = `✏️ Editando registro (${dateStr})`;
-  banner.style.display = 'flex';
+  $bodyEditText.textContent = `✏️ Editando registro (${dateStr})`;
+  $bodyEditBanner.style.display = 'flex';
 
   // Show delete, change save text
-  document.getElementById('bodyDeleteBtn').style.display = '';
-  document.querySelector('#secBody .btn.mb2').textContent = 'Guardar cambios';
+  $bodyDeleteBtn.style.display = '';
+  $bodySaveBtn.textContent = 'Guardar cambios';
 
   // Scroll to banner
-  document.getElementById('bodyEditBanner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $bodyEditBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Initialize body section: cache selectors and bind events */
+export function initBody(db) {
+  $bodyDate = document.getElementById('bodyDate');
+  $bodyMeasures = document.getElementById('bodyMeasures');
+  $bodyHistory = document.getElementById('bodyHistory');
+  $bodyEditBanner = document.getElementById('bodyEditBanner');
+  $bodyEditText = document.getElementById('bodyEditText');
+  $bodyDeleteBtn = document.getElementById('bodyDeleteBtn');
+  $bodySaveBtn = document.querySelector('#secBody .btn.mb2');
+  $calcHeight = document.getElementById('calcHeight');
+  $calcAge = document.getElementById('calcAge');
+  $proportionsPanel = document.getElementById('proportionsPanel');
+  $caloriesPanel = document.getElementById('caloriesPanel');
+
+  $bodySaveBtn.addEventListener('click', () => saveBodyLog(db));
+  $bodyHistory.addEventListener('click', (e) => {
+    const btn = e.target.closest('.hi-edit-btn');
+    if (!btn) return;
+    const item = btn.closest('.history-item[data-body-id]');
+    if (item) startBodyEdit(parseInt(item.dataset.bodyId), db);
+  });
+  $bodyEditBanner.addEventListener('click', (e) => {
+    if (e.target.closest('.body-edit-cancel')) cancelBodyEdit(db);
+  });
+  $bodyDeleteBtn.addEventListener('click', () => deleteBodyLog(db));
+  $calcHeight.addEventListener('change', () => calcCalories(db));
+  $calcAge.addEventListener('change', () => calcCalories(db));
 }
 
 export function cancelBodyEdit(db) {
@@ -83,8 +115,7 @@ export function cancelBodyEdit(db) {
 }
 
 export function deleteBodyLog(db) {
-  const btn = document.getElementById('bodyDeleteBtn');
-  if (btn.dataset.confirm === 'true') {
+  confirmDanger($bodyDeleteBtn, () => {
     markDeleted(db, editingBodyId);
     db.bodyLogs = db.bodyLogs.filter(l => l.id !== editingBodyId);
     saveDB(db);
@@ -94,15 +125,13 @@ export function deleteBodyLog(db) {
     renderBodyHistory(db);
     calcProportions(db);
     calcCalories(db);
-  } else {
-    btn.dataset.confirm = 'true'; btn.textContent = '¿Seguro?';
-    setTimeout(() => { btn.dataset.confirm = 'false'; btn.textContent = 'Borrar'; }, 3000);
-  }
+  });
 }
 
+/** Render the last 10 body measurement logs */
 export function renderBodyHistory(db) {
   const logs = [...db.bodyLogs].reverse().slice(0, 10);
-  document.getElementById('bodyHistory').innerHTML = logs.length === 0
+  $bodyHistory.innerHTML = logs.length === 0
     ? '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:20px 0">Sin registros</p>'
     : logs.map(l => {
       const vals = getBodyMeasures().filter(m => l[m.id]).map(m => `${m.label}: ${l[m.id]}`).join(' · ');
@@ -121,10 +150,11 @@ function getLatestBodyData(db) {
   return r;
 }
 
+/** Calculate and display ideal body proportions based on wrist ratio */
 export function calcProportions(db) {
   const last = getLatestBodyData(db);
   if (!last.muneca) {
-    document.getElementById('proportionsPanel').innerHTML = '<p style="color:var(--text2);font-size:.8rem">Registra muñeca para calcular</p>';
+    $proportionsPanel.innerHTML = '<p style="color:var(--text2);font-size:.8rem">Registra muñeca para calcular</p>';
     return;
   }
   const ps = [
@@ -139,7 +169,7 @@ export function calcProportions(db) {
   const dateWarning = usedDates.size > 1
     ? `<p style="color:var(--text3);font-size:.68rem;text-align:center;margin-bottom:8px">Datos de ${usedDates.size} fechas distintas — registra todas las medidas el mismo día para mayor precisión</p>`
     : '';
-  document.getElementById('proportionsPanel').innerHTML = dateWarning + ps.map(p => {
+  $proportionsPanel.innerHTML = dateWarning + ps.map(p => {
     if (!p.has) return `<div class="proportion-card"><div class="p-label">${p.label}</div><div class="p-value" style="color:var(--text3);font-size:.8rem">Faltan medidas</div></div>`;
     const pct = Math.min((p.current / p.target) * 100, 120);
     const color = pct >= 95 && pct <= 105 ? 'var(--green)' : pct < 95 ? 'var(--accent)' : 'var(--teal)';
@@ -147,16 +177,17 @@ export function calcProportions(db) {
   }).join('');
 }
 
+/** Calculate BMR, maintenance, and target calorie ranges */
 export function calcCalories(db) {
   const last = getLatestBodyData(db);
-  const h = parseFloat(document.getElementById('calcHeight').value) || 175;
-  const age = parseFloat(document.getElementById('calcAge').value) || 32;
+  const h = safeNum($calcHeight.value, 100, 250) ?? DEFAULT_HEIGHT;
+  const age = safeNum($calcAge.value, 10, 120) ?? DEFAULT_AGE;
   const peso = last.peso || 70, grasa = last.grasa || 15;
   const t1 = 10 * peso + 6.25 * h - 5 * age + 5;
   const lbm = peso * (1 - grasa / 100);
   const t2 = 370 + 21.6 * lbm;
   const tmb = (t1 + t2) / 2, m = tmb * 1.65;
-  document.getElementById('caloriesPanel').innerHTML =
+  $caloriesPanel.innerHTML =
     `<div class="calc-result"><div class="cr-label">TMB (media)</div><div class="cr-value">${Math.round(tmb)} kcal</div><div class="cr-sub">Peso: ${peso}kg · Grasa: ${grasa}%</div></div>` +
     `<div class="calc-result"><div class="cr-label">Mantenimiento (×1.65)</div><div class="cr-value">${Math.round(m)} kcal</div></div>` +
     `<div class="calc-result"><div class="cr-label">Volumen (+10-15%)</div><div class="cr-value">${Math.round(m * 1.1)} – ${Math.round(m * 1.15)} kcal</div></div>` +

@@ -1,9 +1,13 @@
 let container;
 
+/** Initialize toast notification container */
 export function initToast() {
   container = document.getElementById('toastContainer');
 }
 
+/** Show a toast notification
+ *  @param {string} message - Text to display
+ *  @param {'success'|'error'|'info'} type - Toast style */
 export function toast(message, type = 'success') {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;

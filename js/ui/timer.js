@@ -1,7 +1,9 @@
+import { DEFAULT_TIMER_DURATION } from '../constants.js';
+
 let audioCtx = null;
 let timerInterval = null;
 let timerRunning = false;
-let timerDuration = 120;
+let timerDuration = DEFAULT_TIMER_DURATION;
 let timerMode = 'countdown';
 
 // Wall-clock timing — survives background suspension
@@ -173,7 +175,7 @@ export function confirmCustomInput() {
     seconds = parseInt(raw) || 0;
   }
 
-  if (seconds > 0) {
+  if (seconds > 0 && seconds <= 5999) {
     timerDuration = seconds;
     document.querySelectorAll('.timer-btn[data-dur]').forEach(b => b.classList.remove('active-dur'));
   }
@@ -189,7 +191,9 @@ export function resetStopwatch() {
   updateTimerDisplay();
 }
 
+/** Initialize timer: presets, mode toggles, and event bindings */
 export function initTimer() {
+  // Duration preset buttons
   document.querySelectorAll('.timer-btn[data-dur]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.timer-btn[data-dur]').forEach(b => b.classList.remove('active-dur'));
@@ -198,6 +202,17 @@ export function initTimer() {
       if (!timerRunning) updateTimerDisplay();
     });
   });
+
+  // Start/stop, mode toggle, custom input, reset
+  document.getElementById('timerStartBtn').addEventListener('click', () => toggleTimer());
+  document.querySelectorAll('.timer-mode[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => setTimerMode(btn.dataset.mode));
+  });
+  document.getElementById('timerCustomBtn').addEventListener('click', () => showCustomInput());
+  const customInput = document.getElementById('timerCustomInput');
+  customInput.addEventListener('blur', () => confirmCustomInput());
+  customInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') customInput.blur(); });
+  document.getElementById('timerResetBtn').addEventListener('click', () => resetStopwatch());
 
   // Catch up immediately when returning from background; manage notifications
   document.addEventListener('visibilitychange', () => {

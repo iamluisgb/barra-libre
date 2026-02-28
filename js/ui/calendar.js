@@ -10,6 +10,7 @@ export function calNav(d, db) {
   renderCalendar(db);
 }
 
+/** Render the monthly calendar grid with workout indicators */
 export function renderCalendar(db) {
   const panel = document.getElementById('calendarPanel');
   const now = new Date();
@@ -44,6 +45,21 @@ export function renderCalendar(db) {
   }
   html += '</div></div>';
   panel.innerHTML = html;
+}
+
+/** Initialize calendar: navigation buttons and day click events */
+export function initCalendar(db) {
+  document.querySelector('.cal-nav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.classList.contains('cal-nav-today')) calNav(0, db);
+    else if (btn.previousElementSibling === null) calNav(-1, db);
+    else calNav(1, db);
+  });
+  document.getElementById('calendarPanel').addEventListener('click', (e) => {
+    const day = e.target.closest('.cal-day[data-date]');
+    if (day) calDayClick(day.dataset.date, db);
+  });
 }
 
 export function calDayClick(ds, db) {
