@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crea tu propio plan de entrenamiento</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="site-nav">
+  <a href="../index.html" class="logo">Barra <span>Libre</span></a>
+  <div class="nav-links"><a href="../index.html" class="active">Guia</a><a href="../app.html">Mi Entreno</a></div>
+</nav>
+<div class="article-header">
+  <a href="../index.html" class="back">&larr; Volver a la guia</a>
+  <div class="phase-tag" style="background:rgba(0,85,255,.1);color:var(--accent)">Personaliza</div>
+  <h1>Crea tu propio plan</h1>
+  <div class="subtitle">Diseña un programa de entrenamiento personalizado y cargalo en la app. Puedes crearlo a mano o con ayuda de una IA.</div>
+</div>
+<div class="article-body">
+
+<h2>Como funciona</h2>
+<p>La app lee planes de entrenamiento en formato <strong>JSON</strong>. Un plan define fases, sesiones y ejercicios. Una vez creado, lo importas desde la pestana <strong>Mas > Mis Planes > Importar plan</strong>.</p>
+
+<h2>Estructura basica</h2>
+<p>Un plan tiene esta forma:</p>
+
+<pre><code>{
+  "_meta": {
+    "name": "Mi Plan",
+    "desc": "Descripcion corta del programa"
+  },
+  "1": {
+    "name": "Fase 1",
+    "desc": "Fuerza base",
+    "sessions": {
+      "Sesion A": [
+        { "name": "Sentadilla", "sets": 3, "reps": "5", "type": "main" },
+        { "name": "Press Banca", "sets": 3, "reps": "5", "type": "main" }
+      ],
+      "Sesion B": [
+        { "name": "Peso Muerto", "sets": 3, "reps": "5", "type": "main" }
+      ]
+    }
+  }
+}</code></pre>
+
+<h2>Campos obligatorios</h2>
+
+<div class="info-box">
+<strong>_meta</strong> (objeto): Metadata del programa.
+<ul>
+<li><code>name</code> (string) — Nombre del programa</li>
+<li><code>desc</code> (string) — Descripcion corta</li>
+</ul>
+</div>
+
+<div class="info-box">
+<strong>Fases</strong> (claves numericas: "1", "2", "3"...): Cada fase contiene:
+<ul>
+<li><code>name</code> (string) — Nombre de la fase</li>
+<li><code>desc</code> (string) — Descripcion de la fase</li>
+<li><code>sessions</code> (objeto) — Claves = nombres de sesion, valores = arrays de ejercicios</li>
+</ul>
+</div>
+
+<h2>Tipos de ejercicio</h2>
+<p>Cada ejercicio tiene un campo <code>mode</code> que determina como se muestra en la app. Si no se especifica, el modo por defecto es <code>"sets"</code>.</p>
+
+<table>
+<thead><tr><th>Modo</th><th>Campos</th><th>Que registra el usuario</th></tr></thead>
+<tbody>
+<tr><td><strong>sets</strong></td><td><code>name</code>, <code>sets</code> (numero), <code>reps</code>, <code>type</code></td><td>Kg + reps por serie</td></tr>
+<tr><td><strong>result</strong></td><td><code>name</code></td><td>Texto libre (tiempo, reps totales)</td></tr>
+<tr><td><strong>interval</strong></td><td><code>name</code>, <code>duration</code>, <code>on</code>, <code>off</code></td><td>Reps totales</td></tr>
+<tr><td><strong>tabata</strong></td><td><code>name</code>, <code>rounds</code> (array de 8 strings)</td><td>Reps totales</td></tr>
+<tr><td><strong>rounds</strong></td><td><code>name</code>, <code>count</code>, <code>rest</code>, <code>exercises</code> (array de {name, reps})</td><td>Rondas completadas</td></tr>
+<tr><td><strong>ladder</strong></td><td><code>name</code>, <code>duration</code>, <code>exercises</code> (array de strings), <code>desc</code></td><td>Peldano maximo</td></tr>
+<tr><td><strong>pyramid</strong></td><td><code>name</code>, <code>duration</code>, <code>exercises</code> (array de strings), <code>step</code>, <code>desc</code></td><td>Nivel maximo</td></tr>
+<tr><td><strong>amrap</strong></td><td><code>name</code>, <code>duration</code></td><td>Reps totales</td></tr>
+<tr><td><strong>emom</strong></td><td><code>name</code>, <code>duration</code>, <code>exercises</code> (array de {name, reps}), <code>desc</code></td><td>Rondas completadas</td></tr>
+<tr><td><strong>superset</strong></td><td><code>name</code>, <code>sets</code>, <code>exercises</code> (array de {name, reps}), <code>desc</code></td><td>Kg + reps por serie por ejercicio</td></tr>
+</tbody>
+</table>
+
+<h2>Ejemplo completo</h2>
+<p>Un plan con 2 fases y varios modos de ejercicio:</p>
+
+<pre><code>{
+  "_meta": { "name": "Plan Completo", "desc": "Fuerza + Condicionamiento" },
+  "1": {
+    "name": "Fuerza",
+    "desc": "Progresion lineal 3x5",
+    "sessions": {
+      "Fuerza A": [
+        { "name": "Sentadilla", "sets": 3, "reps": "5", "type": "main" },
+        { "name": "Press Banca", "sets": 3, "reps": "5", "type": "main" },
+        { "name": "Remo con Barra", "sets": 3, "reps": "5", "type": "main" },
+        { "name": "Curl + Triceps", "mode": "superset", "sets": 3,
+          "exercises": [
+            { "name": "Curl Biceps", "reps": "10" },
+            { "name": "Extension Triceps", "reps": "10" }
+          ]
+        }
+      ],
+      "Condicionamiento": [
+        { "name": "EMOM Kettlebell", "mode": "emom", "duration": "10min",
+          "exercises": [
+            { "name": "Swing", "reps": "15" },
+            { "name": "Goblet Squat", "reps": "10" }
+          ]
+        },
+        { "name": "Circuito Final", "mode": "rounds", "count": 3, "rest": "60s",
+          "exercises": [
+            { "name": "Burpees", "reps": "10" },
+            { "name": "Flexiones", "reps": "15" },
+            { "name": "Sentadillas", "reps": "20" }
+          ]
+        }
+      ]
+    }
+  },
+  "2": {
+    "name": "Hipertrofia",
+    "desc": "Volumen 4x8-12",
+    "sessions": {
+      "Torso": [
+        { "name": "Press Banca", "sets": 4, "reps": "8-10", "type": "main" },
+        { "name": "Dominadas", "sets": 4, "reps": "F", "type": "main" },
+        { "name": "Press Militar", "sets": 3, "reps": "10", "type": "assist" }
+      ],
+      "Pierna": [
+        { "name": "Sentadilla", "sets": 4, "reps": "8", "type": "main" },
+        { "name": "Peso Muerto Rumano", "sets": 3, "reps": "10", "type": "main" },
+        { "name": "Tabata Piernas", "mode": "tabata",
+          "rounds": ["Sentadilla", "Zancada Izq", "Sentadilla", "Zancada Der", "Sentadilla Sumo", "Salto", "Sentadilla", "Isometrico"]
+        }
+      ]
+    }
+  }
+}</code></pre>
+
+<h2>Crear un plan con IA</h2>
+<p>Puedes usar ChatGPT, Claude o cualquier LLM para generar tu plan. Copia el prompt de abajo, describe tu objetivo, y pega el JSON resultante en un archivo <code>.json</code> para importarlo.</p>
+
+<div class="info-box" style="position:relative">
+<button onclick="copyPrompt()" style="position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font)">Copiar prompt</button>
+<pre id="llmPrompt" style="white-space:pre-wrap;font-size:.75rem;line-height:1.5;margin:0">Eres un entrenador personal experto. Crea un plan de entrenamiento en formato JSON que pueda importarse directamente en una app de seguimiento de entrenos.
+
+## Reglas del formato
+
+1. El JSON debe tener un objeto `_meta` con `name` (nombre del programa) y `desc` (descripcion corta).
+2. Las fases se definen con claves numericas ("1", "2", "3"...). Cada fase tiene `name`, `desc` y `sessions`.
+3. Cada sesion es un array de ejercicios.
+4. Cada ejercicio DEBE tener un campo `name`.
+5. Modos de ejercicio disponibles (campo `mode`):
+   - **sets** (por defecto si no se especifica): campos `sets` (numero de series), `reps` (objetivo), `type` ("main", "assist" o "extra"). El usuario registra kg y reps por serie.
+   - **result**: solo `name`. El usuario registra un texto libre (tiempo, resultado).
+   - **interval**: campos `duration`, `on`, `off`. El usuario registra reps totales.
+   - **tabata**: campo `rounds` (array de exactamente 8 strings). 20s on / 10s off. Registra reps totales.
+   - **rounds**: campos `count` (numero de rondas, 0=max), `rest` (descanso entre rondas), `exercises` (array de {name, reps}). Registra rondas completadas.
+   - **ladder**: campos `duration`, `exercises` (array de strings), `desc` (opcional). Registra peldano maximo.
+   - **pyramid**: campos `duration`, `exercises` (array de strings), `step` (incremento), `desc` (opcional). Registra nivel maximo.
+   - **amrap**: campo `duration`. Registra reps totales.
+   - **emom**: campos `duration`, `exercises` (array de {name, reps}), `desc` (opcional). Registra rondas completadas.
+   - **superset**: campos `sets`, `exercises` (array de {name, reps}), `desc` (opcional). El usuario registra kg y reps por serie por ejercicio.
+
+## Objetivo del usuario
+
+[DESCRIBE AQUI TU OBJETIVO: experiencia, equipo disponible, dias por semana, objetivos, lesiones, etc.]
+
+## Instrucciones
+
+- Devuelve SOLO el JSON, sin texto adicional.
+- Usa nombres de ejercicios en espanol.
+- Crea entre 2 y 4 fases con progresion logica.
+- Varia los modos de ejercicio segun el tipo de sesion.
+- Incluye calentamiento o acondicionamiento si es apropiado.</pre>
+</div>
+
+</div>
+
+<div class="article-nav">
+  <a href="../index.html">&larr; Volver a la guia</a>
+</div>
+
+<script>
+function copyPrompt() {
+  const text = document.getElementById('llmPrompt').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar prompt', 2000);
+  });
+}
+</script>
+</body>
+</html>
