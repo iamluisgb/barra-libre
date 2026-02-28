@@ -1,7 +1,7 @@
 import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList } from './programs.js';
 import { today, mergeDB, esc } from './utils.js';
-import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT } from './constants.js';
+import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
 import { initNav, switchTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
 import { initTraining, populateSessions, startEdit, cancelEdit } from './ui/training.js';
@@ -77,6 +77,7 @@ async function init() {
   document.getElementById('timerBar').classList.add('active');
   initTimer();
   populateSessions(db);
+  document.getElementById('appVersion').textContent = `Barra Libre v${APP_VERSION}`;
   bindEvents();
 
   // Sync indicator

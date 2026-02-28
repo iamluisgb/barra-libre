@@ -7,3 +7,4 @@ export const DEFAULT_AGE = 32;
 export const DEFAULT_TIMER_DURATION = 120;
 export const REVISION_PREVIEW_LIMIT = 20;
 export const LOCALE = 'es';
+export const APP_VERSION = '1.3.0';
