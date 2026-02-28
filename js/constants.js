@@ -1,0 +1,9 @@
+export const DEBOUNCE_BACKUP_MS = 3000;
+export const GIS_CHECK_INTERVAL_MS = 200;
+export const GIS_CHECK_TIMEOUT_MS = 10000;
+export const SYNC_INDICATOR_MS = 3000;
+export const DEFAULT_HEIGHT = 175;
+export const DEFAULT_AGE = 32;
+export const DEFAULT_TIMER_DURATION = 120;
+export const REVISION_PREVIEW_LIMIT = 20;
+export const LOCALE = 'es';
