@@ -289,6 +289,24 @@
   </div>
 </div>
 
+<!-- Run Type Picker Modal -->
+<div class="modal-overlay" id="runTypeModal"><div class="modal run-type-picker">
+  <h3>Tipo de carrera</h3>
+  <div class="run-type-grid" id="runTypeGrid"></div>
+  <div class="run-type-extra" id="runTypeExtra" style="display:none">
+    <label>Distancia objetivo (km)</label>
+    <input type="number" id="runTypeTargetDist" min="0.1" step="0.1" placeholder="ej: 10">
+  </div>
+  <div class="run-type-extra" id="runTypeTempoExtra" style="display:none">
+    <label>Ritmo objetivo (min:seg /km)</label>
+    <input type="text" id="runTypeTargetPace" inputmode="numeric" placeholder="ej: 5:30">
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn" id="runTypeStartBtn" style="flex:1">Empezar</button>
+    <button class="btn btn-outline" id="runTypeCancelBtn">Cancelar</button>
+  </div>
+</div></div>
+
 <!-- GPS Tracking Overlay (fullscreen) -->
 <div class="run-tracking-overlay" id="runTrackingOverlay">
   <!-- Live tracking screen -->
@@ -297,6 +315,7 @@
       <button class="run-live-btn run-lock-btn" id="runLockBtn" title="Pantalla puede apagarse">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
+      <span class="run-live-type-badge" id="runLiveTypeBadge"></span>
       <div class="run-live-status" id="runLiveStatus">EN CURSO</div>
       <button class="run-live-btn" id="runStopBtn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
@@ -313,6 +332,7 @@
         <div class="run-live-metric-label">/km</div>
       </div>
     </div>
+    <div class="run-live-type-panel" id="runLiveTypePanel"></div>
     <div class="run-live-splits" id="runLiveSplits"></div>
     <div class="run-live-map" id="runLiveMap"></div>
     <div class="run-live-bottom">

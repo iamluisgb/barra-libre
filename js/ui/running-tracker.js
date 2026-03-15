@@ -377,7 +377,8 @@ export class GpsTracker {
       distance: this.distance,
       currentPace: this.currentPace,
       avgPace: this.avgPace,
-      splits: this.splits
+      splits: this.splits,
+      elevation: this._calcTotalElevation()
     });
   }
 

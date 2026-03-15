@@ -9,6 +9,64 @@ import { GpsTracker } from './running-tracker.js';
 const ZONE_COLORS = { Z1: '#999', Z2: '#34c759', Z3: '#ff9f0a', Z4: '#ff6b35', Z5: '#ff3b30' };
 const ZONE_LABELS = { Z1: 'Recuperacion', Z2: 'Aerobico', Z3: 'Tempo', Z4: 'Umbral', Z5: 'VAM/VO2max' };
 
+// Pace thresholds (sec/km) for zone estimation
+const PACE_ZONES = [
+  { zone: 'Z5', max: 280 },  // < 4:40
+  { zone: 'Z4', max: 310 },  // < 5:10
+  { zone: 'Z3', max: 360 },  // < 6:00
+  { zone: 'Z2', max: 420 },  // < 7:00
+  { zone: 'Z1', max: Infinity }
+];
+
+const RUN_TYPE_META = {
+  libre:       { label: 'Libre',       desc: 'Sin estructura, corre a tu ritmo',     zone: null },
+  rodaje:      { label: 'Rodaje',      desc: 'Carrera suave en zona aerobica',       zone: 'Z2' },
+  intervalos:  { label: 'Intervalos',  desc: 'Series de alta intensidad',            zone: 'Z5' },
+  tempo:       { label: 'Tempo',       desc: 'Ritmo sostenido en zona umbral',       zone: 'Z3' },
+  fartlek:     { label: 'Fartlek',     desc: 'Cambios de ritmo libres',              zone: null },
+  cuestas:     { label: 'Cuestas',     desc: 'Trabajo de fuerza en pendiente',       zone: 'Z4' },
+  competicion: { label: 'Competicion', desc: 'Carrera con distancia objetivo',        zone: null }
+};
+
+// ── Audio/haptic engine ─────────────────────────────────
+
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+function beep(freq = 880, ms = 200) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    gain.gain.value = 0.5;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + ms / 1000);
+  } catch (e) { /* silent fail */ }
+}
+
+function vibrate(pattern) {
+  try { navigator.vibrate?.(pattern); } catch (e) { /* silent fail */ }
+}
+
+/** 3-2-1 countdown: 3 short beeps + 1 long beep, then calls onComplete */
+function startCountdown(onComplete) {
+  beep(880, 150); vibrate(200);
+  setTimeout(() => { beep(880, 150); vibrate(200); }, 1000);
+  setTimeout(() => { beep(880, 150); vibrate(200); }, 2000);
+  setTimeout(() => { beep(1200, 400); vibrate(500); onComplete?.(); }, 3000);
+}
+
+function beepSplit() { beep(880, 150); vibrate([100, 50, 100]); }
+function beepWorkStart() { beep(1200, 150); setTimeout(() => beep(1200, 150), 200); vibrate([200, 100, 200]); }
+function beepRestStart() { beep(440, 500); vibrate(500); }
+function beepAllDone() { beep(880, 150); setTimeout(() => beep(1200, 150), 200); setTimeout(() => beep(1500, 300), 400); vibrate([200, 100, 200, 100, 400]); }
+function beepSegmentChange() { beep(880, 400); vibrate(400); }
+
 /** Format seconds as "m:ss /km" */
 export function formatPace(secPerKm) {
   if (!secPerKm || !Number.isFinite(secPerKm) || secPerKm <= 0) return '--:--';
@@ -48,6 +106,12 @@ let liveMarker = null;
 let summaryMap = null;
 let detailMap = null;
 
+// Run type state
+let activeRunType = 'libre';
+let activeSegments = null;   // segments from plan session (guided mode)
+let targetDistance = 0;       // for competicion mode
+let intervalState = null;     // { rep, totalReps, isWork, segIdx, phaseStartDist, phaseStartTime, countdownStarted }
+
 // ── DOM refs ─────────────────────────────────────────────
 
 let $overlay, $liveScreen, $summaryScreen;
@@ -58,6 +122,7 @@ let $prsGrid;
 let $weekSelect, $sessionSelect, $segments;
 let $historyFilter, $historyList;
 let $weeklyChart, $paceChart, $statsPanel;
+let $typePanel, $typeBadge;
 
 function cacheSelectors() {
   $overlay = document.getElementById('runTrackingOverlay');
@@ -88,6 +153,8 @@ function cacheSelectors() {
   $weeklyChart = document.getElementById('runWeeklyChart');
   $paceChart = document.getElementById('runPaceChart');
   $statsPanel = document.getElementById('runStatsPanel');
+  $typePanel = document.getElementById('runLiveTypePanel');
+  $typeBadge = document.getElementById('runLiveTypeBadge');
 }
 
 // ── Init ─────────────────────────────────────────────────
@@ -111,8 +178,20 @@ export function initRunning(db) {
     });
   });
 
-  // Start GPS run
-  document.getElementById('runStartBtn').addEventListener('click', () => startGpsRun(db));
+  // Start GPS run (via type picker)
+  document.getElementById('runStartBtn').addEventListener('click', () => openRunTypePicker(db));
+  document.getElementById('runTypeStartBtn').addEventListener('click', () => { closeRunTypePicker(); startGpsRun(db); });
+  document.getElementById('runTypeCancelBtn').addEventListener('click', closeRunTypePicker);
+  document.getElementById('runTypeGrid').addEventListener('click', e => {
+    const card = e.target.closest('.run-type-card');
+    if (!card) return;
+    document.querySelectorAll('.run-type-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    activeRunType = card.dataset.type;
+    // Show/hide extra inputs
+    document.getElementById('runTypeExtra').style.display = activeRunType === 'competicion' ? '' : 'none';
+    document.getElementById('runTypeTempoExtra').style.display = activeRunType === 'tempo' ? '' : 'none';
+  });
 
   // Manual entry modal
   document.getElementById('runManualBtn').addEventListener('click', () => openManualModal(db));
@@ -204,9 +283,44 @@ export function initRunning(db) {
   });
 }
 
+// ── Run type picker ──────────────────────────────────────
+
+function openRunTypePicker(db) {
+  const grid = document.getElementById('runTypeGrid');
+  grid.innerHTML = Object.entries(RUN_TYPE_META).map(([key, meta]) => {
+    const zoneHtml = meta.zone
+      ? `<span class="run-type-card-zone" style="background:${ZONE_COLORS[meta.zone]}">${meta.zone}</span>`
+      : '';
+    return `<div class="run-type-card${key === activeRunType ? ' selected' : ''}" data-type="${key}">
+      <div class="run-type-card-name">${meta.label}</div>
+      <div class="run-type-card-desc">${meta.desc}</div>
+      ${zoneHtml}
+    </div>`;
+  }).join('');
+  document.getElementById('runTypeExtra').style.display = activeRunType === 'competicion' ? '' : 'none';
+  document.getElementById('runTypeTempoExtra').style.display = activeRunType === 'tempo' ? '' : 'none';
+  document.getElementById('runTypeModal').classList.add('open');
+}
+
+function closeRunTypePicker() {
+  document.getElementById('runTypeModal').classList.remove('open');
+}
+
 // ── GPS Run lifecycle ────────────────────────────────────
 
 function startGpsRun(db) {
+  // Read extra inputs from type picker
+  if (activeRunType === 'competicion') {
+    targetDistance = parseFloat(document.getElementById('runTypeTargetDist').value) || 0;
+  }
+  if (activeRunType === 'tempo') {
+    const paceStr = document.getElementById('runTypeTargetPace').value;
+    targetDistance = parseRunDuration(paceStr); // reuse parser: "5:30" → 330 sec/km
+  }
+
+  // Reset interval state
+  intervalState = null;
+
   const started = tracker.start();
   if (!started) return;
 
@@ -218,10 +332,26 @@ function startGpsRun(db) {
   $liveDist.textContent = '0.00';
   $livePace.textContent = '--:--';
   $liveSplits.innerHTML = '';
+  $typePanel.innerHTML = '';
   $liveStatus.textContent = 'EN CURSO';
   $liveStatus.classList.remove('paused');
   $pauseBtn.classList.remove('paused');
   $lockBtn.classList.remove('wake-active');
+
+  // Set type badge
+  const meta = RUN_TYPE_META[activeRunType];
+  if (meta && activeRunType !== 'libre') {
+    $typeBadge.textContent = meta.label;
+    $typeBadge.style.background = meta.zone ? ZONE_COLORS[meta.zone] : 'var(--accent)';
+    $typeBadge.classList.add('visible');
+  } else {
+    $typeBadge.classList.remove('visible');
+  }
+
+  // Init intervals if needed
+  if (activeRunType === 'intervalos') {
+    initIntervalState();
+  }
 
   // Hide nav
   document.querySelector('nav').style.display = 'none';
@@ -271,6 +401,9 @@ function stopGpsRun(db) {
 
   // Populate session select for linking to plan
   populateSumSessionSelect(db);
+
+  // Pre-fill run type from picker
+  document.getElementById('runSumType').value = activeRunType;
 
   // Store result for saving
   $summaryScreen.dataset.result = JSON.stringify(result);
@@ -322,6 +455,12 @@ function closeLiveOverlay() {
   // Cleanup maps
   if (liveMap) { liveMap.remove(); liveMap = null; }
   if (summaryMap) { summaryMap.remove(); summaryMap = null; }
+  // Reset type state
+  activeSegments = null;
+  intervalState = null;
+  targetDistance = 0;
+  $typeBadge?.classList.remove('visible');
+  if ($typePanel) { $typePanel.innerHTML = ''; delete $typePanel.dataset.goalReached; }
 }
 
 // ── Live UI updates ──────────────────────────────────────
@@ -341,13 +480,259 @@ function updateLiveUI(data) {
     }
     liveMap.setView(latlng, liveMap.getZoom());
   }
+
+  // Type-specific panel update
+  updateTypePanelUI(data);
 }
 
 function onSplitComplete(split) {
+  beepSplit();
   const el = document.createElement('div');
   el.className = 'run-live-split';
   el.innerHTML = `<span class="run-live-split-km">Km ${split.km}</span><span class="run-live-split-pace">${formatPace(split.pace)} /km</span>`;
   $liveSplits.prepend(el);
+}
+
+// ── Type-specific panel updaters ─────────────────────────
+
+function estimateZone(pace) {
+  if (!pace || pace <= 0) return 'Z2';
+  for (const z of PACE_ZONES) {
+    if (pace < z.max) return z.zone;
+  }
+  return 'Z1';
+}
+
+function updateTypePanelUI(data) {
+  switch (activeRunType) {
+    case 'rodaje': updateRodajeUI(data); break;
+    case 'tempo': updateTempoUI(data); break;
+    case 'fartlek': updateFartlekUI(data); break;
+    case 'competicion': updateCompeticionUI(data); break;
+    case 'intervalos': updateIntervalosUI(data); break;
+    case 'cuestas': updateCuestasUI(data); break;
+    default: $typePanel.innerHTML = ''; break;
+  }
+}
+
+function updateRodajeUI() {
+  const color = ZONE_COLORS.Z2;
+  $typePanel.innerHTML = `<div class="run-type-zone-bar" style="background:${color}">Z2 <span class="zone-label">· Aerobico</span></div>`;
+}
+
+function updateTempoUI(data) {
+  const targetPace = targetDistance; // reused variable: stores sec/km for tempo
+  if (!targetPace || !data.avgPace || data.avgPace <= 0) {
+    const color = ZONE_COLORS.Z3;
+    $typePanel.innerHTML = `<div class="run-type-zone-bar" style="background:${color}">Z3 <span class="zone-label">· Tempo</span></div>`;
+    return;
+  }
+  const delta = data.avgPace - targetPace;
+  const absDelta = Math.abs(delta);
+  const sign = delta > 0 ? '+' : '-';
+  const cls = delta <= 0 ? 'faster' : 'slower';
+  const label = delta <= 0 ? 'mas rapido' : 'mas lento';
+  $typePanel.innerHTML = `<div class="run-type-pace-compare">
+    <div class="run-type-pace-target">
+      <div class="run-type-pace-target-value">${formatPace(targetPace)}</div>
+      <div class="run-type-pace-target-label">objetivo /km</div>
+    </div>
+    <div class="run-type-pace-delta ${cls}">${sign}${formatPace(absDelta)} ${label}</div>
+  </div>`;
+}
+
+function updateFartlekUI(data) {
+  const pace = data.currentPace > 60 && data.currentPace < 1200 ? data.currentPace : data.avgPace;
+  const zone = estimateZone(pace);
+  const color = ZONE_COLORS[zone];
+  const label = ZONE_LABELS[zone];
+  $typePanel.innerHTML = `<div class="run-type-zone-bar" style="background:${color}">${zone} <span class="zone-label">· ${label}</span></div>`;
+}
+
+function updateCompeticionUI(data) {
+  if (!targetDistance) {
+    $typePanel.innerHTML = '';
+    return;
+  }
+  const remaining = Math.max(0, targetDistance - data.distance);
+  const pct = Math.min((data.distance / targetDistance) * 100, 100);
+  const eta = data.avgPace > 0 ? formatRunDuration(Math.round(data.avgPace * targetDistance)) : '--:--';
+
+  // Beep when goal reached
+  if (remaining <= 0 && data.distance > 0 && !$typePanel.dataset.goalReached) {
+    $typePanel.dataset.goalReached = '1';
+    beepAllDone();
+  }
+
+  $typePanel.innerHTML = `<div class="run-type-race">
+    <div class="run-type-race-remaining">${remaining.toFixed(2)} km</div>
+    <div class="run-type-race-label">restantes de ${targetDistance} km</div>
+    <div class="run-type-race-eta">Estimado: ${eta}</div>
+    <div class="run-type-race-bar"><div class="run-type-race-bar-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function updateCuestasUI(data) {
+  const elev = data.elevation || 0;
+  $typePanel.innerHTML = `<div class="run-type-elev">
+    <div><div class="run-type-elev-value">${elev} m</div><div class="run-type-elev-label">D+ acumulado</div></div>
+  </div>`;
+}
+
+// ── Intervals logic ─────────────────────────────────────
+
+function initIntervalState() {
+  if (activeSegments) {
+    // Guided mode: find the first interval segment
+    const idx = activeSegments.findIndex(s => s.mode === 'run-intervals');
+    const seg = activeSegments[idx >= 0 ? idx : 0];
+    intervalState = {
+      rep: 0,
+      totalReps: seg?.reps || 0,
+      isWork: true,
+      segIdx: idx >= 0 ? idx : 0,
+      phaseStartDist: 0,
+      phaseStartTime: 0,
+      countdownStarted: false,
+      segmentDistance: parseSegDistance(seg?.distance),
+      recoveryDistance: parseSegDistance(seg?.recovery),
+    };
+  } else {
+    // Manual mode
+    intervalState = {
+      rep: 0,
+      totalReps: 0,
+      isWork: true,
+      segIdx: 0,
+      phaseStartDist: 0,
+      phaseStartTime: 0,
+      countdownStarted: false,
+      segmentDistance: 0,
+      recoveryDistance: 0,
+    };
+  }
+}
+
+/** Parse "200m" or "1km" or "1.5km" to km */
+function parseSegDistance(str) {
+  if (!str) return 0;
+  str = String(str).toLowerCase().trim();
+  const m = str.match(/([\d.]+)\s*(m|km)/);
+  if (!m) return 0;
+  const val = parseFloat(m[1]);
+  return m[2] === 'km' ? val : val / 1000;
+}
+
+function updateIntervalosUI(data) {
+  if (!intervalState) { $typePanel.innerHTML = ''; return; }
+
+  // Guided mode: check auto-transitions
+  if (activeSegments && intervalState.segmentDistance > 0) {
+    checkIntervalAutoTransition(data);
+  }
+
+  const repLabel = intervalState.totalReps
+    ? `Rep ${intervalState.rep + (intervalState.isWork ? 1 : 0)}/${intervalState.totalReps}`
+    : `Rep ${intervalState.rep}`;
+  const phaseLabel = intervalState.isWork ? 'TRABAJO' : 'RECUPERACION';
+  const phaseCls = intervalState.isWork ? 'work' : 'rest';
+
+  const segInfo = activeSegments
+    ? `<div class="run-type-interval-seg">${activeSegments[intervalState.segIdx]?.name || ''}</div>`
+    : '';
+
+  const lapBtn = !activeSegments
+    ? `<button class="run-type-interval-lap-btn" id="runIntervalLapBtn">Vuelta</button>`
+    : '';
+
+  $typePanel.innerHTML = `<div class="run-type-interval">
+    <div class="run-type-interval-rep">${repLabel}</div>
+    <div class="run-type-interval-phase ${phaseCls}">${phaseLabel}</div>
+    ${segInfo}${lapBtn}
+  </div>`;
+
+  // Bind lap button for manual mode
+  const lapBtnEl = document.getElementById('runIntervalLapBtn');
+  if (lapBtnEl) {
+    lapBtnEl.onclick = () => manualLap(data);
+  }
+}
+
+function manualLap(data) {
+  if (!intervalState) return;
+  if (intervalState.isWork) {
+    intervalState.rep++;
+    intervalState.isWork = false;
+    beepRestStart();
+  } else {
+    intervalState.isWork = true;
+    beepWorkStart();
+  }
+  intervalState.phaseStartDist = data.distance;
+  intervalState.phaseStartTime = data.elapsed;
+  intervalState.countdownStarted = false;
+}
+
+function checkIntervalAutoTransition(data) {
+  if (!intervalState || !activeSegments) return;
+
+  const dist = intervalState.isWork ? intervalState.segmentDistance : intervalState.recoveryDistance;
+  if (dist <= 0) return;
+
+  const phaseDist = data.distance - intervalState.phaseStartDist;
+  const remaining = dist - phaseDist;
+
+  // Countdown 3 seconds before transition
+  if (remaining > 0 && remaining < dist * 0.15 && !intervalState.countdownStarted) {
+    // Estimate time remaining from pace
+    const pace = data.currentPace > 60 ? data.currentPace : (data.avgPace || 360);
+    const timeRemaining = remaining * pace;
+    if (timeRemaining <= 4) {
+      intervalState.countdownStarted = true;
+      startCountdown(() => autoTransitionPhase(data));
+      return;
+    }
+  }
+
+  // Hard cutoff if countdown didn't fire
+  if (remaining <= 0 && !intervalState.countdownStarted) {
+    intervalState.countdownStarted = true;
+    autoTransitionPhase(data);
+  }
+}
+
+function autoTransitionPhase(data) {
+  if (!intervalState) return;
+
+  if (intervalState.isWork) {
+    intervalState.rep++;
+    intervalState.isWork = false;
+    beepRestStart();
+
+    // Check if all reps done
+    if (intervalState.totalReps > 0 && intervalState.rep >= intervalState.totalReps) {
+      beepAllDone();
+      // Move to next segment if available
+      if (activeSegments && intervalState.segIdx < activeSegments.length - 1) {
+        intervalState.segIdx++;
+        const nextSeg = activeSegments[intervalState.segIdx];
+        if (nextSeg.mode === 'run-intervals') {
+          intervalState.rep = 0;
+          intervalState.totalReps = nextSeg.reps || 0;
+          intervalState.segmentDistance = parseSegDistance(nextSeg.distance);
+          intervalState.recoveryDistance = parseSegDistance(nextSeg.recovery);
+          beepSegmentChange();
+        }
+      }
+    }
+  } else {
+    intervalState.isWork = true;
+    beepWorkStart();
+  }
+
+  intervalState.phaseStartDist = data.distance;
+  intervalState.phaseStartTime = data.elapsed;
+  intervalState.countdownStarted = false;
 }
 
 // ── Maps ─────────────────────────────────────────────────
@@ -913,6 +1298,23 @@ function loadRunSessionTemplate(db) {
         <div class="run-seg-info">${esc(info)}</div>
       </div>`;
   }).join('');
+
+  // Add "start this session" button
+  $segments.innerHTML += `<button class="btn run-seg-start-btn" id="runSegStartBtn" style="width:100%;margin-top:8px">Iniciar esta sesion</button>`;
+  document.getElementById('runSegStartBtn').addEventListener('click', () => {
+    activeSegments = segs;
+    activeRunType = inferRunType(segs);
+    startGpsRun(db);
+  });
+}
+
+function inferRunType(segments) {
+  const hasIntervals = segments.some(s => s.mode === 'run-intervals');
+  const hasZ5 = segments.some(s => s.zone === 'Z5');
+  const hasZ3Z4 = segments.some(s => s.zone === 'Z3' || s.zone === 'Z4');
+  if (hasIntervals) return 'intervalos';
+  if (hasZ3Z4 && !hasIntervals) return 'tempo';
+  return 'rodaje';
 }
 
 function populateSumSessionSelect(db) {

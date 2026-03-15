@@ -375,6 +375,59 @@ input.prefilled:focus{background:var(--surface);border:none}
 /* Wake lock toggle (screen on) */
 .run-lock-btn.wake-active{background:var(--accent);color:#fff}
 
+/* ── Run type picker modal ───────────────────────────── */
+.run-type-picker{max-width:400px}
+.run-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.run-type-card{padding:12px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s}
+.run-type-card.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.run-type-card-name{font-weight:600;font-size:.95rem;margin-bottom:2px}
+.run-type-card-desc{font-size:.72rem;color:var(--text-sec);line-height:1.3}
+.run-type-card-zone{display:inline-block;font-size:.65rem;padding:1px 6px;border-radius:4px;color:#fff;margin-top:4px;font-weight:600}
+.run-type-extra{margin-top:8px}
+.run-type-extra label{font-size:.8rem;color:var(--text-sec)}
+.run-type-extra input{width:100%;margin-top:4px}
+
+/* ── Live type panel & badge ─────────────────────────── */
+.run-live-type-badge{font-size:.65rem;padding:2px 8px;border-radius:4px;color:#fff;font-weight:600;display:none}
+.run-live-type-badge.visible{display:inline-block}
+.run-live-type-panel{padding:0 16px;min-height:0;transition:min-height .2s}
+.run-live-type-panel:empty{display:none}
+
+/* Type panel: zone bar */
+.run-type-zone-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:600;color:#fff}
+.run-type-zone-bar .zone-label{opacity:.85;font-weight:400}
+
+/* Type panel: pace comparison (tempo) */
+.run-type-pace-compare{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 0}
+.run-type-pace-target{text-align:center}
+.run-type-pace-target-value{font-size:1.1rem;font-weight:700}
+.run-type-pace-target-label{font-size:.7rem;color:var(--text-sec)}
+.run-type-pace-delta{font-size:1.3rem;font-weight:700;padding:4px 12px;border-radius:8px}
+.run-type-pace-delta.faster{color:#34c759;background:rgba(52,199,89,.12)}
+.run-type-pace-delta.slower{color:#ff3b30;background:rgba(255,59,48,.12)}
+
+/* Type panel: competition progress */
+.run-type-race{text-align:center;padding:6px 0}
+.run-type-race-remaining{font-size:1.4rem;font-weight:700}
+.run-type-race-label{font-size:.7rem;color:var(--text-sec)}
+.run-type-race-eta{font-size:.85rem;color:var(--text-sec);margin-top:4px}
+.run-type-race-bar{height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.run-type-race-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .5s}
+
+/* Type panel: intervals */
+.run-type-interval{text-align:center;padding:6px 0}
+.run-type-interval-rep{font-size:1.3rem;font-weight:700}
+.run-type-interval-phase{font-size:.85rem;font-weight:600;padding:3px 12px;border-radius:6px;display:inline-block;margin-top:4px}
+.run-type-interval-phase.work{background:#ff6b35;color:#fff}
+.run-type-interval-phase.rest{background:#34c759;color:#fff}
+.run-type-interval-seg{font-size:.75rem;color:var(--text-sec);margin-top:4px}
+.run-type-interval-lap-btn{margin-top:8px;padding:8px 24px;border:2px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);font-weight:700;font-size:.9rem;cursor:pointer}
+
+/* Type panel: cuestas */
+.run-type-elev{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 0}
+.run-type-elev-value{font-size:1.4rem;font-weight:700}
+.run-type-elev-label{font-size:.7rem;color:var(--text-sec)}
+
 /* ── Running: Post-run summary ───────────────────────── */
 .run-summary-screen{padding:max(16px,env(safe-area-inset-top)) 20px 20px;overflow-y:auto;height:100%}
 .run-summary-header{font-size:1rem;font-weight:800;text-align:center;margin-bottom:16px;color:var(--text)}
