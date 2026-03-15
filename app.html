@@ -42,21 +42,37 @@
   <button class="timer-start" id="timerStartBtn">▶</button>
   <button class="timer-reset" id="timerResetBtn">↩️</button>
 </div>
-<div class="section active" id="secTrain">
-  <div id="prefillBanner">
-    <div id="prefillText"></div>
-    <button class="prefill-clear">✕ Empezar de cero</button>
+<div class="section active" id="secStrength">
+  <div class="str-subnav">
+    <button class="str-tab active" data-str="strTrain">Entreno</button>
+    <button class="str-tab" data-str="strHistory">Historial</button>
+    <button class="str-tab" data-str="strProgress">Progreso</button>
   </div>
-  <div class="row mb"><div><label>Fecha</label><input type="date" id="trainDate"></div><div><label>Sesión</label><select id="trainSession"></select></div></div>
-  <div id="exerciseList"></div>
-  <div class="mb"><label>Notas</label><textarea id="trainNotes" placeholder="Sensaciones, fatiga, ajustes..."></textarea></div>
-  <button class="btn mb">Guardar sesión</button>
-</div>
-<div class="section" id="secHistory">
-  <div class="cal-nav"><button>◀</button><button class="cal-nav-today">Hoy</button><button>▶</button></div>
-  <div id="calendarPanel"></div>
-  <div class="mb history-filter-wrap"><label>Filtrar por sesión</label><select id="historyFilter"><option value="">Todas</option></select></div>
-  <div id="historyList"></div>
+  <div class="str-panel active" id="strTrain">
+    <div id="prefillBanner">
+      <div id="prefillText"></div>
+      <button class="prefill-clear">✕ Empezar de cero</button>
+    </div>
+    <div class="row mb"><div><label>Fecha</label><input type="date" id="trainDate"></div><div><label>Sesión</label><select id="trainSession"></select></div></div>
+    <div id="exerciseList"></div>
+    <div class="mb"><label>Notas</label><textarea id="trainNotes" placeholder="Sensaciones, fatiga, ajustes..."></textarea></div>
+    <button class="btn mb">Guardar sesión</button>
+  </div>
+  <div class="str-panel" id="strHistory">
+    <div class="cal-nav"><button>◀</button><button class="cal-nav-today">Hoy</button><button>▶</button></div>
+    <div id="calendarPanel"></div>
+    <div class="mb history-filter-wrap"><label>Filtrar por sesión</label><select id="historyFilter"><option value="">Todas</option></select></div>
+    <div id="historyList"></div>
+  </div>
+  <div class="str-panel" id="strProgress">
+    <div class="progress-select-wrap">
+      <label class="progress-label">Ejercicio</label>
+      <select id="progressExercise"></select>
+    </div>
+    <div id="progressChart"></div>
+    <div id="progressStats"></div>
+    <div id="progressHistory"></div>
+  </div>
 </div>
 <div class="section" id="secBody">
   <div class="mb2"><label>Fecha registro</label><input type="date" id="bodyDate"></div>
@@ -446,22 +462,11 @@
     <button class="btn btn-danger" id="runDetailDeleteBtn">Borrar</button>
   </div>
 </div></div>
-<div class="section" id="secProgress">
-  <div class="progress-select-wrap">
-    <label class="progress-label">Ejercicio</label>
-    <select id="progressExercise"></select>
-  </div>
-  <div id="progressChart"></div>
-  <div id="progressStats"></div>
-  <div id="progressHistory"></div>
-</div>
 <nav>
-  <button class="active" data-sec="secTrain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M4 17.5H2V15l3-3h14l3 3v2.5h-2M9 14.5V6M9 6l6 2v6.5"/></svg><span>Entreno</span></button>
-  <button data-sec="secHistory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v4l3 3M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Historial</span></button>
+  <button class="active" data-sec="secStrength"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M4 17.5H2V15l3-3h14l3 3v2.5h-2M9 14.5V6M9 6l6 2v6.5"/></svg><span>Fuerza</span></button>
   <button data-sec="secRunning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="4" r="2"/><path d="M13 7l-1.5 7.5L15 12l3 3.5"/><path d="M8 14l-2 8"/><path d="M11.5 14.5L9 20"/><path d="M7 7l4 0"/></svg><span>Running</span></button>
-  <button data-sec="secProgress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 20h18M6 16l4-4 4 4 4-8"/><circle cx="6" cy="16" r="1"/><circle cx="10" cy="12" r="1"/><circle cx="14" cy="16" r="1"/><circle cx="18" cy="8" r="1"/></svg><span>Progreso</span></button>
   <button data-sec="secBody"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4zM8 10v4l-3 8M16 10v4l3 8M10 14h4"/></svg><span>Cuerpo</span></button>
-  <button data-sec="secSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>Más</span></button>
+  <button data-sec="secSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>Mas</span></button>
 </nav>
 <div class="modal-overlay" id="revisionsModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
   <h3>Versiones anteriores en Drive</h3>

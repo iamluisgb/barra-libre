@@ -14,7 +14,7 @@ function cacheSelectors() {
   $trainNotes = document.getElementById('trainNotes');
   $prefillBanner = document.getElementById('prefillBanner');
   $prefillText = document.getElementById('prefillText');
-  $saveBtn = document.querySelector('#secTrain .btn');
+  $saveBtn = document.querySelector('#strTrain .btn');
   $prCelebration = document.getElementById('prCelebration');
   $prList = document.getElementById('prList');
 }

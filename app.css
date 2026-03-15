@@ -261,6 +261,12 @@ input.prefilled:focus{background:var(--surface);border:none}
 /* Panels */
 .run-panel{display:none}.run-panel.active{display:block}
 
+/* Strength sub-navigation (mirrors run-subnav) */
+.str-subnav{display:flex;background:var(--surface2);border-radius:20px;padding:2px;gap:2px;margin-bottom:16px}
+.str-tab{flex:1;background:none;border:none;color:var(--text3);font-family:var(--font);font-size:.72rem;font-weight:600;padding:8px 4px;border-radius:18px;cursor:pointer;transition:background .2s,color .2s}
+.str-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.str-panel{display:none}.str-panel.active{display:block}
+
 /* Segment cards */
 .run-segment-card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:10px;border-left:4px solid var(--accent)}
 .run-seg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}

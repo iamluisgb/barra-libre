@@ -3,7 +3,7 @@ import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgr
 import { today, mergeDB, esc } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
-import { initNav, switchTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
+import { initNav, switchTab, switchStrTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
 import { initTraining, populateSessions, startEdit, cancelEdit } from './ui/training.js';
 import { initCalendar } from './ui/calendar.js';
 import { initHistory } from './ui/history.js';
@@ -178,8 +178,9 @@ function bindEvents() {
   initCalendar(db);
   initHistory(db, {
     onEdit: (workout) => {
-      const trainBtn = document.querySelector('nav button[data-sec="secTrain"]');
-      switchTab(trainBtn, db);
+      const strengthBtn = document.querySelector('nav button[data-sec="secStrength"]');
+      switchTab(strengthBtn, db);
+      switchStrTab('strTrain', db);
       startEdit(workout, db);
     }
   });

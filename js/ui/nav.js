@@ -27,15 +27,37 @@ export function switchTab(btn, db) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById(btn.dataset.sec).classList.add('active');
-  document.getElementById('timerBar').classList.toggle('active', btn.dataset.sec === 'secTrain');
+
+  // Timer bar: only visible when Strength > Entreno
+  const activeStrPanel = document.querySelector('.str-panel.active')?.id;
+  document.getElementById('timerBar').classList.toggle('active',
+    btn.dataset.sec === 'secStrength' && activeStrPanel === 'strTrain'
+  );
+
   // Hide strength context bar when on running tab
   const contextBar = document.querySelector('.context-bar');
   if (contextBar) contextBar.style.display = btn.dataset.sec === 'secRunning' ? 'none' : '';
-  if (btn.dataset.sec === 'secHistory') { renderCalendar(db); renderHistory(db); }
+
+  if (btn.dataset.sec === 'secStrength') {
+    if (activeStrPanel === 'strHistory') { renderCalendar(db); renderHistory(db); }
+    if (activeStrPanel === 'strProgress') initProgress(db);
+  }
   if (btn.dataset.sec === 'secBody') { renderBodyForm(db); renderBodyHistory(db); calcProportions(db); calcCalories(db); }
   if (btn.dataset.sec === 'secSettings') render1RMs(db);
-  if (btn.dataset.sec === 'secProgress') initProgress(db);
   if (btn.dataset.sec === 'secRunning') refreshRunning(db);
+}
+
+/** Switch strength sub-tab */
+export function switchStrTab(tabName, db) {
+  document.querySelectorAll('.str-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.str-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.str-tab[data-str="${tabName}"]`)?.classList.add('active');
+  document.getElementById(tabName)?.classList.add('active');
+  // Timer only in Entreno
+  document.getElementById('timerBar').classList.toggle('active', tabName === 'strTrain');
+  // Render content
+  if (tabName === 'strHistory') { renderCalendar(db); renderHistory(db); }
+  if (tabName === 'strProgress') initProgress(db);
 }
 
 export function openPhaseModal() {
@@ -71,10 +93,14 @@ export function updatePhaseUI(db) {
   renderPhaseModal(db);
 }
 
-/** Initialize navigation: tab switching and phase modal */
+/** Initialize navigation: tab switching, strength sub-tabs, and phase modal */
 export function initNav(db) {
   document.querySelectorAll('nav button[data-sec]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn, db));
+  });
+  // Strength sub-tabs
+  document.querySelectorAll('.str-tab[data-str]').forEach(btn => {
+    btn.addEventListener('click', () => switchStrTab(btn.dataset.str, db));
   });
   document.getElementById('phaseContext').addEventListener('click', () => {
     renderPhaseModal(db);
@@ -91,9 +117,12 @@ export function initNav(db) {
 /** Re-render the currently active section */
 export function refreshActiveSection(db) {
   const sec = document.querySelector('.section.active')?.id;
-  if (sec === 'secHistory') { renderCalendar(db); renderHistory(db); }
+  if (sec === 'secStrength') {
+    const panel = document.querySelector('.str-panel.active')?.id;
+    if (panel === 'strHistory') { renderCalendar(db); renderHistory(db); }
+    if (panel === 'strProgress') initProgress(db);
+  }
   if (sec === 'secBody') { renderBodyForm(db); renderBodyHistory(db); calcProportions(db); calcCalories(db); }
   if (sec === 'secSettings') render1RMs(db);
-  if (sec === 'secProgress') initProgress(db);
   if (sec === 'secRunning') refreshRunning(db);
 }
