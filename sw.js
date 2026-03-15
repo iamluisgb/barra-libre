@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v41';
+const CACHE_NAME = 'barra-libre-v42';
 const ASSETS = [
   './',
   './app.html',

@@ -511,7 +511,11 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-hist-splits{font-size:.6rem;color:var(--text3);margin-top:4px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── Running: Detail modal ───────────────────────────── */
-.run-detail-modal .modal{padding-top:16px}
+.run-detail-modal .modal{padding-top:0;overflow:hidden}
+#runShareCard{background:linear-gradient(145deg,#fff 0%,#f0f2f8 100%);padding:20px 20px 12px;position:relative;overflow:hidden}
+#runShareCardInner{position:relative;z-index:1}
+#runShareCard .share-footer{margin-top:8px}
+#runShareCard + div{padding:0 16px 16px}
 .run-detail-header{text-align:center;margin-bottom:16px}
 .run-detail-date{font-size:.72rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
 .run-detail-type{display:inline-block;font-size:.6rem;font-weight:700;color:var(--accent);background:rgba(0,85,255,.08);padding:2px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;margin-top:4px}

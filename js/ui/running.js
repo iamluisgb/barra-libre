@@ -259,6 +259,7 @@ export function initRunning(db) {
     closeRunDetail();
     startRunEdit(id, db);
   });
+  document.getElementById('runDetailShareBtn').addEventListener('click', () => shareRunCard());
   document.getElementById('runDetailDeleteBtn').addEventListener('click', () => {
     const btn = document.getElementById('runDetailDeleteBtn');
     const id = parseInt(document.getElementById('runDetailModal').dataset.logId);
@@ -1313,6 +1314,23 @@ function openRunDetail(id, db) {
 function closeRunDetail() {
   document.getElementById('runDetailModal').classList.remove('open');
   if (detailMap) { detailMap.remove(); detailMap = null; }
+}
+
+async function shareRunCard() {
+  const card = document.getElementById('runShareCard');
+  try {
+    const canvas = await html2canvas(card, { backgroundColor: null, scale: 3, useCORS: true, logging: false });
+    canvas.toBlob(async blob => {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'run.png', { type: 'image/png' })] })) {
+        await navigator.share({ files: [new File([blob], 'run.png', { type: 'image/png' })], title: 'Mi carrera — Barra Libre' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'barra-libre-run-' + new Date().toISOString().slice(0, 10) + '.png';
+        a.click(); URL.revokeObjectURL(url);
+      }
+    }, 'image/png');
+  } catch (e) { toast('Error al generar imagen', 'error'); }
 }
 
 // ── Goal ─────────────────────────────────────────────────

@@ -470,14 +470,25 @@
 
 <!-- Run detail modal -->
 <div class="modal-overlay run-detail-modal" id="runDetailModal"><div class="modal" style="max-height:90vh;overflow-y:auto">
-  <div class="run-detail-header" id="runDetailHeader"></div>
-  <div class="run-detail-stats" id="runDetailStats"></div>
-  <div class="run-detail-map" id="runDetailMap"></div>
-  <div class="run-detail-splits" id="runDetailSplits"></div>
-  <div class="run-detail-notes" id="runDetailNotes"></div>
+  <div id="runShareCard">
+    <div class="share-bubble-1"></div>
+    <div class="share-bubble-2"></div>
+    <div id="runShareCardInner">
+      <div class="run-detail-header" id="runDetailHeader"></div>
+      <div class="run-detail-stats" id="runDetailStats"></div>
+      <div class="run-detail-map" id="runDetailMap"></div>
+      <div class="run-detail-splits" id="runDetailSplits"></div>
+      <div class="run-detail-notes" id="runDetailNotes"></div>
+      <div class="share-footer">
+        <div class="card-brand">BARRA <span>LIBRE</span></div>
+        <div class="card-url">·  luisgonzalezbernal.com/barra-libre</div>
+      </div>
+    </div>
+  </div>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn btn-outline" id="runDetailCloseBtn" style="flex:1">Cerrar</button>
     <button class="btn" id="runDetailEditBtn">Editar</button>
+    <button class="btn" id="runDetailShareBtn">📸</button>
     <button class="btn btn-danger" id="runDetailDeleteBtn">Borrar</button>
   </div>
 </div></div>
