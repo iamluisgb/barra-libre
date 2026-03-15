@@ -372,11 +372,8 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-pause-btn.paused svg{display:none}
 .run-pause-btn.paused::after{content:'';width:0;height:0;border-style:solid;border-width:14px 0 14px 24px;border-color:transparent transparent transparent #fff;margin-left:4px}
 
-/* Lock screen */
-.run-tracking-overlay.locked .run-live-top,
-.run-tracking-overlay.locked .run-live-splits,
-.run-tracking-overlay.locked .run-live-bottom{pointer-events:none;opacity:.3}
-.run-tracking-overlay.locked .run-lock-btn{opacity:1;pointer-events:auto;background:var(--accent);color:#fff}
+/* Wake lock toggle (screen on) */
+.run-lock-btn.wake-active{background:var(--accent);color:#fff}
 
 /* ── Running: Post-run summary ───────────────────────── */
 .run-summary-screen{padding:max(16px,env(safe-area-inset-top)) 20px 20px;overflow-y:auto;height:100%}

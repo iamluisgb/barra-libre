@@ -47,7 +47,6 @@ let livePolyline = null;
 let liveMarker = null;
 let summaryMap = null;
 let detailMap = null;
-let isLocked = false;
 
 // ── DOM refs ─────────────────────────────────────────────
 
@@ -222,8 +221,7 @@ function startGpsRun(db) {
   $liveStatus.textContent = 'EN CURSO';
   $liveStatus.classList.remove('paused');
   $pauseBtn.classList.remove('paused');
-  isLocked = false;
-  $overlay.classList.remove('locked');
+  $lockBtn.classList.remove('wake-active');
 
   // Hide nav
   document.querySelector('nav').style.display = 'none';
@@ -246,9 +244,10 @@ function togglePause() {
   }
 }
 
-function toggleLock() {
-  isLocked = !isLocked;
-  $overlay.classList.toggle('locked', isLocked);
+async function toggleLock() {
+  const screenOn = await tracker.toggleWakeLock();
+  $lockBtn.classList.toggle('wake-active', screenOn);
+  $lockBtn.title = screenOn ? 'Pantalla encendida' : 'Pantalla puede apagarse';
 }
 
 function stopGpsRun(db) {
@@ -319,7 +318,6 @@ function discardGpsRun() {
 
 function closeLiveOverlay() {
   $overlay.classList.remove('active');
-  $overlay.classList.remove('locked');
   document.querySelector('nav').style.display = '';
   // Cleanup maps
   if (liveMap) { liveMap.remove(); liveMap = null; }

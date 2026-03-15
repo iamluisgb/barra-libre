@@ -1,7 +1,8 @@
 /**
  * GPS Running Tracker Engine
  * Handles live GPS tracking with distance, pace, splits, and route recording.
- * Uses Wake Lock API to prevent screen from sleeping during tracking.
+ * Runs in background by default (screen can sleep). Wake Lock is opt-in via
+ * toggleWakeLock() to keep the screen on when the user wants it.
  */
 
 // ── Haversine distance (meters) ─────────────────────────
@@ -27,6 +28,7 @@ export class GpsTracker {
     this._timerRaf = null;
     this._timerInterval = null;
     this._wakeLock = null;
+    this._wakeLockEnabled = false; // opt-in: user toggles this
     this._visibilityHandler = null;
 
     // Accumulated data
@@ -79,7 +81,6 @@ export class GpsTracker {
 
     this._startGps();
     this._startTimer();
-    this._acquireWakeLock();
     this._bindVisibility();
     return true;
   }
@@ -92,7 +93,6 @@ export class GpsTracker {
     this._pauseStart = performance.now();
     this._stopGps();
     this._stopTimer();
-    // Keep wake lock active during pause so user can resume easily
   }
 
   resume() {
@@ -101,7 +101,6 @@ export class GpsTracker {
     this._totalPaused += performance.now() - this._pauseStart;
     this._startGps();
     this._startTimer();
-    this._acquireWakeLock();
   }
 
   // ── Stop tracking ───────────────────────────────────────
@@ -117,6 +116,7 @@ export class GpsTracker {
     this._stopTimer();
     this._releaseWakeLock();
     this._unbindVisibility();
+    this._wakeLockEnabled = false;
     this._updateElapsed();
     this.state = 'idle';
 
@@ -145,7 +145,23 @@ export class GpsTracker {
     };
   }
 
-  // ── Wake Lock (prevents screen from sleeping) ───────────
+  // ── Wake Lock (opt-in: keeps screen on) ─────────────────
+  // Called by the UI when user taps the lock/unlock button.
+  // Returns the new state (true = screen stays on, false = screen can sleep).
+
+  async toggleWakeLock() {
+    this._wakeLockEnabled = !this._wakeLockEnabled;
+    if (this._wakeLockEnabled) {
+      await this._acquireWakeLock();
+    } else {
+      this._releaseWakeLock();
+    }
+    return this._wakeLockEnabled;
+  }
+
+  get wakeLockActive() {
+    return this._wakeLockEnabled && this._wakeLock !== null;
+  }
 
   async _acquireWakeLock() {
     if (!('wakeLock' in navigator)) return;
@@ -155,7 +171,6 @@ export class GpsTracker {
         this._wakeLock = null;
       });
     } catch (e) {
-      // Wake lock request failed (e.g. low battery, browser restriction)
       console.warn('Wake Lock failed:', e.message);
     }
   }
@@ -167,14 +182,14 @@ export class GpsTracker {
     }
   }
 
-  // ── Visibility handling (re-acquire wake lock + restart GPS) ──
+  // ── Visibility handling (restart GPS on foreground) ──────
 
   _bindVisibility() {
     this._visibilityHandler = () => {
       if (document.visibilityState === 'visible' && this.state === 'tracking') {
-        // Re-acquire wake lock (it's released when page goes hidden)
-        this._acquireWakeLock();
-        // Restart GPS watcher in case it was suspended
+        // Re-acquire wake lock if user had it enabled (it's auto-released on hidden)
+        if (this._wakeLockEnabled) this._acquireWakeLock();
+        // Restart GPS watcher in case browser suspended it in background
         this._stopGps();
         this._startGps();
       }
@@ -308,8 +323,7 @@ export class GpsTracker {
   }
 
   _calcSplitElevation(km) {
-    // Estimate elevation gain for this km from coords
-    const startIdx = Math.max(0, this.coords.length - 100); // rough approximation
+    const startIdx = Math.max(0, this.coords.length - 100);
     let gain = 0;
     for (let i = startIdx + 1; i < this.coords.length; i++) {
       const diff = (this.coords[i][2] || 0) - (this.coords[i - 1][2] || 0);
@@ -328,11 +342,11 @@ export class GpsTracker {
   }
 
   // ── Timer ───────────────────────────────────────────────
-  // Uses both RAF (smooth UI updates) and setInterval (background resilience).
-  // RAF stops when screen is off; setInterval keeps ticking in most browsers.
+  // RAF for smooth UI when screen is on.
+  // setInterval as fallback for background (RAF is suspended on screen off).
+  // Elapsed time uses performance.now() so it's always accurate regardless.
 
   _startTimer() {
-    // RAF for smooth visual updates when screen is on
     const tick = () => {
       this._updateElapsed();
       this._emitUpdate();
@@ -340,7 +354,6 @@ export class GpsTracker {
     };
     this._timerRaf = requestAnimationFrame(tick);
 
-    // setInterval as fallback: keeps elapsed calculation correct even if RAF stops
     this._timerInterval = setInterval(() => {
       this._updateElapsed();
       this._emitUpdate();
