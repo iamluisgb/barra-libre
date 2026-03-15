@@ -26,22 +26,6 @@
     <span id="phaseName">Fase I</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
   </div>
 </div>
-<div class="timer-bar mode-countdown" id="timerBar">
-  <div class="timer-mode-toggle">
-    <button class="timer-mode active" data-mode="countdown">Descanso</button>
-    <button class="timer-mode" data-mode="stopwatch">Crono</button>
-  </div>
-  <div class="timer-presets" id="timerPresets">
-    <button class="timer-btn" data-dur="60">1:00</button>
-    <button class="timer-btn active-dur" data-dur="120">2:00</button>
-    <button class="timer-btn" data-dur="180">3:00</button>
-    <button class="timer-btn timer-custom-btn" id="timerCustomBtn">✏️</button>
-  </div>
-  <div class="timer-display" id="timerDisplay">2:00</div>
-  <input type="text" class="timer-custom-input" id="timerCustomInput" placeholder="m:ss" maxlength="5" inputmode="numeric">
-  <button class="timer-start" id="timerStartBtn">▶</button>
-  <button class="timer-reset" id="timerResetBtn">↩️</button>
-</div>
 <div class="section active" id="secStrength">
   <div class="str-subnav">
     <button class="str-tab active" data-str="strTrain">Entreno</button>
@@ -49,6 +33,22 @@
     <button class="str-tab" data-str="strProgress">Progreso</button>
   </div>
   <div class="str-panel active" id="strTrain">
+    <div class="timer-bar mode-countdown active" id="timerBar">
+      <div class="timer-mode-toggle">
+        <button class="timer-mode active" data-mode="countdown">Descanso</button>
+        <button class="timer-mode" data-mode="stopwatch">Crono</button>
+      </div>
+      <div class="timer-presets" id="timerPresets">
+        <button class="timer-btn" data-dur="60">1:00</button>
+        <button class="timer-btn active-dur" data-dur="120">2:00</button>
+        <button class="timer-btn" data-dur="180">3:00</button>
+        <button class="timer-btn timer-custom-btn" id="timerCustomBtn">✏️</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">2:00</div>
+      <input type="text" class="timer-custom-input" id="timerCustomInput" placeholder="m:ss" maxlength="5" inputmode="numeric">
+      <button class="timer-start" id="timerStartBtn">▶</button>
+      <button class="timer-reset" id="timerResetBtn">↩️</button>
+    </div>
     <div id="prefillBanner">
       <div id="prefillText"></div>
       <button class="prefill-clear">✕ Empezar de cero</button>

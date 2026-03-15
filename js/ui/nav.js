@@ -28,11 +28,7 @@ export function switchTab(btn, db) {
   btn.classList.add('active');
   document.getElementById(btn.dataset.sec).classList.add('active');
 
-  // Timer bar: only visible when Strength > Entreno
   const activeStrPanel = document.querySelector('.str-panel.active')?.id;
-  document.getElementById('timerBar').classList.toggle('active',
-    btn.dataset.sec === 'secStrength' && activeStrPanel === 'strTrain'
-  );
 
   // Hide strength context bar when on running tab
   const contextBar = document.querySelector('.context-bar');
@@ -53,8 +49,6 @@ export function switchStrTab(tabName, db) {
   document.querySelectorAll('.str-panel').forEach(p => p.classList.remove('active'));
   document.querySelector(`.str-tab[data-str="${tabName}"]`)?.classList.add('active');
   document.getElementById(tabName)?.classList.add('active');
-  // Timer only in Entreno
-  document.getElementById('timerBar').classList.toggle('active', tabName === 'strTrain');
   // Render content
   if (tabName === 'strHistory') { renderCalendar(db); renderHistory(db); }
   if (tabName === 'strProgress') initProgress(db);
