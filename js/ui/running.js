@@ -359,6 +359,7 @@ function startGpsRun(db) {
       segDurations: activeSegments.map(s => s.mode === 'run-steady' ? parseSegDuration(s.duration) : 0),
       completed: activeSegments.map(() => false),
       countdownFired: false,
+      segLog: [],
     };
     activeRunType = segModeToRunType(activeSegments[0]);
     // Update badge for first segment
@@ -401,6 +402,22 @@ async function toggleLock() {
 function stopGpsRun(db) {
   const result = tracker.stop();
   if (!result) { closeLiveOverlay(); return; }
+
+  // Log final segment if session is active
+  if (sessionState && activeSegments) {
+    const idx = sessionState.currentIdx;
+    if (!sessionState.completed[idx]) {
+      const seg = activeSegments[idx];
+      sessionState.segLog.push({
+        name: seg.name,
+        zone: seg.zone || 'Z2',
+        mode: seg.mode,
+        duration: Math.round(result.duration - sessionState.segStartTime),
+        distance: +(result.distance - sessionState.segStartDist).toFixed(3),
+      });
+    }
+    result.sessionSegments = sessionState.segLog;
+  }
 
   // Show summary screen
   $liveScreen.style.display = 'none';
@@ -446,7 +463,7 @@ function saveGpsRun(db) {
     cadence: null,
     splits: result.splits || [],
     route: result.route || null,
-    segments: [],
+    segments: result.sessionSegments || [],
     source: 'gps',
     notes: document.getElementById('runSumNotes').value.trim()
   };
@@ -687,6 +704,8 @@ function updateSteadySegmentUI(data, seg) {
   const color = ZONE_COLORS[zone];
   const label = ZONE_LABELS[zone];
   const pct = target > 0 ? Math.min((elapsed / target) * 100, 100) : 0;
+  const isLast = sessionState.currentIdx >= activeSegments.length - 1;
+  const skipBtn = !isLast ? `<button class="run-seg-skip-btn" id="runSegSkipBtn">Siguiente ▸</button>` : '';
   $typePanel.innerHTML = `<div class="run-type-steady-seg">
     <div class="run-type-zone-bar" style="background:${color}">${zone} <span class="zone-label">· ${label}</span></div>
     <div class="run-type-steady-info">
@@ -694,7 +713,10 @@ function updateSteadySegmentUI(data, seg) {
       <span class="run-type-steady-remaining">${target > 0 ? formatRunDuration(Math.floor(remaining)) : ''}</span>
     </div>
     ${target > 0 ? `<div class="run-type-steady-bar"><div class="run-type-steady-bar-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
+    ${skipBtn}
   </div>`;
+  const skipEl = document.getElementById('runSegSkipBtn');
+  if (skipEl) skipEl.onclick = () => advanceSegment(data);
 }
 
 function updateSessionUI(data) {
@@ -733,6 +755,15 @@ function checkSteadySegmentTransition(data) {
 function advanceSegment(data) {
   const oldIdx = sessionState.currentIdx;
   sessionState.completed[oldIdx] = true;
+  // Log completed segment
+  const oldSeg = activeSegments[oldIdx];
+  sessionState.segLog.push({
+    name: oldSeg.name,
+    zone: oldSeg.zone || 'Z2',
+    mode: oldSeg.mode,
+    duration: Math.round(data.elapsed - sessionState.segStartTime),
+    distance: +(data.distance - sessionState.segStartDist).toFixed(3),
+  });
 
   if (oldIdx >= activeSegments.length - 1) {
     beepAllDone();

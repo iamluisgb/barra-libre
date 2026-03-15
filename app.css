@@ -412,6 +412,7 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-type-steady-remaining{font-variant-numeric:tabular-nums;font-weight:700;font-size:1rem}
 .run-type-steady-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
 .run-type-steady-bar-fill{height:100%;border-radius:2px;transition:width .5s linear}
+.run-seg-skip-btn{display:block;margin:10px auto 0;background:var(--surface2);border:none;color:var(--text2);font-family:var(--font);font-size:.75rem;font-weight:600;padding:8px 20px;border-radius:20px;cursor:pointer;transition:background .2s}
 
 /* Type panel: zone bar */
 .run-type-zone-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:600;color:#fff}
