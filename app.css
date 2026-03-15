@@ -221,6 +221,33 @@ textarea:focus{background:var(--surface);box-shadow:0 0 0 2px rgba(0,85,255,.35)
 .tabata-round{font-size:.6rem;text-align:center;padding:5px 2px;background:var(--surface2);border-radius:6px;font-weight:600;line-height:1.3}
 .tabata-round .tr-num{font-size:.5rem;color:var(--text3);display:block}
 
+/* Exercise inline timer */
+.ex-timer-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;margin:8px 0;border-radius:var(--radius);border:1.5px dashed var(--border);background:none;color:var(--text2);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s}
+.ex-timer-btn:active{transform:scale(.97)}
+.ex-timer{margin:8px 0;padding:12px;border-radius:var(--radius);text-align:center;transition:background .3s,border-color .3s}
+.ex-timer.work{background:rgba(52,199,89,.1);border:1.5px solid var(--green)}
+.ex-timer.rest{background:rgba(255,59,48,.08);border:1.5px solid var(--red)}
+.ex-timer.neutral{background:var(--surface2);border:1.5px solid var(--border)}
+.ex-timer-phase{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.ex-timer.work .ex-timer-phase{color:var(--green)}
+.ex-timer.rest .ex-timer-phase{color:var(--red)}
+.ex-timer.neutral .ex-timer-phase{color:var(--text2)}
+.ex-timer-display{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.ex-timer-round{font-size:.7rem;color:var(--text2);margin-top:4px}
+.ex-timer-label{font-size:.65rem;color:var(--text2);margin-top:2px;font-weight:500}
+.ex-timer-bar{height:4px;border-radius:2px;background:var(--surface2);margin:8px 0 4px;overflow:hidden}
+.ex-timer-bar-fill{height:100%;border-radius:2px;transition:width .25s linear}
+.ex-timer.work .ex-timer-bar-fill{background:var(--green)}
+.ex-timer.rest .ex-timer-bar-fill{background:var(--red)}
+.ex-timer.neutral .ex-timer-bar-fill{background:var(--accent)}
+.ex-timer-actions{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.ex-timer-stop{padding:6px 20px;border-radius:20px;border:none;font-size:.7rem;font-weight:700;cursor:pointer}
+.ex-timer.work .ex-timer-stop{background:var(--green);color:#fff}
+.ex-timer.rest .ex-timer-stop{background:var(--red);color:#fff}
+.ex-timer.neutral .ex-timer-stop{background:var(--text2);color:#fff}
+.ex-timer-round-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:.7rem;font-weight:700;cursor:pointer}
+.ex-timer-round-btn:active{background:var(--accent);color:#fff}
+
 /* Toast notifications */
 .toast-container{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:250;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
 .toast{background:var(--text);color:var(--bg);font-family:var(--font);font-size:.78rem;font-weight:600;padding:10px 20px;border-radius:20px;opacity:0;transform:translateY(20px);transition:opacity .25s,transform .25s;pointer-events:auto;max-width:90vw;text-align:center}
