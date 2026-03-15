@@ -11,6 +11,17 @@ let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $pref
 let activeExTimer = null;
 let exAudioCtx = null;
 let lastBeepSec = -1;
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+  } catch (e) { }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
 
 function getExAudioCtx() {
   if (!exAudioCtx) exAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -265,6 +276,7 @@ function startExTimer(exIdx, mode, ex) {
   lastBeepSec = -1;
 
   renderExTimerUI(zone);
+  requestWakeLock();
 
   // Resume audio context on user gesture
   if (exAudioCtx) exAudioCtx.resume();
@@ -300,6 +312,7 @@ function stopExTimer(completed) {
   if (btn) btn.style.display = '';
   activeExTimer = null;
   lastBeepSec = -1;
+  releaseWakeLock();
 }
 
 function handleExTimerRound() {
