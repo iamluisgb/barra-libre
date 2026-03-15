@@ -253,6 +253,9 @@ input.prefilled:focus{background:var(--surface);border:none}
 
 /* ── Running Section ─────────────────────────────────── */
 
+/* Running context bar */
+.run-ctx-bar{position:sticky;top:48px;z-index:55;background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);padding:8px 20px 10px;display:flex;align-items:center;justify-content:center;gap:8px}
+
 /* Sub-navigation */
 .run-subnav{display:flex;background:var(--surface2);border-radius:20px;padding:2px;gap:2px;margin-bottom:16px}
 .run-tab{flex:1;background:none;border:none;color:var(--text3);font-family:var(--font);font-size:.72rem;font-weight:600;padding:8px 4px;border-radius:18px;cursor:pointer;transition:background .2s,color .2s}

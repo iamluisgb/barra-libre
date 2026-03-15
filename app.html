@@ -182,6 +182,14 @@
   <div id="phaseOptions"></div>
   <button class="btn btn-outline">Cerrar</button>
 </div></div>
+<div class="modal-overlay" id="runProgramModal"><div class="modal"><h3>Programa de Running</h3>
+  <div id="runProgramOptions"></div>
+  <button class="btn btn-outline" id="runProgramModalClose">Cerrar</button>
+</div></div>
+<div class="modal-overlay" id="runWeekModal"><div class="modal"><h3>Seleccionar Semana</h3>
+  <div id="runWeekOptions"></div>
+  <button class="btn btn-outline" id="runWeekModalClose">Cerrar</button>
+</div></div>
 <div class="modal-overlay detail-modal" id="detailModal"><div class="modal">
   <div id="shareCard">
     <div class="share-bubble-1"></div>
@@ -220,6 +228,16 @@
   </div>
 </div>
 <div class="section" id="secRunning">
+  <div class="run-ctx-bar">
+    <div class="phase-context" id="runProgramContext">
+      <span id="runProgramName">—</span>
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
+    </div>
+    <div class="phase-context" id="runWeekContext">
+      <span id="runWeekName">—</span>
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
+    </div>
+  </div>
   <div class="run-subnav" id="runSubnav">
     <button class="run-tab active" data-run="runActivity">Actividad</button>
     <button class="run-tab" data-run="runHistory">Historial</button>

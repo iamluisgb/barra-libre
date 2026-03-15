@@ -272,8 +272,53 @@ export function initRunning(db) {
     db.runningWeek = parseInt($weekSelect.value) || 1;
     saveDB(db);
     populateRunSessions(db);
+    updateRunContextBar(db);
   });
   $sessionSelect.addEventListener('change', () => loadRunSessionTemplate(db));
+
+  // Running program context bar
+  document.getElementById('runProgramContext').addEventListener('click', () => {
+    renderRunProgramModal(db);
+    document.getElementById('runProgramModal').classList.add('open');
+  });
+  document.getElementById('runProgramModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('runProgramModal'))
+      document.getElementById('runProgramModal').classList.remove('open');
+    const item = e.target.closest('[data-prog]');
+    if (item) {
+      db.runningProgram = item.dataset.prog;
+      db.runningWeek = 1;
+      saveDB(db);
+      document.getElementById('runProgramModal').classList.remove('open');
+      updateRunContextBar(db);
+      populateRunWeeks(db);
+    }
+  });
+  document.getElementById('runProgramModalClose').addEventListener('click', () =>
+    document.getElementById('runProgramModal').classList.remove('open')
+  );
+
+  // Running week context bar
+  document.getElementById('runWeekContext').addEventListener('click', () => {
+    renderRunWeekModal(db);
+    document.getElementById('runWeekModal').classList.add('open');
+  });
+  document.getElementById('runWeekModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('runWeekModal'))
+      document.getElementById('runWeekModal').classList.remove('open');
+    const item = e.target.closest('[data-week]');
+    if (item) {
+      db.runningWeek = parseInt(item.dataset.week);
+      saveDB(db);
+      document.getElementById('runWeekModal').classList.remove('open');
+      updateRunContextBar(db);
+      $weekSelect.value = item.dataset.week;
+      populateRunSessions(db);
+    }
+  });
+  document.getElementById('runWeekModalClose').addEventListener('click', () =>
+    document.getElementById('runWeekModal').classList.remove('open')
+  );
 
   // Tracker callbacks
   tracker.onUpdate(data => updateLiveUI(data));
@@ -1726,6 +1771,39 @@ function renderStats(logs) {
 // ── Refresh (called when switching to running tab) ───────
 
 export function refreshRunning(db) {
+  updateRunContextBar(db);
   renderGoalWidget(db);
   renderPRs(db);
+}
+
+function updateRunContextBar(db) {
+  const programs = getRunningProgramList();
+  const prog = programs.find(p => p.id === db.runningProgram);
+  document.getElementById('runProgramName').textContent = prog?.name || 'Sin programa';
+  const phases = getRunningPhases(db.runningProgram);
+  const week = phases[db.runningWeek];
+  document.getElementById('runWeekName').textContent = week?.name || `Semana ${db.runningWeek || 1}`;
+}
+
+function renderRunProgramModal(db) {
+  const programs = getRunningProgramList();
+  const active = db.runningProgram || '';
+  document.getElementById('runProgramOptions').innerHTML = programs.map(p =>
+    `<div class="prog-modal-item${p.id === active ? ' active' : ''}" data-prog="${esc(p.id)}">
+      <div style="flex:1"><div class="prog-modal-name">${esc(p.name)}</div><div class="prog-modal-desc">${esc(p.desc)}</div></div>
+    </div>`
+  ).join('') || '<div class="empty-state">No hay programas de running</div>';
+}
+
+function renderRunWeekModal(db) {
+  const phases = getRunningPhases(db.runningProgram);
+  const weekKeys = Object.keys(phases).sort((a, b) => parseInt(a) - parseInt(b));
+  const current = db.runningWeek || 1;
+  document.getElementById('runWeekOptions').innerHTML = weekKeys.map(k => {
+    const w = phases[k];
+    return `<div class="phase-option${parseInt(k) === current ? ' selected' : ''}" data-week="${k}">
+      <div class="po-num">${k}</div>
+      <div class="po-text"><div class="po-title">${w.name || 'Semana ' + k}</div><div class="po-desc">${w.desc || Object.keys(w.sessions || {}).join(', ')}</div></div>
+    </div>`;
+  }).join('');
 }
