@@ -13,6 +13,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-16.png">
 <title>Barra Libre</title>
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 <div class="offline-banner" id="offlineBanner">Sin conexión — los datos se guardan localmente</div>
@@ -204,55 +205,60 @@
 </div>
 <div class="section" id="secRunning">
   <div class="run-subnav" id="runSubnav">
-    <button class="run-tab active" data-run="runTrain">Entrenar</button>
+    <button class="run-tab active" data-run="runActivity">Actividad</button>
     <button class="run-tab" data-run="runHistory">Historial</button>
     <button class="run-tab" data-run="runProgress">Progreso</button>
+    <button class="run-tab" data-run="runPlan">Plan</button>
   </div>
 
-  <div class="run-panel active" id="runTrain">
-    <div class="run-context-bar" id="runContextBar">
-      <div class="row mb">
-        <div><label>Semana</label><select id="runWeekSelect"></select></div>
-        <div><label>Sesion</label><select id="runSessionSelect"></select></div>
+  <!-- TAB 1: Actividad -->
+  <div class="run-panel active" id="runActivity">
+    <!-- Objetivo semanal -->
+    <div class="run-goal-card" id="runGoalCard">
+      <div class="run-goal-header">
+        <span class="run-goal-title">Objetivo semanal</span>
+        <button class="run-goal-settings" id="runGoalSettingsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </button>
+      </div>
+      <div class="run-goal-body" id="runGoalBody">
+        <div class="run-goal-ring" id="runGoalRing">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface2)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" id="runGoalArc" transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="run-goal-ring-text">
+            <div class="run-goal-current" id="runGoalCurrent">0</div>
+            <div class="run-goal-unit" id="runGoalUnit">km</div>
+          </div>
+        </div>
+        <div class="run-goal-info">
+          <div class="run-goal-target" id="runGoalTarget">Objetivo: sin definir</div>
+          <div class="run-goal-sessions" id="runGoalSessions">0 sesiones esta semana</div>
+        </div>
       </div>
     </div>
-    <div id="runSegments"></div>
-    <div class="run-summary">
-      <div class="sec-title sec-title-accent">Resumen</div>
-      <div class="row mb">
-        <div><label>Fecha</label><input type="date" id="runDate"></div>
-        <div><label>Tipo</label><select id="runType">
-          <option value="intervalos">Intervalos</option>
-          <option value="rodaje">Rodaje</option>
-          <option value="tempo">Tempo</option>
-          <option value="fartlek">Fartlek</option>
-          <option value="cuestas">Cuestas</option>
-          <option value="competicion">Competicion</option>
-          <option value="libre">Libre</option>
-        </select></div>
-      </div>
-      <div class="row mb">
-        <div><label>Distancia (km)</label><input type="number" id="runDistance" step="0.1" min="0" placeholder="0.0" inputmode="decimal"></div>
-        <div><label>Duracion (mm:ss)</label><input type="text" id="runDuration" placeholder="32:15" inputmode="numeric"></div>
-      </div>
-      <div class="run-pace-display" id="runPaceDisplay"></div>
-      <div class="row mb">
-        <div><label>FC media (bpm)</label><input type="number" id="runHr" min="0" max="250" placeholder="—" inputmode="numeric"></div>
-        <div><label>Desnivel (m)</label><input type="number" id="runElevation" min="0" placeholder="—" inputmode="numeric"></div>
-        <div><label>Cadencia (ppm)</label><input type="number" id="runCadence" min="0" max="300" placeholder="—" inputmode="numeric"></div>
-      </div>
-      <div class="mb"><label>Notas</label><textarea id="runNotes" placeholder="Sensaciones, terreno, ajustes..."></textarea></div>
-      <div id="runEditBanner" style="display:none">
-        <div id="runEditText"></div>
-        <button class="prefill-clear run-edit-cancel">✕ Cancelar</button>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn mb" id="runSaveBtn" style="flex:1">Guardar sesion</button>
-        <button class="btn btn-danger mb" id="runDeleteBtn" style="display:none">Borrar</button>
+
+    <!-- Records personales -->
+    <div class="run-prs-card" id="runPrsCard">
+      <div class="sec-title sec-title-accent">Records personales</div>
+      <div class="run-prs-grid" id="runPrsGrid">
+        <div class="run-pr-item"><div class="run-pr-dist">1 km</div><div class="run-pr-value" data-pr="1">--:--</div></div>
+        <div class="run-pr-item"><div class="run-pr-dist">5 km</div><div class="run-pr-value" data-pr="5">--:--</div></div>
+        <div class="run-pr-item"><div class="run-pr-dist">10 km</div><div class="run-pr-value" data-pr="10">--:--</div></div>
+        <div class="run-pr-item"><div class="run-pr-dist">21.1 km</div><div class="run-pr-value" data-pr="21.1">--:--</div></div>
       </div>
     </div>
+
+    <!-- Botones principales -->
+    <button class="run-start-btn" id="runStartBtn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+      Iniciar carrera
+    </button>
+    <button class="run-manual-btn" id="runManualBtn">Registro manual</button>
   </div>
 
+  <!-- TAB 2: Historial -->
   <div class="run-panel" id="runHistory">
     <div class="mb history-filter-wrap"><label>Filtrar por tipo</label><select id="runHistoryFilter"><option value="">Todas</option>
       <option value="intervalos">Intervalos</option><option value="rodaje">Rodaje</option><option value="tempo">Tempo</option>
@@ -261,6 +267,7 @@
     <div id="runHistoryList"></div>
   </div>
 
+  <!-- TAB 3: Progreso -->
   <div class="run-panel" id="runProgress">
     <div class="sec-title sec-title-accent">Km semanales</div>
     <div id="runWeeklyChart" class="run-chart"></div>
@@ -269,7 +276,156 @@
     <div class="sec-title sec-title-accent sec-title-mt">Resumen</div>
     <div id="runStatsPanel"></div>
   </div>
+
+  <!-- TAB 4: Plan (programas estructurados) -->
+  <div class="run-panel" id="runPlan">
+    <div class="run-context-bar" id="runContextBar">
+      <div class="row mb">
+        <div><label>Semana</label><select id="runWeekSelect"></select></div>
+        <div><label>Sesion</label><select id="runSessionSelect"></select></div>
+      </div>
+    </div>
+    <div id="runSegments"></div>
+  </div>
 </div>
+
+<!-- GPS Tracking Overlay (fullscreen) -->
+<div class="run-tracking-overlay" id="runTrackingOverlay">
+  <!-- Live tracking screen -->
+  <div class="run-live" id="runLiveScreen">
+    <div class="run-live-top">
+      <button class="run-live-btn run-lock-btn" id="runLockBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      <div class="run-live-status" id="runLiveStatus">EN CURSO</div>
+      <button class="run-live-btn" id="runStopBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+    </div>
+    <div class="run-live-timer" id="runLiveTimer">00:00</div>
+    <div class="run-live-metrics">
+      <div class="run-live-metric">
+        <div class="run-live-metric-value" id="runLiveDist">0.00</div>
+        <div class="run-live-metric-label">km</div>
+      </div>
+      <div class="run-live-metric">
+        <div class="run-live-metric-value" id="runLivePace">--:--</div>
+        <div class="run-live-metric-label">/km</div>
+      </div>
+    </div>
+    <div class="run-live-splits" id="runLiveSplits"></div>
+    <div class="run-live-map" id="runLiveMap"></div>
+    <div class="run-live-bottom">
+      <button class="run-pause-btn" id="runPauseBtn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Post-run summary screen -->
+  <div class="run-summary-screen" id="runSummaryScreen" style="display:none">
+    <div class="run-summary-header">Resumen de carrera</div>
+    <div class="run-summary-big-stats">
+      <div class="run-summary-stat"><div class="run-summary-stat-value" id="runSumDist">0.00</div><div class="run-summary-stat-label">km</div></div>
+      <div class="run-summary-stat"><div class="run-summary-stat-value" id="runSumTime">00:00</div><div class="run-summary-stat-label">tiempo</div></div>
+      <div class="run-summary-stat"><div class="run-summary-stat-value" id="runSumPace">--:--</div><div class="run-summary-stat-label">/km</div></div>
+    </div>
+    <div class="run-summary-map" id="runSummaryMap"></div>
+    <div class="run-summary-splits-title">Splits por km</div>
+    <div class="run-summary-splits" id="runSumSplits"></div>
+    <div class="run-summary-form">
+      <div class="row mb">
+        <div><label>Tipo</label><select id="runSumType">
+          <option value="rodaje">Rodaje</option>
+          <option value="intervalos">Intervalos</option>
+          <option value="tempo">Tempo</option>
+          <option value="fartlek">Fartlek</option>
+          <option value="cuestas">Cuestas</option>
+          <option value="competicion">Competicion</option>
+          <option value="libre">Libre</option>
+        </select></div>
+        <div><label>Sesion del plan</label><select id="runSumSession"><option value="">Ninguna</option></select></div>
+      </div>
+      <div class="mb"><label>Notas</label><textarea id="runSumNotes" placeholder="Sensaciones, terreno, ajustes..."></textarea></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="runSumSaveBtn" style="flex:1">Guardar</button>
+        <button class="btn btn-outline" id="runSumDiscardBtn">Descartar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manual run entry modal -->
+<div class="modal-overlay" id="runManualModal"><div class="modal">
+  <h3>Registro manual</h3>
+  <div class="row mb">
+    <div><label>Fecha</label><input type="date" id="runDate"></div>
+    <div><label>Tipo</label><select id="runType">
+      <option value="rodaje">Rodaje</option>
+      <option value="intervalos">Intervalos</option>
+      <option value="tempo">Tempo</option>
+      <option value="fartlek">Fartlek</option>
+      <option value="cuestas">Cuestas</option>
+      <option value="competicion">Competicion</option>
+      <option value="libre">Libre</option>
+    </select></div>
+  </div>
+  <div class="row mb">
+    <div><label>Distancia (km)</label><input type="number" id="runDistance" step="0.1" min="0" placeholder="0.0" inputmode="decimal"></div>
+    <div><label>Duracion (mm:ss)</label><input type="text" id="runDuration" placeholder="32:15" inputmode="numeric"></div>
+  </div>
+  <div class="run-pace-display" id="runPaceDisplay"></div>
+  <div class="run-manual-splits" id="runManualSplits">
+    <div class="sec-title sec-title-accent">Splits por km (opcional)</div>
+    <div id="runSplitInputs"></div>
+    <button class="btn-sm btn-outline" id="runAddSplitBtn">+ Anadir split</button>
+  </div>
+  <div class="row mb">
+    <div><label>FC media (bpm)</label><input type="number" id="runHr" min="0" max="250" placeholder="—" inputmode="numeric"></div>
+    <div><label>Desnivel (m)</label><input type="number" id="runElevation" min="0" placeholder="—" inputmode="numeric"></div>
+    <div><label>Cadencia (ppm)</label><input type="number" id="runCadence" min="0" max="300" placeholder="—" inputmode="numeric"></div>
+  </div>
+  <div class="mb"><label>Notas</label><textarea id="runNotes" placeholder="Sensaciones, terreno, ajustes..."></textarea></div>
+  <div id="runEditBanner" style="display:none">
+    <div id="runEditText"></div>
+    <button class="prefill-clear run-edit-cancel">✕ Cancelar</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" id="runSaveBtn" style="flex:1">Guardar sesion</button>
+    <button class="btn btn-danger" id="runDeleteBtn" style="display:none">Borrar</button>
+  </div>
+  <button class="btn btn-outline" id="runManualCloseBtn" style="margin-top:8px;width:100%">Cancelar</button>
+</div></div>
+
+<!-- Goal settings modal -->
+<div class="modal-overlay" id="runGoalModal"><div class="modal">
+  <h3>Objetivo semanal</h3>
+  <div class="row mb">
+    <div><label>Tipo</label><select id="runGoalType">
+      <option value="km">Kilometros</option>
+      <option value="sessions">Sesiones</option>
+    </select></div>
+    <div><label>Meta</label><input type="number" id="runGoalValue" min="1" max="500" placeholder="25" inputmode="numeric"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" id="runGoalSaveBtn" style="flex:1">Guardar</button>
+    <button class="btn btn-outline" id="runGoalCloseBtn">Cancelar</button>
+  </div>
+</div></div>
+
+<!-- Run detail modal -->
+<div class="modal-overlay run-detail-modal" id="runDetailModal"><div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="run-detail-header" id="runDetailHeader"></div>
+  <div class="run-detail-stats" id="runDetailStats"></div>
+  <div class="run-detail-map" id="runDetailMap"></div>
+  <div class="run-detail-splits" id="runDetailSplits"></div>
+  <div class="run-detail-notes" id="runDetailNotes"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-outline" id="runDetailCloseBtn" style="flex:1">Cerrar</button>
+    <button class="btn" id="runDetailEditBtn">Editar</button>
+    <button class="btn btn-danger" id="runDetailDeleteBtn">Borrar</button>
+  </div>
+</div></div>
 <div class="section" id="secProgress">
   <div class="progress-select-wrap">
     <label class="progress-label">Ejercicio</label>
@@ -303,6 +459,7 @@
 <div id="toastContainer" class="toast-container"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
