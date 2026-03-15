@@ -111,6 +111,7 @@ let activeRunType = 'libre';
 let activeSegments = null;   // segments from plan session (guided mode)
 let targetDistance = 0;       // for competicion mode
 let intervalState = null;     // { rep, totalReps, isWork, segIdx, phaseStartDist, phaseStartTime, countdownStarted }
+let sessionState = null;      // { currentIdx, segStartTime, segStartDist, segDurations, completed, countdownFired }
 
 // ── DOM refs ─────────────────────────────────────────────
 
@@ -348,10 +349,27 @@ function startGpsRun(db) {
     $typeBadge.classList.remove('visible');
   }
 
-  // Init intervals if needed
-  if (activeRunType === 'intervalos') {
+  // Init session state for guided runs (from plan)
+  sessionState = null;
+  if (activeSegments && activeSegments.length > 0) {
+    sessionState = {
+      currentIdx: 0,
+      segStartTime: 0,
+      segStartDist: 0,
+      segDurations: activeSegments.map(s => s.mode === 'run-steady' ? parseSegDuration(s.duration) : 0),
+      completed: activeSegments.map(() => false),
+      countdownFired: false,
+    };
+    activeRunType = segModeToRunType(activeSegments[0]);
+    // Update badge for first segment
+    $typeBadge.textContent = activeSegments[0].name;
+    $typeBadge.style.background = ZONE_COLORS[activeSegments[0].zone] || 'var(--accent)';
+    $typeBadge.classList.add('visible');
+    if (activeSegments[0].mode === 'run-intervals') initIntervalState();
+  } else if (activeRunType === 'intervalos') {
     initIntervalState();
   }
+  renderSessionProgress();
 
   // Hide nav
   document.querySelector('nav').style.display = 'none';
@@ -458,7 +476,9 @@ function closeLiveOverlay() {
   // Reset type state
   activeSegments = null;
   intervalState = null;
+  sessionState = null;
   targetDistance = 0;
+  document.getElementById('runSessionProgress').style.display = 'none';
   $typeBadge?.classList.remove('visible');
   if ($typePanel) { $typePanel.innerHTML = ''; delete $typePanel.dataset.goalReached; }
 }
@@ -482,7 +502,7 @@ function updateLiveUI(data) {
   }
 
   // Type-specific panel update
-  updateTypePanelUI(data);
+  updateSessionUI(data);
 }
 
 function onSplitComplete(split) {
@@ -623,6 +643,132 @@ function parseSegDistance(str) {
   return m[2] === 'km' ? val : val / 1000;
 }
 
+function parseSegDuration(str) {
+  if (!str) return 0;
+  str = String(str).toLowerCase().trim();
+  let m = str.match(/^(\d+)h(\d+)?$/);
+  if (m) return parseInt(m[1]) * 3600 + (parseInt(m[2]) || 0) * 60;
+  m = str.match(/^(\d+)\s*min$/);
+  if (m) return parseInt(m[1]) * 60;
+  return 0;
+}
+
+function segModeToRunType(seg) {
+  if (seg.mode === 'run-intervals') return 'intervalos';
+  if (seg.zone === 'Z3' || seg.zone === 'Z4') return 'tempo';
+  return 'rodaje';
+}
+
+// ── Session-level tracking ───────────────────────────────
+
+function renderSessionProgress() {
+  const $progress = document.getElementById('runSessionProgress');
+  if (!sessionState || !activeSegments) { $progress.style.display = 'none'; return; }
+  $progress.style.display = '';
+  $progress.innerHTML = activeSegments.map((seg, i) => {
+    const color = ZONE_COLORS[seg.zone] || ZONE_COLORS.Z2;
+    const cls = i === sessionState.currentIdx ? 'active' : sessionState.completed[i] ? 'done' : '';
+    return `<div class="run-session-seg ${cls}" style="background:${color}">${esc(seg.name.substring(0, 12))}</div>`;
+  }).join('');
+}
+
+function updateProgressBarHighlight() {
+  document.querySelectorAll('.run-session-seg').forEach((el, i) => {
+    el.classList.toggle('active', i === sessionState.currentIdx);
+    el.classList.toggle('done', sessionState.completed[i]);
+  });
+}
+
+function updateSteadySegmentUI(data, seg) {
+  const elapsed = data.elapsed - sessionState.segStartTime;
+  const target = sessionState.segDurations[sessionState.currentIdx];
+  const remaining = Math.max(0, target - elapsed);
+  const zone = seg.zone || 'Z2';
+  const color = ZONE_COLORS[zone];
+  const label = ZONE_LABELS[zone];
+  const pct = target > 0 ? Math.min((elapsed / target) * 100, 100) : 0;
+  $typePanel.innerHTML = `<div class="run-type-steady-seg">
+    <div class="run-type-zone-bar" style="background:${color}">${zone} <span class="zone-label">· ${label}</span></div>
+    <div class="run-type-steady-info">
+      <span class="run-type-steady-name">${esc(seg.name)}</span>
+      <span class="run-type-steady-remaining">${target > 0 ? formatRunDuration(Math.floor(remaining)) : ''}</span>
+    </div>
+    ${target > 0 ? `<div class="run-type-steady-bar"><div class="run-type-steady-bar-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
+  </div>`;
+}
+
+function updateSessionUI(data) {
+  if (!sessionState || !activeSegments) {
+    updateTypePanelUI(data);
+    return;
+  }
+  const seg = activeSegments[sessionState.currentIdx];
+  if (seg.mode === 'run-steady') checkSteadySegmentTransition(data);
+
+  switch (seg.mode) {
+    case 'run-steady': updateSteadySegmentUI(data, seg); break;
+    case 'run-intervals': updateIntervalosUI(data); break;
+    default: updateTypePanelUI(data); break;
+  }
+  updateProgressBarHighlight();
+}
+
+function checkSteadySegmentTransition(data) {
+  const target = sessionState.segDurations[sessionState.currentIdx];
+  if (target <= 0) return;
+  const elapsed = data.elapsed - sessionState.segStartTime;
+  const remaining = target - elapsed;
+
+  if (remaining <= 3 && remaining > 0 && !sessionState.countdownFired) {
+    sessionState.countdownFired = true;
+    startCountdown(() => advanceSegment(data));
+    return;
+  }
+  if (remaining <= 0 && !sessionState.countdownFired) {
+    sessionState.countdownFired = true;
+    advanceSegment(data);
+  }
+}
+
+function advanceSegment(data) {
+  const oldIdx = sessionState.currentIdx;
+  sessionState.completed[oldIdx] = true;
+
+  if (oldIdx >= activeSegments.length - 1) {
+    beepAllDone();
+    renderSessionProgress();
+    return;
+  }
+
+  sessionState.currentIdx = oldIdx + 1;
+  sessionState.segStartTime = data.elapsed;
+  sessionState.segStartDist = data.distance;
+  sessionState.countdownFired = false;
+
+  const nextSeg = activeSegments[sessionState.currentIdx];
+  beepSegmentChange();
+
+  activeRunType = segModeToRunType(nextSeg);
+  $typeBadge.textContent = nextSeg.name;
+  $typeBadge.style.background = ZONE_COLORS[nextSeg.zone] || 'var(--accent)';
+
+  if (nextSeg.mode === 'run-intervals') {
+    intervalState = {
+      rep: 0, totalReps: nextSeg.reps || 0, isWork: true,
+      segIdx: sessionState.currentIdx,
+      phaseStartDist: data.distance, phaseStartTime: data.elapsed,
+      countdownStarted: false,
+      segmentDistance: parseSegDistance(nextSeg.distance),
+      recoveryDistance: parseSegDistance(nextSeg.recovery),
+    };
+    beepWorkStart();
+  } else {
+    intervalState = null;
+  }
+
+  renderSessionProgress();
+}
+
 function updateIntervalosUI(data) {
   if (!intervalState) { $typePanel.innerHTML = ''; return; }
 
@@ -712,7 +858,12 @@ function autoTransitionPhase(data) {
     // Check if all reps done
     if (intervalState.totalReps > 0 && intervalState.rep >= intervalState.totalReps) {
       beepAllDone();
-      // Move to next segment if available
+      if (sessionState) {
+        // Session state machine handles segment transition
+        advanceSegment(data);
+        return;
+      }
+      // Non-session mode: try to advance to next interval segment
       if (activeSegments && intervalState.segIdx < activeSegments.length - 1) {
         intervalState.segIdx++;
         const nextSeg = activeSegments[intervalState.segIdx];
