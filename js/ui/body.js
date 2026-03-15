@@ -105,8 +105,18 @@ export function initBody(db) {
     if (e.target.closest('.body-edit-cancel')) cancelBodyEdit(db);
   });
   $bodyDeleteBtn.addEventListener('click', () => deleteBodyLog(db));
-  $calcHeight.addEventListener('change', () => calcCalories(db));
-  $calcAge.addEventListener('change', () => calcCalories(db));
+  $calcHeight.addEventListener('change', () => {
+    if (!db.settings) db.settings = {};
+    db.settings.height = parseInt($calcHeight.value) || DEFAULT_HEIGHT;
+    saveDB(db);
+    calcCalories(db);
+  });
+  $calcAge.addEventListener('change', () => {
+    if (!db.settings) db.settings = {};
+    db.settings.age = parseInt($calcAge.value) || DEFAULT_AGE;
+    saveDB(db);
+    calcCalories(db);
+  });
 }
 
 export function cancelBodyEdit(db) {
