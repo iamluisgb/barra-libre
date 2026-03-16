@@ -302,6 +302,8 @@ input.prefilled:focus{background:var(--surface);border:none}
 
 /* Running context bar */
 .run-ctx-bar{position:sticky;top:48px;z-index:55;background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);padding:8px 20px 10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.run-ctx-bar .phase-context{background:rgba(0,85,255,.1);border-color:rgba(0,85,255,.2)}
+.run-ctx-bar .phase-context:active{background:rgba(0,85,255,.2)}
 
 /* Sub-navigation */
 .run-subnav{display:flex;background:var(--surface2);border-radius:20px;padding:2px;gap:2px;margin-bottom:16px}

@@ -30,10 +30,6 @@ export function switchTab(btn, db) {
 
   const activeStrPanel = document.querySelector('.str-panel.active')?.id;
 
-  // Hide strength context bar when on running tab
-  const contextBar = document.querySelector('.context-bar');
-  if (contextBar) contextBar.style.display = btn.dataset.sec === 'secRunning' ? 'none' : '';
-
   if (btn.dataset.sec === 'secStrength') {
     if (activeStrPanel === 'strHistory') { renderCalendar(db); renderHistory(db); }
     if (activeStrPanel === 'strProgress') initProgress(db);
