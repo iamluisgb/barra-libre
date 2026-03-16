@@ -1,10 +1,9 @@
 import { saveDB, markDeleted } from '../data.js';
+import { ROMAN } from '../constants.js';
 import { formatDate, esc, confirmDanger } from '../utils.js';
 import { getActiveProgram } from '../programs.js';
 import { renderCalendar } from './calendar.js';
 import { toast } from './toast.js';
-
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const PAGE_SIZE = 50;
 let detailWorkoutId = null;
 let historyPage = 0;

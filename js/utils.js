@@ -35,6 +35,24 @@ export function today() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
+/** Trap focus inside a modal element. Returns a cleanup function. */
+export function trapFocus(el) {
+  const focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function handler(e) {
+    if (e.key !== 'Tab') return;
+    const nodes = [...el.querySelectorAll(focusable)].filter(n => !n.disabled && n.offsetParent !== null);
+    if (nodes.length === 0) return;
+    const first = nodes[0], last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+  el.addEventListener('keydown', handler);
+  // Focus the first focusable element
+  const first = el.querySelector(focusable);
+  if (first) requestAnimationFrame(() => first.focus());
+  return () => el.removeEventListener('keydown', handler);
+}
+
 const safeArr = v => Array.isArray(v) ? v : [];
 
 function mergeById(local, remote, deleted, key = 'id') {

@@ -1,4 +1,5 @@
 import { saveDB } from '../data.js';
+import { ROMAN } from '../constants.js';
 import { getPrograms, getActiveProgram, getAllPhases } from '../programs.js';
 import { esc } from '../utils.js';
 import { toast } from './toast.js';
@@ -646,7 +647,6 @@ export function startEdit(workout, db) {
   if (workout.phase !== db.phase) {
     db.phase = workout.phase;
     saveDB(db);
-    const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
     const phases = getAllPhases();
     const phase = phases.find(p => p.id === db.phase);
     const roman = ROMAN[db.phase - 1] || db.phase;

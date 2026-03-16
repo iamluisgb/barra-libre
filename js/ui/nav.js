@@ -1,4 +1,5 @@
 import { saveDB } from '../data.js';
+import { ROMAN } from '../constants.js';
 import { getPrograms, getAllPhases } from '../programs.js';
 import { renderCalendar } from './calendar.js';
 import { renderHistory } from './history.js';
@@ -7,8 +8,6 @@ import { render1RMs } from './settings.js';
 import { initProgress } from './progress.js';
 import { populateSessions } from './training.js';
 import { refreshRunning, renderRunHistory, renderRunProgress } from './running.js';
-
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 /** Update the phase name in the context bar */
 export function updatePhaseDisplay(db) {

@@ -1,6 +1,6 @@
-import { loadDB, saveDB, setOnSave, exportData, importData, clearAllData } from './data.js';
+import { loadDB, saveDB, setOnSave, setOnQuotaError, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
-import { today, mergeDB, esc } from './utils.js';
+import { today, mergeDB, esc, trapFocus } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
 import { initNav, switchTab, switchStrTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
@@ -8,7 +8,8 @@ import { initTraining, populateSessions, startEdit, cancelEdit } from './ui/trai
 import { initCalendar } from './ui/calendar.js';
 import { initHistory } from './ui/history.js';
 import { initBody } from './ui/body.js';
-import { initDrive, backupToDrive, restoreFromDrive, listRevisions, downloadRevision, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
+import { initDrive, silentBackup, syncOnLoad, onSyncStatus, isSyncing, clearStoredToken } from './drive.js';
+import { initDriveUI } from './ui/drive-ui.js';
 import { initToast, toast } from './ui/toast.js';
 import { initRunning } from './ui/running.js';
 
@@ -133,6 +134,9 @@ async function init() {
   // Auto-sync: debounced backup on every saveDB
   const debouncedBackup = debounce((d) => silentBackup(d), DEBOUNCE_BACKUP_MS);
   setOnSave((d) => { if (isAutoSync() && !isSyncing()) debouncedBackup(d); });
+  setOnQuotaError(() => {
+    toast('Almacenamiento lleno. Exporta tus datos para no perder información.', 'error');
+  });
 
   updateSyncUI();
 
@@ -249,163 +253,8 @@ function bindEvents() {
     }
   });
 
-  // Helper: get/set label text inside settings row buttons
-  const btnLabel = (btn) => btn.querySelector('span:nth-child(2)') || btn;
-  const getBtnText = (btn) => btnLabel(btn).textContent;
-  const setBtnText = (btn, text) => { btnLabel(btn).textContent = text; };
-
-  // Google Drive manual buttons
-  document.getElementById('driveBackupBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('driveBackupBtn');
-    const status = document.getElementById('driveStatus');
-    const originalText = getBtnText(btn);
-    btn.disabled = true;
-    setBtnText(btn, 'Guardando...');
-    try {
-      await backupToDrive(db);
-      status.textContent = `Copia guardada en Drive (${new Date().toLocaleString(LOCALE)})`;
-      status.className = 'drive-status drive-success';
-    } catch (e) {
-      status.textContent = e.message === 'popup_closed_by_user'
-        ? 'Inicio de sesion cancelado'
-        : `Error: ${e.message}`;
-      status.className = 'drive-status drive-error';
-    } finally {
-      btn.disabled = false;
-      setBtnText(btn, originalText);
-    }
-  });
-
-  document.getElementById('driveRestoreBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('driveRestoreBtn');
-    const status = document.getElementById('driveStatus');
-    const originalText = getBtnText(btn);
-    btn.disabled = true;
-    setBtnText(btn, 'Cargando...');
-    try {
-      const result = await restoreFromDrive();
-      if (!result.success) {
-        status.textContent = 'No hay copia de seguridad en Drive';
-        status.className = 'drive-status drive-error';
-        return;
-      }
-      const when = new Date(result.modifiedTime).toLocaleString(LOCALE);
-      if (!confirm(`Restaurar copia del ${when}?\nLos datos se fusionarán con los actuales.`)) {
-        status.textContent = 'Restauracion cancelada';
-        status.className = 'drive-status';
-        return;
-      }
-      Object.assign(db, mergeDB(db, result.data));
-      saveDB(db);
-      status.textContent = 'Datos restaurados correctamente';
-      status.className = 'drive-status drive-success';
-      location.reload();
-    } catch (e) {
-      status.textContent = e.message === 'popup_closed_by_user'
-        ? 'Inicio de sesion cancelado'
-        : `Error: ${e.message}`;
-      status.className = 'drive-status drive-error';
-    } finally {
-      btn.disabled = false;
-      setBtnText(btn, originalText);
-    }
-  });
-
-  // Drive revision recovery
-  let _revFileId = null;
-  let _revData = null;
-
-  document.getElementById('driveRevisionsBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('driveRevisionsBtn');
-    const status = document.getElementById('driveStatus');
-    btn.disabled = true;
-    setBtnText(btn, 'Cargando revisiones...');
-    try {
-      const result = await listRevisions();
-      if (!result.success) {
-        status.textContent = 'No hay copia de seguridad en Drive';
-        status.className = 'drive-status drive-error';
-        return;
-      }
-      _revFileId = result.fileId;
-      const list = document.getElementById('revisionsList');
-      const revs = result.revisions.sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
-      if (revs.length === 0) {
-        list.innerHTML = '<p>No hay versiones anteriores disponibles.</p>';
-      } else {
-        list.innerHTML = revs.map(r => {
-          const date = new Date(r.modifiedTime).toLocaleString(LOCALE);
-          const size = r.size ? `${(parseInt(r.size) / 1024).toFixed(1)} KB` : '';
-          return `<div class="history-item" data-rev="${r.id}" style="cursor:pointer"><div class="hi-main"><div class="hi-date">${date}</div><div class="hi-session">${size}</div></div></div>`;
-        }).join('');
-      }
-      document.getElementById('revisionPreview').style.display = 'none';
-      document.getElementById('revisionsList').style.display = '';
-      document.getElementById('revisionsCloseBtn').style.display = '';
-      document.getElementById('revisionsModal').classList.add('open');
-    } catch (e) {
-      status.textContent = e.message === 'popup_closed_by_user'
-        ? 'Inicio de sesión cancelado'
-        : `Error: ${e.message}`;
-      status.className = 'drive-status drive-error';
-    } finally {
-      btn.disabled = false;
-      setBtnText(btn, 'Recuperar versión anterior');
-    }
-  });
-
-  document.getElementById('revisionsList').addEventListener('click', async (e) => {
-    const item = e.target.closest('[data-rev]');
-    if (!item) return;
-    const revId = item.dataset.rev;
-    item.style.opacity = '0.5';
-    try {
-      _revData = await downloadRevision(_revFileId, revId);
-      const workouts = (_revData.workouts || []).sort((a, b) => b.date.localeCompare(a.date));
-      const preview = document.getElementById('revisionPreviewContent');
-      document.getElementById('revisionPreviewTitle').textContent =
-        `${workouts.length} sesiones encontradas`;
-      preview.innerHTML = workouts.slice(0, REVISION_PREVIEW_LIMIT).map(w => {
-        const exList = (w.exercises || []).map(ex =>
-          `${esc(ex.name)}: ${ex.sets.map(s => `${esc(s.kg) || '-'}kg×${esc(s.reps)}`).join(', ')}`
-        ).join('<br>');
-        return `<div class="history-item"><div class="hi-main"><div class="hi-date">${w.date}</div><div class="hi-session">${w.session || ''} · ${w.program || 'barraLibre'} · Fase ${w.phase || '?'}</div></div><div class="hi-detail" style="font-size:12px;color:#666;margin-top:4px">${exList}</div></div>`;
-      }).join('');
-      if (workouts.length > REVISION_PREVIEW_LIMIT) {
-        preview.innerHTML += `<p style="color:#666;font-size:13px">... y ${workouts.length - REVISION_PREVIEW_LIMIT} sesiones más</p>`;
-      }
-      document.getElementById('revisionsList').style.display = 'none';
-      document.getElementById('revisionsCloseBtn').style.display = 'none';
-      document.getElementById('revisionPreview').style.display = '';
-    } catch (err) {
-      alert('Error al descargar revisión: ' + err.message);
-    } finally {
-      item.style.opacity = '';
-    }
-  });
-
-  document.getElementById('revisionBackBtn').addEventListener('click', () => {
-    document.getElementById('revisionPreview').style.display = 'none';
-    document.getElementById('revisionsList').style.display = '';
-    document.getElementById('revisionsCloseBtn').style.display = '';
-    _revData = null;
-  });
-
-  document.getElementById('revisionRestoreBtn').addEventListener('click', () => {
-    if (!_revData) return;
-    if (!confirm('¿Restaurar esta versión? Los datos se fusionarán con los actuales.')) return;
-    Object.assign(db, mergeDB(db, _revData));
-    saveDB(db);
-    location.reload();
-  });
-
-  document.getElementById('revisionsCloseBtn').addEventListener('click', () => {
-    document.getElementById('revisionsModal').classList.remove('open');
-  });
-  document.getElementById('revisionsModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('revisionsModal'))
-      document.getElementById('revisionsModal').classList.remove('open');
-  });
+  // Google Drive UI
+  initDriveUI(db);
 
   // Custom programs
   renderCustomProgramsList();
@@ -475,6 +324,25 @@ if ('serviceWorker' in navigator) {
     if (!refreshing) { refreshing = true; location.reload(); }
   });
 }
+
+// ── Global focus trap for modals ─────────────────────────
+const _focusTraps = new Map();
+const _modalObserver = new MutationObserver(mutations => {
+  for (const m of mutations) {
+    if (m.type !== 'attributes' || m.attributeName !== 'class') continue;
+    const el = m.target;
+    if (!el.classList.contains('modal-overlay')) continue;
+    if (el.classList.contains('open')) {
+      if (!_focusTraps.has(el)) _focusTraps.set(el, trapFocus(el));
+    } else {
+      const cleanup = _focusTraps.get(el);
+      if (cleanup) { cleanup(); _focusTraps.delete(el); }
+    }
+  }
+});
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  _modalObserver.observe(el, { attributes: true, attributeFilter: ['class'] })
+);
 
 function showUpdateBanner(worker) {
   const banner = document.createElement('div');

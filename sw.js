@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v44';
+const CACHE_NAME = 'barra-libre-v46';
 const ASSETS = [
   './',
   './app.html',
@@ -22,6 +22,11 @@ const ASSETS = [
   './programs/running/media-maraton-1h40.json',
   './js/ui/running.js',
   './js/ui/running-tracker.js',
+  './js/ui/running-audio.js',
+  './js/ui/running-helpers.js',
+  './js/ui/running-history.js',
+  './js/ui/running-progress.js',
+  './js/ui/running-plan.js',
   './js/app.js',
   './js/data.js',
   './js/programs.js',
@@ -36,6 +41,7 @@ const ASSETS = [
   './js/ui/settings.js',
   './js/ui/timer.js',
   './js/ui/toast.js',
+  './js/ui/drive-ui.js',
   './js/drive.js'
 ];
 

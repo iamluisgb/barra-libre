@@ -3,98 +3,14 @@ import { getRunningProgramList, getRunningPhases } from '../programs.js';
 import { safeNum, esc, confirmDanger, formatDate, today } from '../utils.js';
 import { toast } from './toast.js';
 import { GpsTracker } from './running-tracker.js';
+import { beep, vibrate, startCountdown, beepSplit, beepWorkStart, beepRestStart, beepAllDone, beepSegmentChange } from './running-audio.js';
+import { ZONE_COLORS, ZONE_LABELS, PACE_ZONES, RUN_TYPE_META, formatPace, formatRunDuration, parseRunDuration, estimateZone, parseSegDistance, parseSegDuration, segModeToRunType } from './running-helpers.js';
+import { renderRunHistory as _renderRunHistory, shareRunCard } from './running-history.js';
+import { renderRunProgress as _renderRunProgress } from './running-progress.js';
+import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession } from './running-plan.js';
 
-// ── Helpers ──────────────────────────────────────────────
-
-const ZONE_COLORS = { Z1: '#999', Z2: '#34c759', Z3: '#ff9f0a', Z4: '#ff6b35', Z5: '#ff3b30' };
-const ZONE_LABELS = { Z1: 'Recuperacion', Z2: 'Aerobico', Z3: 'Tempo', Z4: 'Umbral', Z5: 'VAM/VO2max' };
-
-// Pace thresholds (sec/km) for zone estimation
-const PACE_ZONES = [
-  { zone: 'Z5', max: 280 },  // < 4:40
-  { zone: 'Z4', max: 310 },  // < 5:10
-  { zone: 'Z3', max: 360 },  // < 6:00
-  { zone: 'Z2', max: 420 },  // < 7:00
-  { zone: 'Z1', max: Infinity }
-];
-
-const RUN_TYPE_META = {
-  libre:       { label: 'Libre',       desc: 'Sin estructura, corre a tu ritmo',     zone: null },
-  rodaje:      { label: 'Rodaje',      desc: 'Carrera suave en zona aerobica',       zone: 'Z2' },
-  intervalos:  { label: 'Intervalos',  desc: 'Series de alta intensidad',            zone: 'Z5' },
-  tempo:       { label: 'Tempo',       desc: 'Ritmo sostenido en zona umbral',       zone: 'Z3' },
-  fartlek:     { label: 'Fartlek',     desc: 'Cambios de ritmo libres',              zone: null },
-  cuestas:     { label: 'Cuestas',     desc: 'Trabajo de fuerza en pendiente',       zone: 'Z4' },
-  competicion: { label: 'Competicion', desc: 'Carrera con distancia objetivo',        zone: null }
-};
-
-// ── Audio/haptic engine ─────────────────────────────────
-
-let _audioCtx = null;
-function getAudioCtx() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return _audioCtx;
-}
-
-function beep(freq = 880, ms = 200) {
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = freq;
-    gain.gain.value = 0.5;
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + ms / 1000);
-  } catch (e) { /* silent fail */ }
-}
-
-function vibrate(pattern) {
-  try { navigator.vibrate?.(pattern); } catch (e) { /* silent fail */ }
-}
-
-/** 3-2-1 countdown: 3 short beeps + 1 long beep, then calls onComplete */
-function startCountdown(onComplete) {
-  beep(880, 150); vibrate(200);
-  setTimeout(() => { beep(880, 150); vibrate(200); }, 1000);
-  setTimeout(() => { beep(880, 150); vibrate(200); }, 2000);
-  setTimeout(() => { beep(1200, 400); vibrate(500); onComplete?.(); }, 3000);
-}
-
-function beepSplit() { beep(880, 150); vibrate([100, 50, 100]); }
-function beepWorkStart() { beep(1200, 150); setTimeout(() => beep(1200, 150), 200); vibrate([200, 100, 200]); }
-function beepRestStart() { beep(440, 500); vibrate(500); }
-function beepAllDone() { beep(880, 150); setTimeout(() => beep(1200, 150), 200); setTimeout(() => beep(1500, 300), 400); vibrate([200, 100, 200, 100, 400]); }
-function beepSegmentChange() { beep(880, 400); vibrate(400); }
-
-/** Format seconds as "m:ss /km" */
-export function formatPace(secPerKm) {
-  if (!secPerKm || !Number.isFinite(secPerKm) || secPerKm <= 0) return '--:--';
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-/** Format total seconds as "h:mm:ss" or "mm:ss" */
-export function formatRunDuration(totalSec) {
-  if (!totalSec || totalSec <= 0) return '00:00';
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = Math.round(totalSec % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-/** Parse "mm:ss" or "h:mm:ss" into total seconds */
-export function parseRunDuration(str) {
-  if (!str) return 0;
-  str = str.trim();
-  const parts = str.split(':').map(Number);
-  if (parts.some(isNaN)) return 0;
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  return 0;
-}
+// Re-export for backward compatibility
+export { formatPace, formatRunDuration, parseRunDuration, parseSegDuration, segModeToRunType };
 
 // ── State ────────────────────────────────────────────────
 
@@ -163,6 +79,14 @@ function cacheSelectors() {
 
 export function initRunning(db) {
   cacheSelectors();
+
+  // Wire plan session start callback
+  setOnStartSession((segs, runType, sessionLabel, d) => {
+    activeSegments = segs;
+    activeRunType = runType;
+    activePlanSession = sessionLabel;
+    startGpsRun(d);
+  });
 
   // Sub-nav tabs
   document.querySelectorAll('.run-tab').forEach(btn => {
@@ -587,14 +511,6 @@ function onSplitComplete(split) {
 
 // ── Type-specific panel updaters ─────────────────────────
 
-function estimateZone(pace) {
-  if (!pace || pace <= 0) return 'Z2';
-  for (const z of PACE_ZONES) {
-    if (pace < z.max) return z.zone;
-  }
-  return 'Z1';
-}
-
 function updateTypePanelUI(data) {
   switch (activeRunType) {
     case 'rodaje': updateRodajeUI(data); break;
@@ -703,32 +619,6 @@ function initIntervalState() {
       recoveryDistance: 0,
     };
   }
-}
-
-/** Parse "200m" or "1km" or "1.5km" to km */
-function parseSegDistance(str) {
-  if (!str) return 0;
-  str = String(str).toLowerCase().trim();
-  const m = str.match(/([\d.]+)\s*(m|km)/);
-  if (!m) return 0;
-  const val = parseFloat(m[1]);
-  return m[2] === 'km' ? val : val / 1000;
-}
-
-export function parseSegDuration(str) {
-  if (!str) return 0;
-  str = String(str).toLowerCase().trim();
-  let m = str.match(/^(\d+)h(\d+)?$/);
-  if (m) return parseInt(m[1]) * 3600 + (parseInt(m[2]) || 0) * 60;
-  m = str.match(/^(\d+)\s*min$/);
-  if (m) return parseInt(m[1]) * 60;
-  return 0;
-}
-
-export function segModeToRunType(seg) {
-  if (seg.mode === 'run-intervals') return 'intervalos';
-  if (seg.zone === 'Z3' || seg.zone === 'Z4') return 'tempo';
-  return 'rodaje';
 }
 
 // ── Session-level tracking ───────────────────────────────
@@ -1316,33 +1206,6 @@ function closeRunDetail() {
   if (detailMap) { detailMap.remove(); detailMap = null; }
 }
 
-async function shareRunCard() {
-  const card = document.getElementById('runShareCard');
-  const mapEl = document.getElementById('runDetailMap');
-  // Hide map during capture — html2canvas can't render Leaflet tiles
-  const mapDisplay = mapEl.style.display;
-  mapEl.style.display = 'none';
-  try {
-    const canvas = await html2canvas(card, { backgroundColor: '#f0f2f8', scale: 3, useCORS: true, logging: false });
-    mapEl.style.display = mapDisplay;
-    canvas.toBlob(async blob => {
-      if (!blob) { toast('Error al generar imagen', 'error'); return; }
-      const file = new File([blob], 'run.png', { type: 'image/png' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Mi carrera — Barra Libre' });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'barra-libre-run-' + new Date().toISOString().slice(0, 10) + '.png';
-        a.click(); URL.revokeObjectURL(url);
-      }
-    }, 'image/png');
-  } catch (e) {
-    mapEl.style.display = mapDisplay;
-    toast('Error al generar imagen', 'error');
-  }
-}
-
 // ── Goal ─────────────────────────────────────────────────
 
 function openGoalModal(db) {
@@ -1487,361 +1350,17 @@ function checkAndNotifyPRs(db, newLog) {
   }
 }
 
-// ── Plan tab (programs) ──────────────────────────────────
+// ── Delegated functions (from sub-modules) ───────────────
 
-function populateRunWeeks(db) {
-  const programs = getRunningProgramList();
-  if (programs.length === 0) {
-    $weekSelect.innerHTML = '<option value="">Sin programa</option>';
-    $sessionSelect.innerHTML = '<option value="">—</option>';
-    $segments.innerHTML = '<div class="empty-state">No hay programas de running disponibles</div>';
-    return;
-  }
+function populateRunWeeks(db) { _populateRunWeeks(db, $weekSelect, $sessionSelect, $segments); }
+function populateRunSessions(db) { _populateRunSessions(db, $weekSelect, $sessionSelect, $segments); }
+function loadRunSessionTemplate(db) { _loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segments); }
 
-  const progId = db.runningProgram || programs[0].id;
-  db.runningProgram = progId;
-  const phases = getRunningPhases(progId);
-  const weekKeys = Object.keys(phases).sort((a, b) => parseInt(a) - parseInt(b));
-
-  $weekSelect.innerHTML = weekKeys.map(k =>
-    `<option value="${k}" ${parseInt(k) === db.runningWeek ? 'selected' : ''}>${phases[k].name || 'Semana ' + k}</option>`
-  ).join('');
-
-  populateRunSessions(db);
-}
-
-function populateRunSessions(db) {
-  const progId = db.runningProgram;
-  const phases = getRunningPhases(progId);
-  const week = phases[$weekSelect.value];
-  if (!week || !week.sessions) {
-    $sessionSelect.innerHTML = '<option value="">—</option>';
-    $segments.innerHTML = '';
-    return;
-  }
-
-  const sessionNames = Object.keys(week.sessions);
-  $sessionSelect.innerHTML = sessionNames.map(s =>
-    `<option value="${esc(s)}">${esc(s)}</option>`
-  ).join('');
-
-  loadRunSessionTemplate(db);
-}
-
-function loadRunSessionTemplate(db) {
-  const progId = db.runningProgram;
-  const phases = getRunningPhases(progId);
-  const week = phases[$weekSelect.value];
-  if (!week) { $segments.innerHTML = ''; return; }
-
-  const sessionName = $sessionSelect.value;
-  const segs = week.sessions?.[sessionName];
-  if (!segs || segs.length === 0) { $segments.innerHTML = ''; return; }
-
-  $segments.innerHTML = segs.map(seg => {
-    const zone = seg.zone || 'Z2';
-    const color = ZONE_COLORS[zone] || ZONE_COLORS.Z2;
-    const zoneLabel = ZONE_LABELS[zone] || zone;
-
-    let info = '';
-    if (seg.mode === 'run-intervals') {
-      info = `${seg.reps} x ${seg.distance || seg.duration || ''}`;
-      if (seg.pace) info += ` a ${seg.pace}`;
-      if (seg.recovery) info += ` · Rec: ${seg.recovery}`;
-    } else {
-      info = seg.duration || '';
-      if (seg.desc) info += ` · ${seg.desc}`;
-    }
-
-    return `
-      <div class="run-segment-card" style="border-left-color:${color}">
-        <div class="run-seg-header">
-          <span class="run-seg-name">${esc(seg.name)}</span>
-          <span class="run-seg-zone" style="background:${color}">${zone}</span>
-        </div>
-        <div class="run-seg-info">${esc(info)}</div>
-      </div>`;
-  }).join('');
-
-  // Add "start this session" button
-  $segments.innerHTML += `<button class="btn run-seg-start-btn" id="runSegStartBtn" style="width:100%;margin-top:8px">Iniciar esta sesion</button>`;
-  document.getElementById('runSegStartBtn').addEventListener('click', () => {
-    activeSegments = segs;
-    activeRunType = inferRunType(segs);
-    activePlanSession = $sessionSelect.value || '';
-    startGpsRun(db);
-  });
-}
-
-function inferRunType(segments) {
-  const hasIntervals = segments.some(s => s.mode === 'run-intervals');
-  const hasZ5 = segments.some(s => s.zone === 'Z5');
-  const hasZ3Z4 = segments.some(s => s.zone === 'Z3' || s.zone === 'Z4');
-  if (hasIntervals) return 'intervalos';
-  if (hasZ3Z4 && !hasIntervals) return 'tempo';
-  return 'rodaje';
-}
-
-function populateSumSessionSelect(db) {
-  const $sel = document.getElementById('runSumSession');
-  $sel.innerHTML = '<option value="">Ninguna</option>';
-  const programs = getRunningProgramList();
-  if (programs.length === 0) return;
-
-  const progId = db.runningProgram || programs[0].id;
-  const phases = getRunningPhases(progId);
-  for (const [wk, phase] of Object.entries(phases)) {
-    if (phase.sessions) {
-      for (const name of Object.keys(phase.sessions)) {
-        $sel.innerHTML += `<option value="${esc(name)}">S${wk}: ${esc(name)}</option>`;
-      }
-    }
-  }
-}
-
-// ── History ──────────────────────────────────────────────
-
-export function renderRunHistory(db) {
-  const logs = (db.runningLogs || []).slice().sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date);
-    return b.id - a.id;
-  });
-
-  const filter = $historyFilter?.value || '';
-  const filtered = filter ? logs.filter(l => l.type === filter) : logs;
-
-  if (filtered.length === 0) {
-    $historyList.innerHTML = '<div class="empty-state">Sin sesiones de running registradas</div>';
-    return;
-  }
-
-  $historyList.innerHTML = filtered.slice(0, 50).map(log => {
-    const typeLabel = log.type ? log.type.charAt(0).toUpperCase() + log.type.slice(1) : '';
-    const pace = log.pace ? formatPace(log.pace) + ' /km' : '';
-    const dur = log.duration ? formatRunDuration(log.duration) : '';
-    const dist = log.distance ? `${log.distance} km` : '';
-
-    let details = [dist, dur, pace].filter(Boolean).join(' · ');
-    let extras = [];
-    if (log.hr) extras.push(`♥ ${log.hr}`);
-    if (log.elevation) extras.push(`↑ ${log.elevation} m`);
-    if (log.cadence) extras.push(`${log.cadence} ppm`);
-
-    const hasRoute = log.route?.coords?.length > 1;
-    const splitsPreview = log.splits?.length
-      ? log.splits.slice(0, 5).map(s => formatPace(s.pace)).join(' | ') + (log.splits.length > 5 ? ' ...' : '')
-      : '';
-
-    const minimap = hasRoute ? `<div class="run-hist-minimap"><canvas data-coords='${JSON.stringify(log.route.coords.map(c => [c[0], c[1]]))}'></canvas></div>` : '';
-
-    return `
-      <div class="run-history-card" data-id="${log.id}">
-        <div class="run-hist-body">
-          ${minimap}
-          <div class="run-hist-content">
-            <div class="run-hist-top">
-              <span class="run-hist-date">${formatDate(log.date)}</span>
-              <span class="run-hist-type">${esc(typeLabel)}</span>
-            </div>
-            ${log.session ? `<div class="run-hist-session">${esc(log.session)}</div>` : ''}
-            <div class="run-hist-details">${esc(details)}</div>
-            ${extras.length ? `<div class="run-hist-extras">${extras.join(' · ')}</div>` : ''}
-            ${splitsPreview ? `<div class="run-hist-splits">${splitsPreview}</div>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  // Render mini-map canvases
-  renderMiniMaps();
-}
-
-function renderMiniMaps() {
-  document.querySelectorAll('.run-hist-minimap canvas').forEach(canvas => {
-    try {
-      const coords = JSON.parse(canvas.dataset.coords || '[]');
-      if (coords.length < 2) return;
-      drawMiniRoute(canvas, coords);
-    } catch (e) { /* skip */ }
-  });
-}
-
-function drawMiniRoute(canvas, coords) {
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = 128;
-  const h = canvas.height = 128;
-
-  const lats = coords.map(c => c[0]);
-  const lngs = coords.map(c => c[1]);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-  const rangeLat = maxLat - minLat || 0.001;
-  const rangeLng = maxLng - minLng || 0.001;
-  const pad = 12;
-
-  ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = '#0055ff';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-
-  coords.forEach((c, i) => {
-    const x = pad + ((c[1] - minLng) / rangeLng) * (w - 2 * pad);
-    const y = pad + (1 - (c[0] - minLat) / rangeLat) * (h - 2 * pad);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-
-  ctx.stroke();
-}
-
-// ── Progress ─────────────────────────────────────────────
-
-export function renderRunProgress(db) {
-  const logs = (db.runningLogs || []).slice().sort((a, b) => a.date.localeCompare(b.date));
-
-  if (logs.length === 0) {
-    $weeklyChart.innerHTML = '<div class="empty-state">Sin datos</div>';
-    $paceChart.innerHTML = '';
-    $statsPanel.innerHTML = '';
-    return;
-  }
-
-  renderWeeklyChart(logs);
-  renderPaceChart(logs);
-  renderStats(logs);
-}
-
-function getWeekKey(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const jan1 = new Date(d.getFullYear(), 0, 1);
-  const weekNum = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
-}
-
-function renderWeeklyChart(logs) {
-  const weekMap = new Map();
-  for (const log of logs) {
-    if (!log.distance) continue;
-    const wk = getWeekKey(log.date);
-    weekMap.set(wk, (weekMap.get(wk) || 0) + log.distance);
-  }
-
-  const weeks = [...weekMap.entries()].slice(-12);
-  if (weeks.length === 0) {
-    $weeklyChart.innerHTML = '<div class="empty-state">Sin datos de distancia</div>';
-    return;
-  }
-
-  const maxKm = Math.max(...weeks.map(w => w[1]));
-  $weeklyChart.innerHTML = `
-    <div class="run-bar-chart">
-      ${weeks.map(([wk, km]) => {
-        const pct = maxKm > 0 ? (km / maxKm) * 100 : 0;
-        const label = wk.split('-W')[1];
-        return `<div class="run-bar-col">
-          <div class="run-bar-value">${km.toFixed(1)}</div>
-          <div class="run-bar" style="height:${Math.max(pct, 4)}%"></div>
-          <div class="run-bar-label">S${label}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-}
-
-function renderPaceChart(logs) {
-  const paceLogs = logs.filter(l => l.pace && l.pace > 0 && l.distance >= 1);
-  if (paceLogs.length < 2) {
-    $paceChart.innerHTML = '<div class="empty-state">Necesitas al menos 2 sesiones con distancia >= 1km</div>';
-    return;
-  }
-
-  const paces = paceLogs.map(l => l.pace);
-  const minPace = Math.min(...paces);
-  const maxPace = Math.max(...paces);
-  const range = maxPace - minPace || 1;
-
-  const points = paceLogs.map((l, i) => {
-    const x = (i / (paceLogs.length - 1)) * 100;
-    const y = 100 - ((l.pace - minPace) / range) * 80 - 10;
-    return { x, y, pace: l.pace, date: l.date };
-  });
-
-  const polyline = points.map(p => `${p.x},${p.y}`).join(' ');
-
-  $paceChart.innerHTML = `
-    <svg class="run-pace-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
-      ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="2" fill="var(--accent)" vector-effect="non-scaling-stroke"/>`).join('')}
-    </svg>
-    <div class="run-pace-labels">
-      <span>${formatPace(maxPace)} /km</span>
-      <span>${formatPace(minPace)} /km</span>
-    </div>
-    <div class="run-pace-dates">
-      <span>${formatDate(paceLogs[0].date)}</span>
-      <span>${formatDate(paceLogs[paceLogs.length - 1].date)}</span>
-    </div>`;
-}
-
-function renderStats(logs) {
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const monthLogs = logs.filter(l => l.date?.startsWith(thisMonth));
-
-  const totalKm = logs.reduce((s, l) => s + (l.distance || 0), 0);
-  const monthKm = monthLogs.reduce((s, l) => s + (l.distance || 0), 0);
-  const withPace = logs.filter(l => l.pace > 0);
-  const avgPace = withPace.length ? withPace.reduce((s, l) => s + l.pace, 0) / withPace.length : 0;
-  const bestPace = withPace.length ? Math.min(...withPace.map(l => l.pace)) : 0;
-
-  $statsPanel.innerHTML = `
-    <div class="run-stats-grid">
-      <div class="run-stat-card"><div class="run-stat-value">${totalKm.toFixed(1)}</div><div class="run-stat-label">Km totales</div></div>
-      <div class="run-stat-card"><div class="run-stat-value">${monthKm.toFixed(1)}</div><div class="run-stat-label">Km este mes</div></div>
-      <div class="run-stat-card"><div class="run-stat-value">${formatPace(avgPace)}</div><div class="run-stat-label">Ritmo medio</div></div>
-      <div class="run-stat-card"><div class="run-stat-value">${formatPace(bestPace)}</div><div class="run-stat-label">Mejor ritmo</div></div>
-      <div class="run-stat-card"><div class="run-stat-value">${logs.length}</div><div class="run-stat-label">Sesiones totales</div></div>
-      <div class="run-stat-card"><div class="run-stat-value">${monthLogs.length}</div><div class="run-stat-label">Sesiones este mes</div></div>
-    </div>`;
-}
-
-// ── Refresh (called when switching to running tab) ───────
+export function renderRunHistory(db) { _renderRunHistory(db, $historyFilter, $historyList); }
+export function renderRunProgress(db) { _renderRunProgress(db, $weeklyChart, $paceChart, $statsPanel); }
 
 export function refreshRunning(db) {
   updateRunContextBar(db);
   renderGoalWidget(db);
   renderPRs(db);
-}
-
-function updateRunContextBar(db) {
-  const programs = getRunningProgramList();
-  const prog = programs.find(p => p.id === db.runningProgram);
-  document.getElementById('runProgramName').textContent = prog?.name || 'Sin programa';
-  const phases = getRunningPhases(db.runningProgram);
-  const week = phases[db.runningWeek];
-  document.getElementById('runWeekName').textContent = week?.name || `Semana ${db.runningWeek || 1}`;
-}
-
-function renderRunProgramModal(db) {
-  const programs = getRunningProgramList();
-  const active = db.runningProgram || '';
-  document.getElementById('runProgramOptions').innerHTML = programs.map(p =>
-    `<div class="prog-modal-item${p.id === active ? ' active' : ''}" data-prog="${esc(p.id)}">
-      <div style="flex:1"><div class="prog-modal-name">${esc(p.name)}</div><div class="prog-modal-desc">${esc(p.desc)}</div></div>
-    </div>`
-  ).join('') || '<div class="empty-state">No hay programas de running</div>';
-}
-
-function renderRunWeekModal(db) {
-  const phases = getRunningPhases(db.runningProgram);
-  const weekKeys = Object.keys(phases).sort((a, b) => parseInt(a) - parseInt(b));
-  const current = db.runningWeek || 1;
-  document.getElementById('runWeekOptions').innerHTML = weekKeys.map(k => {
-    const w = phases[k];
-    return `<div class="phase-option${parseInt(k) === current ? ' selected' : ''}" data-week="${k}">
-      <div class="po-num">${k}</div>
-      <div class="po-text"><div class="po-title">${w.name || 'Semana ' + k}</div><div class="po-desc">${w.desc || Object.keys(w.sessions || {}).join(', ')}</div></div>
-    </div>`;
-  }).join('');
 }

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Barra Libre">
@@ -26,7 +26,7 @@
     <span id="phaseName">Fase I</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 3.5L5 6.5L7.5 3.5"/></svg>
   </div>
 </div>
-<div class="section active" id="secStrength">
+<main><div class="section active" id="secStrength" aria-label="Fuerza">
   <div class="str-subnav">
     <button class="str-tab active" data-str="strTrain">Entreno</button>
     <button class="str-tab" data-str="strHistory">Historial</button>
@@ -74,7 +74,7 @@
     <div id="progressHistory"></div>
   </div>
 </div>
-<div class="section" id="secBody">
+<div class="section" id="secBody" aria-label="Cuerpo">
   <div class="mb2"><label>Fecha registro</label><input type="date" id="bodyDate"></div>
   <div class="sec-title sec-title-accent">Medidas (cm / kg)</div>
   <div id="bodyEditBanner" style="display:none">
@@ -92,7 +92,7 @@
   <div id="caloriesPanel"></div>
   <div class="sec-title sec-title-accent sec-title-mt">Historial Corporal</div><div id="bodyHistory"></div>
 </div>
-<div class="section" id="secSettings">
+<div class="section" id="secSettings" aria-label="Ajustes">
   <div class="sec-title sec-title-accent">Records personales</div>
   <div id="rmPanel"></div>
 
@@ -174,23 +174,23 @@
 
   <div id="appVersion" style="text-align:center;padding:24px 0 8px;font-size:.7rem;color:var(--text3);font-weight:500"></div>
 </div>
-<div class="modal-overlay" id="programModal"><div class="modal"><h3>Seleccionar Programa</h3>
+<div class="modal-overlay" role="dialog" aria-modal="true" id="programModal"><div class="modal"><h3>Seleccionar Programa</h3>
   <div id="programOptions"></div>
   <button class="btn btn-outline" id="programModalClose">Cerrar</button>
 </div></div>
-<div class="modal-overlay" id="phaseModal"><div class="modal"><h3>Seleccionar Fase</h3>
+<div class="modal-overlay" role="dialog" aria-modal="true" id="phaseModal"><div class="modal"><h3>Seleccionar Fase</h3>
   <div id="phaseOptions"></div>
   <button class="btn btn-outline">Cerrar</button>
 </div></div>
-<div class="modal-overlay" id="runProgramModal"><div class="modal"><h3>Programa de Running</h3>
+<div class="modal-overlay" role="dialog" aria-modal="true" id="runProgramModal"><div class="modal"><h3>Programa de Running</h3>
   <div id="runProgramOptions"></div>
   <button class="btn btn-outline" id="runProgramModalClose">Cerrar</button>
 </div></div>
-<div class="modal-overlay" id="runWeekModal"><div class="modal"><h3>Seleccionar Semana</h3>
+<div class="modal-overlay" role="dialog" aria-modal="true" id="runWeekModal"><div class="modal"><h3>Seleccionar Semana</h3>
   <div id="runWeekOptions"></div>
   <button class="btn btn-outline" id="runWeekModalClose">Cerrar</button>
 </div></div>
-<div class="modal-overlay detail-modal" id="detailModal"><div class="modal">
+<div class="modal-overlay detail-modal" role="dialog" aria-modal="true" id="detailModal"><div class="modal">
   <div id="shareCard">
     <div class="share-bubble-1"></div>
     <div class="share-bubble-2"></div>
@@ -227,7 +227,7 @@
     <button class="btn pr-confirm-btn">¡Vamos! 💪</button>
   </div>
 </div>
-<div class="section" id="secRunning">
+<div class="section" id="secRunning" aria-label="Running">
   <div class="run-ctx-bar">
     <div class="phase-context" id="runProgramContext">
       <span id="runProgramName">—</span>
@@ -324,7 +324,7 @@
 </div>
 
 <!-- Run Type Picker Modal -->
-<div class="modal-overlay" id="runTypeModal"><div class="modal run-type-picker">
+<div class="modal-overlay" role="dialog" aria-modal="true" id="runTypeModal"><div class="modal run-type-picker">
   <h3>Tipo de carrera</h3>
   <div class="run-type-grid" id="runTypeGrid"></div>
   <div class="run-type-extra" id="runTypeExtra" style="display:none">
@@ -411,7 +411,7 @@
 </div>
 
 <!-- Manual run entry modal -->
-<div class="modal-overlay" id="runManualModal"><div class="modal">
+<div class="modal-overlay" role="dialog" aria-modal="true" id="runManualModal"><div class="modal">
   <h3>Registro manual</h3>
   <div class="row mb">
     <div><label>Fecha</label><input type="date" id="runDate"></div>
@@ -453,7 +453,7 @@
 </div></div>
 
 <!-- Goal settings modal -->
-<div class="modal-overlay" id="runGoalModal"><div class="modal">
+<div class="modal-overlay" role="dialog" aria-modal="true" id="runGoalModal"><div class="modal">
   <h3>Objetivo semanal</h3>
   <div class="row mb">
     <div><label>Tipo</label><select id="runGoalType">
@@ -469,7 +469,7 @@
 </div></div>
 
 <!-- Run detail modal -->
-<div class="modal-overlay run-detail-modal" id="runDetailModal"><div class="modal" style="max-height:90vh;overflow-y:auto">
+<div class="modal-overlay run-detail-modal" role="dialog" aria-modal="true" id="runDetailModal"><div class="modal" style="max-height:90vh;overflow-y:auto">
   <div id="runShareCard">
     <div class="share-bubble-1"></div>
     <div class="share-bubble-2"></div>
@@ -492,13 +492,14 @@
     <button class="btn btn-danger" id="runDetailDeleteBtn">Borrar</button>
   </div>
 </div></div>
-<nav>
+</main>
+<nav aria-label="Navegacion principal">
   <button class="active" data-sec="secStrength"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M4 17.5H2V15l3-3h14l3 3v2.5h-2M9 14.5V6M9 6l6 2v6.5"/></svg><span>Fuerza</span></button>
   <button data-sec="secRunning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="4" r="2"/><path d="M13 7l-1.5 7.5L15 12l3 3.5"/><path d="M8 14l-2 8"/><path d="M11.5 14.5L9 20"/><path d="M7 7l4 0"/></svg><span>Running</span></button>
   <button data-sec="secBody"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4zM8 10v4l-3 8M16 10v4l3 8M10 14h4"/></svg><span>Cuerpo</span></button>
   <button data-sec="secSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>Mas</span></button>
 </nav>
-<div class="modal-overlay" id="revisionsModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
+<div class="modal-overlay" role="dialog" aria-modal="true" id="revisionsModal"><div class="modal" style="max-height:80vh;overflow-y:auto">
   <h3>Versiones anteriores en Drive</h3>
   <div id="revisionsList"></div>
   <div id="revisionPreview" style="display:none">
@@ -511,7 +512,7 @@
   </div>
   <button class="btn btn-outline" id="revisionsCloseBtn" style="margin-top:12px">Cerrar</button>
 </div></div>
-<div id="toastContainer" class="toast-container"></div>
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
