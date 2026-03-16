@@ -122,6 +122,10 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .sc-row-danger{color:var(--red)}
 .sc-row-danger .sc-row-icon{background:var(--red)}
 .settings-card-danger{margin-top:24px}
+.input-hint{font-size:.65rem;color:var(--text2);margin-top:2px}
+.zones-preview{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 14px}
+.zp-chip{font-size:.65rem;font-weight:700;color:#fff;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.zp-hint{font-size:.65rem;color:var(--text3);font-style:italic}
 ::-webkit-scrollbar{width:0}
 @media(min-width:500px){body{max-width:500px;margin:0 auto}nav{max-width:500px;left:50%;transform:translateX(-50%)}}
 

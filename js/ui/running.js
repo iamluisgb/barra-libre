@@ -4,7 +4,7 @@ import { safeNum, esc, confirmDanger, formatDate, today } from '../utils.js';
 import { toast } from './toast.js';
 import { GpsTracker } from './running-tracker.js';
 import { beep, vibrate, startCountdown, beepSplit, beepWorkStart, beepRestStart, beepAllDone, beepSegmentChange } from './running-audio.js';
-import { ZONE_COLORS, ZONE_LABELS, PACE_ZONES, RUN_TYPE_META, formatPace, formatRunDuration, parseRunDuration, estimateZone, parseSegDistance, parseSegDuration, segModeToRunType } from './running-helpers.js';
+import { ZONE_COLORS, ZONE_LABELS, getPaceZones, RUN_TYPE_META, formatPace, formatRunDuration, parseRunDuration, estimateZone, parseSegDistance, parseSegDuration, segModeToRunType } from './running-helpers.js';
 import { renderRunHistory as _renderRunHistory, shareRunCard } from './running-history.js';
 import { renderRunProgress as _renderRunProgress } from './running-progress.js';
 import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession } from './running-plan.js';
@@ -741,7 +741,7 @@ function updateTempoUI(data) {
 
 function updateFartlekUI(data) {
   const pace = data.currentPace > 60 && data.currentPace < 1200 ? data.currentPace : data.avgPace;
-  const zone = estimateZone(pace);
+  const zone = estimateZone(pace, getPaceZones(db));
   const color = ZONE_COLORS[zone];
   const label = ZONE_LABELS[zone];
   $typePanel.innerHTML = `<div class="run-type-zone-bar" style="background:${color}">${zone} <span class="zone-label">· ${label}</span></div>`;

@@ -1,5 +1,6 @@
 import { loadDB, saveDB, setOnSave, setOnQuotaError, setOnExternalChange, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
+import { formatPace, parseRunDuration, formatRunDuration, getPaceZones, ZONE_COLORS } from './ui/running-helpers.js';
 import { today, mergeDB, esc, trapFocus } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
@@ -117,6 +118,31 @@ async function init() {
   updatePhaseUI(db);
   document.getElementById('calcHeight').value = db.settings?.height || DEFAULT_HEIGHT;
   document.getElementById('calcAge').value = db.settings?.age || DEFAULT_AGE;
+
+  // Race 5K input for personalized pace zones
+  const $race5k = document.getElementById('settingsRace5k');
+  const $zonesPreview = document.getElementById('settingsZonesPreview');
+  if (db.settings.race5k > 0) $race5k.value = formatRunDuration(db.settings.race5k);
+  function updateZonesPreview() {
+    const sec = parseRunDuration($race5k.value);
+    if (sec > 0) {
+      db.settings.race5k = sec;
+      saveDB(db);
+      const zones = getPaceZones(db);
+      $zonesPreview.innerHTML = zones.map(z => {
+        const color = ZONE_COLORS[z.zone];
+        const pace = z.max === Infinity ? '∞' : formatPace(z.max);
+        return `<span class="zp-chip" style="background:${color}">${z.zone} &lt;${pace}</span>`;
+      }).join('');
+    } else {
+      db.settings.race5k = 0;
+      saveDB(db);
+      $zonesPreview.innerHTML = '<span class="zp-hint">Sin marca → zonas por defecto</span>';
+    }
+  }
+  $race5k.addEventListener('input', updateZonesPreview);
+  updateZonesPreview();
+
   document.getElementById('timerBar').classList.add('active');
   initTimer();
   populateSessions(db);

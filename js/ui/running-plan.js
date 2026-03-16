@@ -1,7 +1,7 @@
 import { esc } from '../utils.js';
 import { getRunningProgramList, getRunningPhases } from '../programs.js';
 import { saveDB } from '../data.js';
-import { ZONE_COLORS, ZONE_LABELS, parseSegDistance, parseSegDuration, estimateZone } from './running-helpers.js';
+import { ZONE_COLORS, ZONE_LABELS, parseSegDistance, parseSegDuration, estimateZone, getPaceZones } from './running-helpers.js';
 
 // ── Plan tab (programs) ──────────────────────────────────
 
@@ -53,13 +53,13 @@ function parsePaceToSec(pace) {
   return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
 }
 
-function inferZone(seg) {
+function inferZone(seg, db) {
   if (seg.zone) return seg.zone;
-  if (seg.mode === 'run-intervals' && seg.pace) return estimateZone(parsePaceToSec(seg.pace));
+  if (seg.mode === 'run-intervals' && seg.pace) return estimateZone(parsePaceToSec(seg.pace), getPaceZones(db));
   return 'Z2';
 }
 
-function buildSegmentBar(segs) {
+function buildSegmentBar(segs, db) {
   const blocks = [];
   const GAP = { dur: 0, gap: true };
 
@@ -67,7 +67,7 @@ function buildSegmentBar(segs) {
     if (i > 0) blocks.push(GAP); // gap between main segments
 
     const seg = segs[i];
-    const zone = inferZone(seg);
+    const zone = inferZone(seg, db);
     const color = ZONE_COLORS[zone] || ZONE_COLORS.Z2;
 
     if (seg.mode === 'run-intervals' && seg.reps > 0) {
@@ -105,8 +105,8 @@ export function loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segment
   const segs = week.sessions?.[sessionName];
   if (!segs || segs.length === 0) { $segments.innerHTML = ''; return; }
 
-  $segments.innerHTML = buildSegmentBar(segs) + segs.map(seg => {
-    const zone = inferZone(seg);
+  $segments.innerHTML = buildSegmentBar(segs, db) + segs.map(seg => {
+    const zone = inferZone(seg, db);
     const color = ZONE_COLORS[zone] || ZONE_COLORS.Z2;
 
     let info = '';

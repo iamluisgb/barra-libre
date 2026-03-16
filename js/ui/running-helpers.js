@@ -3,13 +3,56 @@
 export const ZONE_COLORS = { Z1: '#999', Z2: '#34c759', Z3: '#ff9f0a', Z4: '#ff6b35', Z5: '#ff3b30' };
 export const ZONE_LABELS = { Z1: 'Recuperacion', Z2: 'Aerobico', Z3: 'Tempo', Z4: 'Umbral', Z5: 'VAM/VO2max' };
 
-export const PACE_ZONES = [
+// ── VDOT-based pace zones (Jack Daniels) ─────────────────
+
+const DEFAULT_PACE_ZONES = [
   { zone: 'Z5', max: 280 },
   { zone: 'Z4', max: 310 },
   { zone: 'Z3', max: 360 },
   { zone: 'Z2', max: 420 },
   { zone: 'Z1', max: Infinity }
 ];
+
+/** @deprecated Use getPaceZones(db) instead */
+export const PACE_ZONES = DEFAULT_PACE_ZONES;
+
+function calcVDOT(distMeters, timeSec) {
+  const T = timeSec / 60;
+  const V = distMeters / T;
+  const o2cost = -4.60 + 0.182258 * V + 0.000104 * V * V;
+  const pctVO2 = 0.8 + 0.1894393 * Math.exp(-0.012778 * T)
+                     + 0.2989558 * Math.exp(-0.1932605 * T);
+  return o2cost / pctVO2;
+}
+
+function velocityAtVO2(targetVO2) {
+  const a = 0.000104, b = 0.182258, c = -4.60 - targetVO2;
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return 200; // fallback ~5:00/km
+  return (-b + Math.sqrt(disc)) / (2 * a);
+}
+
+function paceAtPct(vdot, pct) {
+  const vel = velocityAtVO2(vdot * pct);
+  return vel > 0 ? 1000 / vel * 60 : 600;
+}
+
+export function calcPaceZones(raceDistM, raceTimeSec) {
+  const vdot = calcVDOT(raceDistM, raceTimeSec);
+  return [
+    { zone: 'Z5', max: Math.round(paceAtPct(vdot, 1.00)) },
+    { zone: 'Z4', max: Math.round(paceAtPct(vdot, 0.88)) },
+    { zone: 'Z3', max: Math.round(paceAtPct(vdot, 0.84)) },
+    { zone: 'Z2', max: Math.round(paceAtPct(vdot, 0.74)) },
+    { zone: 'Z1', max: Infinity }
+  ];
+}
+
+export function getPaceZones(db) {
+  const race5k = db?.settings?.race5k;
+  if (race5k && race5k > 0) return calcPaceZones(5000, race5k);
+  return DEFAULT_PACE_ZONES;
+}
 
 export const RUN_TYPE_META = {
   libre:       { label: 'Libre',       desc: 'Sin estructura, corre a tu ritmo',     zone: null },
@@ -50,9 +93,10 @@ export function parseRunDuration(str) {
   return 0;
 }
 
-export function estimateZone(pace) {
+export function estimateZone(pace, zones) {
   if (!pace || pace <= 0) return 'Z2';
-  for (const z of PACE_ZONES) {
+  const pz = zones || DEFAULT_PACE_ZONES;
+  for (const z of pz) {
     if (pace < z.max) return z.zone;
   }
   return 'Z1';

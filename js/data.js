@@ -19,9 +19,9 @@ if (typeof window !== 'undefined') {
   });
 }
 
-const CURRENT_SCHEMA = 2;
+const CURRENT_SCHEMA = 3;
 
-const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32 } };
+const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32, race5k: 0 } };
 
 /** Schema migrations — each takes a db object and mutates it in place */
 const migrations = [
@@ -35,6 +35,11 @@ const migrations = [
     }
     if (!db.runningLogs) db.runningLogs = [];
     if (!db.customPrograms) db.customPrograms = [];
+  },
+  // v2 → v3: add race5k to settings for personalized pace zones
+  (db) => {
+    if (!db.settings) db.settings = {};
+    if (!db.settings.race5k) db.settings.race5k = 0;
   },
 ];
 
