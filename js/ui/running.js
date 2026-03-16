@@ -12,6 +12,54 @@ import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populate
 // Re-export for backward compatibility
 export { formatPace, formatRunDuration, parseRunDuration, parseSegDuration, segModeToRunType };
 
+// ── Active run persistence (survive reload) ──────────────
+
+const RUN_SAVE_KEY = 'barra-libre-activeRun';
+let _lastSaveTime = 0;
+
+function saveActiveRun() {
+  // Throttle: save at most every 5 seconds
+  const now = Date.now();
+  if (now - _lastSaveTime < 5000) return;
+  _lastSaveTime = now;
+
+  try {
+    const snap = {
+      tracker: tracker.serialize(),
+      activeRunType,
+      activeSegments,
+      activePlanSession,
+      targetDistance,
+      intervalState,
+      sessionState,
+      savedAt: now,
+    };
+    localStorage.setItem(RUN_SAVE_KEY, JSON.stringify(snap));
+  } catch (e) {
+    // localStorage full or unavailable — ignore silently
+  }
+}
+
+function clearActiveRun() {
+  localStorage.removeItem(RUN_SAVE_KEY);
+}
+
+function getActiveRunSnap() {
+  try {
+    const raw = localStorage.getItem(RUN_SAVE_KEY);
+    if (!raw) return null;
+    const snap = JSON.parse(raw);
+    // Discard if older than 12 hours
+    if (Date.now() - snap.savedAt > 12 * 3600 * 1000) {
+      clearActiveRun();
+      return null;
+    }
+    return snap;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ── State ────────────────────────────────────────────────
 
 let editingId = null;
@@ -247,12 +295,128 @@ export function initRunning(db) {
   );
 
   // Tracker callbacks
-  tracker.onUpdate(data => updateLiveUI(data));
+  tracker.onUpdate(data => { updateLiveUI(data); saveActiveRun(); });
   tracker.onSplit(split => onSplitComplete(split));
   tracker.onError(msg => {
     toast(msg, 'error');
     if (tracker.state === 'idle') closeLiveOverlay();
   });
+
+  // Check for a previously interrupted run
+  checkAndRestoreRun(db);
+}
+
+// ── Restore interrupted run ──────────────────────────────
+
+function checkAndRestoreRun(db) {
+  const snap = getActiveRunSnap();
+  if (!snap || !snap.tracker) return;
+
+  const elapsed = snap.tracker.elapsed || 0;
+  const dist = snap.tracker.distance || 0;
+  const ago = Math.round((Date.now() - snap.savedAt) / 60000);
+
+  // Show a confirmation toast with restore/discard options
+  const msg = `Carrera interrumpida (${formatRunDuration(Math.round(elapsed))}, ${dist.toFixed(2)} km, hace ${ago} min). ¿Recuperar?`;
+  showRestorePrompt(msg, () => restoreRun(snap, db), () => clearActiveRun());
+}
+
+function showRestorePrompt(msg, onRestore, onDiscard) {
+  const el = document.createElement('div');
+  el.className = 'toast-restore';
+  el.innerHTML = `<div class="toast-restore-msg">${msg}</div>
+    <div class="toast-restore-actions">
+      <button class="toast-restore-yes">Recuperar</button>
+      <button class="toast-restore-no">Descartar</button>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+
+  el.querySelector('.toast-restore-yes').addEventListener('click', () => {
+    el.remove();
+    onRestore();
+  });
+  el.querySelector('.toast-restore-no').addEventListener('click', () => {
+    el.remove();
+    onDiscard();
+  });
+}
+
+function restoreRun(snap, db) {
+  // Restore module-level state
+  activeRunType = snap.activeRunType || 'libre';
+  activeSegments = snap.activeSegments || null;
+  activePlanSession = snap.activePlanSession || '';
+  targetDistance = snap.targetDistance || 0;
+  intervalState = snap.intervalState || null;
+  sessionState = snap.sessionState || null;
+
+  // Restore tracker
+  const restored = tracker.restore(snap.tracker);
+  if (!restored) { clearActiveRun(); return; }
+
+  // Show overlay in correct state
+  $overlay.classList.add('active');
+  $liveScreen.style.display = '';
+  $summaryScreen.style.display = 'none';
+  document.querySelector('nav').style.display = 'none';
+
+  // Set UI for current tracker state
+  if (tracker.state === 'paused') {
+    $pauseBtn.classList.add('paused');
+    $liveStatus.textContent = 'EN PAUSA';
+    $liveStatus.classList.add('paused');
+  } else {
+    $pauseBtn.classList.remove('paused');
+    $liveStatus.textContent = 'EN CURSO';
+    $liveStatus.classList.remove('paused');
+  }
+
+  $lockBtn.classList.toggle('wake-active', tracker.wakeLockActive);
+
+  // Set type badge
+  const meta = RUN_TYPE_META[activeRunType];
+  if (meta && activeRunType !== 'libre') {
+    $typeBadge.textContent = meta.label;
+    $typeBadge.style.background = meta.zone ? ZONE_COLORS[meta.zone] : 'var(--accent)';
+    $typeBadge.classList.add('visible');
+  } else {
+    $typeBadge.classList.remove('visible');
+  }
+
+  // Restore splits UI
+  $liveSplits.innerHTML = '';
+  for (const split of tracker.splits) {
+    const el = document.createElement('div');
+    el.className = 'run-live-split';
+    el.innerHTML = `<span class="run-live-split-km">Km ${split.km}</span><span class="run-live-split-pace">${formatPace(split.pace)} /km</span>`;
+    $liveSplits.prepend(el);
+  }
+
+  // Restore live stats
+  $liveTimer.textContent = formatRunDuration(Math.floor(tracker.elapsed));
+  $liveDist.textContent = tracker.distance.toFixed(2);
+  $livePace.textContent = tracker.avgPace > 0 ? formatPace(tracker.avgPace) : '--:--';
+
+  // Restore session progress if applicable
+  renderSessionProgress();
+
+  // Init map
+  initLiveMap();
+
+  // Draw existing route on map
+  if (liveMap && tracker.coords.length > 0) {
+    setTimeout(() => {
+      for (const c of tracker.coords) {
+        if (livePolyline) livePolyline.addLatLng([c[0], c[1]]);
+      }
+      const last = tracker.coords[tracker.coords.length - 1];
+      if (liveMarker) liveMarker.setLatLng([last[0], last[1]]);
+      liveMap.setView([last[0], last[1]], liveMap.getZoom());
+    }, 300);
+  }
+
+  toast('Carrera recuperada');
 }
 
 // ── Run type picker ──────────────────────────────────────
@@ -371,6 +535,7 @@ async function toggleLock() {
 }
 
 function stopGpsRun(db) {
+  clearActiveRun();
   const result = tracker.stop();
   if (!result) { closeLiveOverlay(); return; }
 
@@ -423,6 +588,7 @@ function stopGpsRun(db) {
 }
 
 function saveGpsRun(db) {
+  clearActiveRun();
   const result = JSON.parse($summaryScreen.dataset.result || '{}');
   if (!result.distance && !result.duration) { toast('Sin datos para guardar', 'warn'); return; }
 
@@ -459,10 +625,12 @@ function saveGpsRun(db) {
 }
 
 function discardGpsRun() {
+  clearActiveRun();
   closeLiveOverlay();
 }
 
 function closeLiveOverlay() {
+  clearActiveRun();
   $overlay.classList.remove('active');
   document.querySelector('nav').style.display = '';
   // Cleanup maps

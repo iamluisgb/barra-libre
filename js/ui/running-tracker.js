@@ -154,6 +154,71 @@ export class GpsTracker {
     };
   }
 
+  // ── Serialize / Restore (survive page reload) ───────────
+
+  serialize() {
+    return {
+      state: this.state,
+      startedAt: this._startTime,
+      totalPaused: this._totalPaused,
+      pauseStart: this._pauseStart,
+      elapsed: this.elapsed,
+      distance: this.distance,
+      currentPace: this.currentPace,
+      avgPace: this.avgPace,
+      splits: this.splits,
+      coords: this.coords,
+      lastPos: this._lastPos,
+      lastSplitDist: this._lastSplitDist,
+      lastSplitTime: this._lastSplitTime,
+      recentPoints: this._recentPoints,
+      wakeLockEnabled: this._wakeLockEnabled,
+      // Wall-clock anchor: convert performance.now() to Date.now() for cross-reload
+      wallClockAnchor: Date.now(),
+      perfNowAnchor: performance.now(),
+    };
+  }
+
+  restore(snap) {
+    if (!snap || !snap.state || snap.state === 'idle') return false;
+
+    // Reconstruct performance.now()-based times using wall-clock delta
+    const wallDelta = Date.now() - snap.wallClockAnchor; // ms since snapshot
+    const perfOffset = performance.now() - (snap.perfNowAnchor + wallDelta);
+
+    this.state = snap.state;
+    this._startTime = snap.startedAt + perfOffset;
+    this._totalPaused = snap.totalPaused;
+    this._pauseStart = snap.pauseStart ? snap.pauseStart + perfOffset : 0;
+    this.elapsed = snap.elapsed;
+    this.distance = snap.distance;
+    this.currentPace = snap.currentPace;
+    this.avgPace = snap.avgPace;
+    this.splits = snap.splits || [];
+    this.coords = snap.coords || [];
+    this._lastPos = snap.lastPos;
+    this._lastSplitDist = snap.lastSplitDist;
+    this._lastSplitTime = snap.lastSplitTime;
+    this._recentPoints = snap.recentPoints || [];
+    this._wakeLockEnabled = snap.wakeLockEnabled ?? true;
+
+    // If was tracking, resume GPS + timer
+    if (this.state === 'tracking') {
+      this._updateElapsed();
+      this._startGps();
+      this._startTimer();
+      this._startBgPoll();
+      this._bindVisibility();
+      if (this._wakeLockEnabled) this._acquireWakeLock();
+    } else if (this.state === 'paused') {
+      // Paused: just recalc elapsed, don't start GPS
+      this._updateElapsed();
+      this._bindVisibility();
+    }
+
+    return true;
+  }
+
   // ── Wake Lock (opt-in: keeps screen on) ─────────────────
   // Called by the UI when user taps the lock/unlock button.
   // Returns the new state (true = screen stays on, false = screen can sleep).
