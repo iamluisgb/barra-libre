@@ -715,7 +715,7 @@ function parseSegDistance(str) {
   return m[2] === 'km' ? val : val / 1000;
 }
 
-function parseSegDuration(str) {
+export function parseSegDuration(str) {
   if (!str) return 0;
   str = String(str).toLowerCase().trim();
   let m = str.match(/^(\d+)h(\d+)?$/);
@@ -725,7 +725,7 @@ function parseSegDuration(str) {
   return 0;
 }
 
-function segModeToRunType(seg) {
+export function segModeToRunType(seg) {
   if (seg.mode === 'run-intervals') return 'intervalos';
   if (seg.zone === 'Z3' || seg.zone === 'Z4') return 'tempo';
   return 'rodaje';

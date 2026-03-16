@@ -48,12 +48,12 @@ function exBeepWork() { exBeep(1200, 150); setTimeout(() => exBeep(1200, 150), 2
 function exBeepRest() { exBeep(440, 500); exVibrate(500); }
 function exBeepDone() { playAlarm(); exVibrate([200, 100, 200, 100, 400]); }
 
-function exFmtTime(seconds) {
+export function exFmtTime(seconds) {
   const m = Math.floor(seconds / 60), s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function parseDurationStr(str) {
+export function parseDurationStr(str) {
   if (!str) return 0;
   const s = str.toLowerCase().replace(/\s/g, '');
   // "4min" → 240, "30s" → 30, "1h" → 3600, "1h30" → 5400, "10min" → 600
@@ -65,7 +65,7 @@ function parseDurationStr(str) {
   return total;
 }
 
-function buildTimerConfig(mode, ex) {
+export function buildTimerConfig(mode, ex) {
   if (mode === 'interval') {
     const onSec = parseDurationStr(ex.on);
     const offSec = parseDurationStr(ex.off);
