@@ -308,7 +308,7 @@ function startGpsRun(db) {
   $liveStatus.textContent = 'EN CURSO';
   $liveStatus.classList.remove('paused');
   $pauseBtn.classList.remove('paused');
-  $lockBtn.classList.remove('wake-active');
+  $lockBtn.classList.add('wake-active');
 
   // Set type badge
   const meta = RUN_TYPE_META[activeRunType];

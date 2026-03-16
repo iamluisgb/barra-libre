@@ -27,6 +27,8 @@ export class GpsTracker {
     this._totalPaused = 0;
     this._timerRaf = null;
     this._timerInterval = null;
+    this._bgPollInterval = null;   // background GPS polling fallback
+    this._lastGpsTime = 0;         // timestamp of last GPS callback
     this._wakeLock = null;
     this._wakeLockEnabled = false; // opt-in: user toggles this
     this._visibilityHandler = null;
@@ -81,7 +83,11 @@ export class GpsTracker {
 
     this._startGps();
     this._startTimer();
+    this._startBgPoll();
     this._bindVisibility();
+    // Auto-enable wake lock on start (user can toggle off)
+    this._wakeLockEnabled = true;
+    this._acquireWakeLock();
     return true;
   }
 
@@ -93,6 +99,7 @@ export class GpsTracker {
     this._pauseStart = performance.now();
     this._stopGps();
     this._stopTimer();
+    this._stopBgPoll();
   }
 
   resume() {
@@ -101,6 +108,7 @@ export class GpsTracker {
     this._totalPaused += performance.now() - this._pauseStart;
     this._startGps();
     this._startTimer();
+    this._startBgPoll();
   }
 
   // ── Stop tracking ───────────────────────────────────────
@@ -114,6 +122,7 @@ export class GpsTracker {
 
     this._stopGps();
     this._stopTimer();
+    this._stopBgPoll();
     this._releaseWakeLock();
     this._unbindVisibility();
     this._wakeLockEnabled = false;
@@ -204,6 +213,32 @@ export class GpsTracker {
     }
   }
 
+  // ── Background GPS polling ─────────────────────────────
+  // Fallback: if watchPosition stops delivering (screen off on some devices),
+  // poll getCurrentPosition every 5s to keep collecting data.
+
+  _startBgPoll() {
+    this._stopBgPoll();
+    this._bgPollInterval = setInterval(() => {
+      if (this.state !== 'tracking') return;
+      // Only poll if watchPosition hasn't fired recently (> 6s)
+      if (Date.now() - this._lastGpsTime > 6000) {
+        navigator.geolocation.getCurrentPosition(
+          pos => this._onPosition(pos),
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 3000, timeout: 5000 }
+        );
+      }
+    }, 5000);
+  }
+
+  _stopBgPoll() {
+    if (this._bgPollInterval) {
+      clearInterval(this._bgPollInterval);
+      this._bgPollInterval = null;
+    }
+  }
+
   // ── GPS watcher ─────────────────────────────────────────
 
   _startGps() {
@@ -230,6 +265,7 @@ export class GpsTracker {
 
   _onPosition(pos) {
     if (this.state !== 'tracking') return;
+    this._lastGpsTime = Date.now();
 
     const { latitude: lat, longitude: lng, altitude: alt, accuracy } = pos.coords;
     const ts = pos.timestamp;
