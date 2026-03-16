@@ -3,382 +3,15 @@ import { ROMAN } from '../constants.js';
 import { getPrograms, getActiveProgram, getAllPhases } from '../programs.js';
 import { esc } from '../utils.js';
 import { toast } from './toast.js';
-import { playAlarm } from './timer.js';
+import { exFmtTime, parseDurationStr, buildTimerConfig, initExTimerEvents, stopExTimer, isExTimerActive } from './training-timer.js';
+
+// Re-export for tests
+export { exFmtTime, parseDurationStr, buildTimerConfig };
 
 let editingId = null;
 let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList;
 
-// --- Exercise inline timer state ---
-let activeExTimer = null;
-let exAudioCtx = null;
-let lastBeepSec = -1;
-let wakeLock = null;
 
-async function requestWakeLock() {
-  try {
-    if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-  } catch (e) { }
-}
-
-function releaseWakeLock() {
-  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
-}
-
-function getExAudioCtx() {
-  if (!exAudioCtx) exAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return exAudioCtx;
-}
-
-function exBeep(freq = 880, ms = 200) {
-  try {
-    const ctx = getExAudioCtx(), now = ctx.currentTime;
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination); o.type = 'sine';
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(0.3, now);
-    g.gain.exponentialRampToValueAtTime(0.01, now + ms / 1000);
-    o.start(now); o.stop(now + ms / 1000);
-  } catch (e) { }
-}
-
-function exVibrate(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
-}
-
-function exBeepWork() { exBeep(1200, 150); setTimeout(() => exBeep(1200, 150), 200); exVibrate([200, 100, 200]); }
-function exBeepRest() { exBeep(440, 500); exVibrate(500); }
-function exBeepDone() { playAlarm(); exVibrate([200, 100, 200, 100, 400]); }
-
-export function exFmtTime(seconds) {
-  const m = Math.floor(seconds / 60), s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-export function parseDurationStr(str) {
-  if (!str) return 0;
-  const s = str.toLowerCase().replace(/\s/g, '');
-  // "4min" → 240, "30s" → 30, "1h" → 3600, "1h30" → 5400, "10min" → 600
-  let total = 0;
-  const hm = s.match(/(\d+)h/); if (hm) total += parseInt(hm[1]) * 3600;
-  const mm = s.match(/(\d+)min/); if (mm) total += parseInt(mm[1]) * 60;
-  const sm = s.match(/(\d+)s(?!e)/); if (sm) total += parseInt(sm[1]);
-  if (total === 0) total = parseInt(s) || 0;
-  return total;
-}
-
-export function buildTimerConfig(mode, ex) {
-  if (mode === 'interval') {
-    const onSec = parseDurationStr(ex.on);
-    const offSec = parseDurationStr(ex.off);
-    const totalSec = parseDurationStr(ex.duration);
-    const roundDur = onSec + offSec;
-    const rounds = roundDur > 0 ? Math.ceil(totalSec / roundDur) : 1;
-    const phases = [];
-    for (let r = 0; r < rounds; r++) {
-      phases.push({ type: 'work', duration: onSec, label: ex.name, round: r + 1 });
-      phases.push({ type: 'rest', duration: offSec, label: 'Descanso', round: r + 1 });
-    }
-    return { phases, totalRounds: rounds, type: 'phased' };
-  }
-  if (mode === 'tabata') {
-    const rounds = ex.rounds || [];
-    const phases = [];
-    for (let r = 0; r < 8; r++) {
-      phases.push({ type: 'work', duration: 20, label: rounds[r] || ex.name, round: r + 1 });
-      if (r < 7) phases.push({ type: 'rest', duration: 10, label: 'Descanso', round: r + 1 });
-    }
-    return { phases, totalRounds: 8, type: 'phased' };
-  }
-  if (mode === 'emom') {
-    const totalSec = parseDurationStr(ex.duration);
-    const totalMin = Math.max(1, Math.floor(totalSec / 60));
-    const phases = [];
-    for (let m = 0; m < totalMin; m++) {
-      phases.push({ type: 'work', duration: 60, label: `Minuto ${m + 1}`, round: m + 1 });
-    }
-    return { phases, totalRounds: totalMin, type: 'phased' };
-  }
-  if (mode === 'amrap') {
-    const totalSec = parseDurationStr(ex.duration);
-    return { phases: [{ type: 'neutral', duration: totalSec, label: ex.name, round: 1 }], totalRounds: 0, type: 'countdown-manual' };
-  }
-  if (mode === 'rounds') {
-    const restSec = parseDurationStr(ex.rest);
-    const count = ex.count || 0;
-    return { phases: [], totalRounds: count, restDuration: restSec, type: 'manual-rounds' };
-  }
-  // result (HIIT) — stopwatch
-  return { phases: [], totalRounds: 0, type: 'stopwatch' };
-}
-
-function renderExTimerUI(zone) {
-  if (!activeExTimer) return;
-  const { config, mode } = activeExTimer;
-  const t = config.type;
-
-  if (t === 'phased') {
-    const phase = config.phases[activeExTimer.phaseIdx];
-    const cls = phase.type;
-    zone.innerHTML = `<div class="ex-timer ${cls}">
-      <div class="ex-timer-phase">${phase.type === 'work' ? 'Work' : 'Rest'}</div>
-      <div class="ex-timer-display">${exFmtTime(phase.duration)}</div>
-      <div class="ex-timer-round">R${phase.round} / ${config.totalRounds}</div>
-      <div class="ex-timer-label">${esc(phase.label)}</div>
-      <div class="ex-timer-bar"><div class="ex-timer-bar-fill" style="width:100%"></div></div>
-      <div class="ex-timer-actions"><button class="ex-timer-stop">Parar</button></div>
-    </div>`;
-  } else if (t === 'countdown-manual') {
-    const phase = config.phases[0];
-    zone.innerHTML = `<div class="ex-timer neutral">
-      <div class="ex-timer-phase">AMRAP</div>
-      <div class="ex-timer-display">${exFmtTime(phase.duration)}</div>
-      <div class="ex-timer-round">Rondas: <strong>0</strong></div>
-      <div class="ex-timer-bar"><div class="ex-timer-bar-fill" style="width:100%"></div></div>
-      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button></div>
-    </div>`;
-  } else if (t === 'manual-rounds') {
-    zone.innerHTML = `<div class="ex-timer neutral">
-      <div class="ex-timer-phase">Circuito</div>
-      <div class="ex-timer-display">0:00</div>
-      <div class="ex-timer-round">Rondas: <strong>0</strong>${config.totalRounds > 0 ? ` / ${config.totalRounds}` : ''}</div>
-      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button></div>
-    </div>`;
-  } else {
-    // stopwatch
-    zone.innerHTML = `<div class="ex-timer neutral">
-      <div class="ex-timer-phase">Tiempo</div>
-      <div class="ex-timer-display">0:00</div>
-      <div class="ex-timer-actions"><button class="ex-timer-stop">Parar</button></div>
-    </div>`;
-  }
-}
-
-function updateExTimerDisplay() {
-  if (!activeExTimer) return;
-  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
-  if (!zone) return;
-  const display = zone.querySelector('.ex-timer-display');
-  const barFill = zone.querySelector('.ex-timer-bar-fill');
-  if (!display) return;
-
-  const { config } = activeExTimer;
-  const t = config.type;
-
-  if (t === 'phased') {
-    const phase = config.phases[activeExTimer.phaseIdx];
-    if (!phase) return;
-    const elapsed = Math.floor((Date.now() - activeExTimer.phaseStartedAt) / 1000);
-    const remaining = Math.max(0, phase.duration - elapsed);
-    display.textContent = exFmtTime(remaining);
-    if (barFill) barFill.style.width = `${(remaining / phase.duration) * 100}%`;
-  } else if (t === 'countdown-manual') {
-    const phase = config.phases[0];
-    const elapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
-    const remaining = Math.max(0, phase.duration - elapsed);
-    display.textContent = exFmtTime(remaining);
-    if (barFill) barFill.style.width = `${(remaining / phase.duration) * 100}%`;
-  } else {
-    // stopwatch / manual-rounds — skip display while rest countdown owns it
-    if (activeExTimer.resting) return;
-    const elapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
-    display.textContent = exFmtTime(elapsed);
-  }
-}
-
-function tickExTimer() {
-  if (!activeExTimer) return;
-  const { config } = activeExTimer;
-  const t = config.type;
-
-  updateExTimerDisplay();
-
-  if (t === 'phased') {
-    const phase = config.phases[activeExTimer.phaseIdx];
-    if (!phase) return;
-    const elapsed = Math.floor((Date.now() - activeExTimer.phaseStartedAt) / 1000);
-    const remaining = phase.duration - elapsed;
-
-    // Countdown beeps at 3, 2, 1
-    if (remaining <= 3 && remaining > 0 && remaining !== lastBeepSec) {
-      lastBeepSec = remaining;
-      exBeep(660 + (3 - remaining) * 220, 100);
-    }
-
-    if (remaining <= 0) {
-      advanceExPhase();
-    }
-  } else if (t === 'countdown-manual') {
-    const phase = config.phases[0];
-    const elapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
-    const remaining = phase.duration - elapsed;
-
-    if (remaining <= 3 && remaining > 0 && remaining !== lastBeepSec) {
-      lastBeepSec = remaining;
-      exBeep(660 + (3 - remaining) * 220, 100);
-    }
-
-    if (remaining <= 0) {
-      stopExTimer(true);
-    }
-  }
-  // stopwatch and manual-rounds just keep running
-}
-
-function advanceExPhase() {
-  if (!activeExTimer) return;
-  const { config } = activeExTimer;
-  activeExTimer.phaseIdx++;
-  lastBeepSec = -1;
-
-  if (activeExTimer.phaseIdx >= config.phases.length) {
-    stopExTimer(true);
-    return;
-  }
-
-  const newPhase = config.phases[activeExTimer.phaseIdx];
-  activeExTimer.phaseStartedAt = Date.now();
-
-  // Audio/haptic feedback
-  if (newPhase.type === 'work') exBeepWork();
-  else exBeepRest();
-
-  // Update UI classes and content
-  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
-  if (!zone) return;
-  const timer = zone.querySelector('.ex-timer');
-  if (timer) {
-    timer.className = `ex-timer ${newPhase.type}`;
-    const phaseEl = timer.querySelector('.ex-timer-phase');
-    if (phaseEl) phaseEl.textContent = newPhase.type === 'work' ? 'Work' : 'Rest';
-    const roundEl = timer.querySelector('.ex-timer-round');
-    if (roundEl) roundEl.textContent = `R${newPhase.round} / ${config.totalRounds}`;
-    const labelEl = timer.querySelector('.ex-timer-label');
-    if (labelEl) labelEl.textContent = newPhase.label;
-  }
-}
-
-function startExTimer(exIdx, mode, ex) {
-  if (activeExTimer) stopExTimer(false);
-
-  const zone = document.querySelector(`.ex-timer-zone[data-ex="${exIdx}"]`);
-  const btn = document.querySelector(`[data-ex-timer="${exIdx}"]`);
-  if (!zone) return;
-  if (btn) btn.style.display = 'none';
-
-  const config = buildTimerConfig(mode, ex);
-
-  activeExTimer = {
-    exIdx, mode, config,
-    startedAt: Date.now(),
-    phaseIdx: 0,
-    phaseStartedAt: Date.now(),
-    roundCount: 0,
-    interval: setInterval(tickExTimer, 250)
-  };
-  lastBeepSec = -1;
-
-  renderExTimerUI(zone);
-  requestWakeLock();
-
-  // Resume audio context on user gesture
-  if (exAudioCtx) exAudioCtx.resume();
-
-  // Initial beep for phased work start
-  if (config.type === 'phased' && config.phases[0]?.type === 'work') {
-    exBeepWork();
-  }
-}
-
-function stopExTimer(completed) {
-  if (!activeExTimer) return;
-  clearInterval(activeExTimer.interval);
-
-  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
-  const btn = document.querySelector(`[data-ex-timer="${activeExTimer.exIdx}"]`);
-
-  if (completed) {
-    const input = document.querySelector(`[data-ex="${activeExTimer.exIdx}"][data-set="0"][data-field="reps"]`);
-    if (input && !input.value) {
-      const totalElapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
-      if (activeExTimer.config.type === 'stopwatch') {
-        input.value = exFmtTime(totalElapsed);
-      } else if (activeExTimer.config.type === 'countdown-manual' || activeExTimer.config.type === 'manual-rounds') {
-        if (activeExTimer.roundCount > 0) input.value = activeExTimer.roundCount;
-      }
-      input.classList.add('prefilled');
-    }
-    exBeepDone();
-  }
-
-  if (zone) zone.innerHTML = '';
-  if (btn) btn.style.display = '';
-  activeExTimer = null;
-  lastBeepSec = -1;
-  releaseWakeLock();
-}
-
-function handleExTimerRound() {
-  if (!activeExTimer) return;
-  activeExTimer.roundCount++;
-  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
-  if (!zone) return;
-  const roundEl = zone.querySelector('.ex-timer-round strong');
-  if (roundEl) roundEl.textContent = activeExTimer.roundCount;
-
-  exBeep(1000, 100);
-  exVibrate(100);
-
-  // For manual-rounds with rest: start rest countdown
-  if (activeExTimer.config.type === 'manual-rounds' && activeExTimer.config.restDuration > 0) {
-    const { totalRounds, restDuration } = activeExTimer.config;
-    if (totalRounds > 0 && activeExTimer.roundCount >= totalRounds) {
-      stopExTimer(true);
-      return;
-    }
-    // Show rest countdown inline — set flag so tickExTimer skips display
-    activeExTimer.resting = true;
-    startRestCountdown(zone, restDuration);
-  }
-}
-
-function startRestCountdown(zone, duration) {
-  if (!activeExTimer) return;
-  const timer = zone.querySelector('.ex-timer');
-  if (timer) {
-    timer.className = 'ex-timer rest';
-    const phaseEl = timer.querySelector('.ex-timer-phase');
-    if (phaseEl) phaseEl.textContent = 'Descanso';
-  }
-
-  const restStart = Date.now();
-  const restInterval = setInterval(() => {
-    if (!activeExTimer) { clearInterval(restInterval); return; }
-    const elapsed = Math.floor((Date.now() - restStart) / 1000);
-    const remaining = Math.max(0, duration - elapsed);
-    const display = zone.querySelector('.ex-timer-display');
-    if (display) display.textContent = exFmtTime(remaining);
-
-    if (remaining <= 3 && remaining > 0 && remaining !== lastBeepSec) {
-      lastBeepSec = remaining;
-      exBeep(660 + (3 - remaining) * 220, 100);
-    }
-
-    if (remaining <= 0) {
-      clearInterval(restInterval);
-      lastBeepSec = -1;
-      exBeepWork();
-      if (timer) {
-        timer.className = 'ex-timer neutral';
-        const phaseEl = timer.querySelector('.ex-timer-phase');
-        if (phaseEl) phaseEl.textContent = 'Circuito';
-      }
-      // Resume stopwatch display
-      if (activeExTimer) activeExTimer.resting = false;
-    }
-  }, 250);
-}
-
-// --- end exercise timer ---
 
 function cacheSelectors() {
   if ($trainSession) return;
@@ -421,7 +54,7 @@ export function populateSessions(db) {
 
 /** Render exercise cards for the selected session template */
 export function loadSessionTemplate(db, autoPrefill) {
-  if (activeExTimer) stopExTimer(false);
+  if (isExTimerActive()) stopExTimer(false);
   clearEditState();
   const session = $trainSession.value;
   const progs = getPrograms();
@@ -630,16 +263,47 @@ function getPrevSession(db, n) {
   return f.length ? f[f.length - 1] : null;
 }
 
+// PR cache: avoids scanning all workouts on every save
+let _prCache = null;
+let _prCacheCount = -1;
+
+function buildPRCache(db) {
+  if (_prCache && _prCacheCount === db.workouts.length) return _prCache;
+  const cache = new Map();
+  for (const w of db.workouts) {
+    for (const e of w.exercises) {
+      for (const s of e.sets) {
+        const kg = parseFloat(s.kg) || 0;
+        if (kg > 0) {
+          const key = e.name;
+          const entry = cache.get(key);
+          if (!entry || kg > entry.kg) cache.set(key, { kg, workoutId: w.id });
+        }
+      }
+    }
+  }
+  _prCache = cache;
+  _prCacheCount = db.workouts.length;
+  return cache;
+}
+
 /** Get highest kg ever lifted for an exercise */
 export function getExercisePR(db, name, excludeId) {
-  let max = 0;
-  db.workouts.forEach(w => {
-    if (excludeId && w.id === excludeId) return;
-    w.exercises.forEach(e => {
-      if (e.name === name) e.sets.forEach(s => { const kg = parseFloat(s.kg) || 0; if (kg > max) max = kg; });
-    });
-  });
-  return max;
+  const cache = buildPRCache(db);
+  const entry = cache.get(name);
+  if (!entry) return 0;
+  if (excludeId && entry.workoutId === excludeId) {
+    // Fallback: scan without cache for this edge case
+    let max = 0;
+    for (const w of db.workouts) {
+      if (w.id === excludeId) continue;
+      for (const e of w.exercises) {
+        if (e.name === name) for (const s of e.sets) { const kg = parseFloat(s.kg) || 0; if (kg > max) max = kg; }
+      }
+    }
+    return max;
+  }
+  return entry.kg;
 }
 
 /** Pre-fill the training form for editing an existing workout */
@@ -775,29 +439,10 @@ export function initTraining(db, { onCancelEdit }) {
   $prCelebration.addEventListener('click', function () { this.style.display = 'none'; });
 
   // Exercise timer event delegation
-  $exerciseList.addEventListener('click', (e) => {
-    const timerBtn = e.target.closest('.ex-timer-btn');
-    if (timerBtn) {
-      const exIdx = parseInt(timerBtn.dataset.exTimer);
-      const mode = timerBtn.dataset.timerMode;
-      const progs = getPrograms();
-      const session = $trainSession.value;
-      const exercises = progs[db.phase]?.sessions[session];
-      if (exercises && exercises[exIdx]) {
-        startExTimer(exIdx, mode, exercises[exIdx]);
-      }
-      return;
-    }
-    const stopBtn = e.target.closest('.ex-timer-stop');
-    if (stopBtn) { stopExTimer(false); return; }
-    const roundBtn = e.target.closest('.ex-timer-round-btn');
-    if (roundBtn) { handleExTimerRound(); return; }
+  initExTimerEvents($exerciseList, (exIdx) => {
+    const progs = getPrograms();
+    const session = $trainSession.value;
+    const exercises = progs[db.phase]?.sessions[session];
+    return exercises?.[exIdx] || null;
   });
-
-  // Unlock audio context on first touch
-  document.addEventListener('touchstart', function u() {
-    if (exAudioCtx) exAudioCtx.resume();
-    else exAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    document.removeEventListener('touchstart', u);
-  }, { once: true });
 }

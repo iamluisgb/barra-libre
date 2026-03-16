@@ -4,10 +4,20 @@ const SK = 'barraLibre';
 
 let _onSave = null;
 let _onQuotaError = null;
+let _onExternalChange = null;
 /** @param {Function} fn - Callback invoked after every saveDB */
 export function setOnSave(fn) { _onSave = fn; }
 /** @param {Function} fn - Callback invoked when localStorage is full */
 export function setOnQuotaError(fn) { _onQuotaError = fn; }
+/** @param {Function} fn - Callback invoked when another tab changes the data */
+export function setOnExternalChange(fn) { _onExternalChange = fn; }
+
+// Detect writes from other tabs
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === SK && _onExternalChange) _onExternalChange();
+  });
+}
 
 const CURRENT_SCHEMA = 2;
 
@@ -99,6 +109,7 @@ export function exportData(db) {
   a.href = URL.createObjectURL(b);
   a.download = `barra-libre-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 /** Validate imported data structure before merging */

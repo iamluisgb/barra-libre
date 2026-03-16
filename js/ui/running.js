@@ -1014,7 +1014,7 @@ function addSplitInput() {
   row.innerHTML = `
     <span class="run-split-input-label">Km ${count}</span>
     <input type="text" placeholder="m:ss" inputmode="numeric" class="run-split-time-input">
-    <button class="run-split-remove btn-sm">&times;</button>`;
+    <button class="run-split-remove btn-sm" aria-label="Eliminar split">&times;</button>`;
   row.querySelector('.run-split-remove').addEventListener('click', () => {
     row.remove();
     renumberSplitInputs();

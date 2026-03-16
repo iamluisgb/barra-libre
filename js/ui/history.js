@@ -8,6 +8,7 @@ const PAGE_SIZE = 50;
 let detailWorkoutId = null;
 let historyPage = 0;
 let _currentDb = null;
+let _lastWorkoutCount = -1;
 
 function renderItem(w) {
   const summary = w.exercises.filter(e => e.sets.some(s => s.kg)).map(e => `${esc(e.name)}: ${e.sets.map(s => `${esc(s.kg) || '—'}×${esc(s.reps) || '—'}`).join(', ')}`).join(' · ');

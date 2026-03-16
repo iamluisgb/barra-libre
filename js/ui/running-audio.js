@@ -1,27 +1,7 @@
-// ── Running audio/haptic engine ──────────────────────────
+// ── Running audio/haptic patterns ────────────────────────
+import { beep, vibrate } from './audio.js';
 
-let _audioCtx = null;
-function getAudioCtx() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return _audioCtx;
-}
-
-export function beep(freq = 880, ms = 200) {
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = freq;
-    gain.gain.value = 0.5;
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + ms / 1000);
-  } catch (e) { /* silent fail */ }
-}
-
-export function vibrate(pattern) {
-  try { navigator.vibrate?.(pattern); } catch (e) { /* silent fail */ }
-}
+export { beep, vibrate };
 
 /** 3-2-1 countdown: 3 short beeps + 1 long beep, then calls onComplete */
 export function startCountdown(onComplete) {

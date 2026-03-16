@@ -1,4 +1,4 @@
-import { loadDB, saveDB, setOnSave, setOnQuotaError, exportData, importData, clearAllData } from './data.js';
+import { loadDB, saveDB, setOnSave, setOnQuotaError, setOnExternalChange, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
 import { today, mergeDB, esc, trapFocus } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
@@ -136,6 +136,10 @@ async function init() {
   setOnSave((d) => { if (isAutoSync() && !isSyncing()) debouncedBackup(d); });
   setOnQuotaError(() => {
     toast('Almacenamiento lleno. Exporta tus datos para no perder información.', 'error');
+  });
+  setOnExternalChange(() => {
+    toast('Datos actualizados en otra pestaña. Recargando...', 'info');
+    setTimeout(() => location.reload(), 1500);
   });
 
   updateSyncUI();
