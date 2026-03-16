@@ -446,6 +446,14 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-live-timer.auto-paused{animation:autopause-blink 1.2s ease-in-out infinite}
 @keyframes autopause-blink{0%,100%{opacity:1}50%{opacity:.3}}
 
+/* HR monitor button states */
+.run-hr-btn.connected{background:var(--red);color:#fff}
+.run-hr-btn.connected svg{fill:currentColor}
+.run-hr-btn.connecting{animation:hr-pulse 1s ease-in-out infinite}
+@keyframes hr-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.run-live-hr .run-live-metric-value{transition:color .3s;font-variant-numeric:tabular-nums}
+.run-type-hr-btn.hr-connected{border-color:var(--green);color:var(--green)}
+
 /* ── Run type picker modal ───────────────────────────── */
 .run-type-picker{max-width:400px}
 .run-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
@@ -528,7 +536,8 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-split-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--border)}
 .run-split-row:last-child{border-bottom:none}
 .run-split-km{font-size:.7rem;font-weight:700;color:var(--text2);width:40px}
-.run-split-pace{font-size:.85rem;font-weight:700;color:var(--text);width:60px;font-variant-numeric:tabular-nums}
+.run-split-pace{font-size:.85rem;font-weight:700;color:var(--text);width:auto;min-width:60px;font-variant-numeric:tabular-nums}
+.run-split-hr{font-size:.7rem;color:var(--red);margin-left:4px;font-weight:600}
 .run-split-bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .run-split-fill{height:100%;border-radius:3px;transition:width .3s}
 .run-split-fast{background:var(--green)}

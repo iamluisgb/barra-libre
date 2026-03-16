@@ -121,6 +121,33 @@ export function parseSegDuration(str) {
   return 0;
 }
 
+// ── HR zones (% of maxHR) ────────────────────────────────
+
+export const HR_ZONE_PCT = [
+  { zone: 'Z1', min: 0,    max: 0.60 },
+  { zone: 'Z2', min: 0.60, max: 0.70 },
+  { zone: 'Z3', min: 0.70, max: 0.80 },
+  { zone: 'Z4', min: 0.80, max: 0.90 },
+  { zone: 'Z5', min: 0.90, max: 1.00 },
+];
+
+export function getHRZones(db) {
+  const maxHR = db?.settings?.maxHR || (db?.settings?.age ? 220 - db.settings.age : 190);
+  return HR_ZONE_PCT.map(z => ({
+    zone: z.zone,
+    min: Math.round(maxHR * z.min),
+    max: Math.round(maxHR * z.max),
+  }));
+}
+
+export function estimateHRZone(hr, zones) {
+  if (!hr || hr <= 0 || !zones?.length) return 'Z1';
+  for (let i = zones.length - 1; i >= 0; i--) {
+    if (hr >= zones[i].min) return zones[i].zone;
+  }
+  return 'Z1';
+}
+
 export function segModeToRunType(seg) {
   if (seg.mode === 'run-intervals') return 'intervalos';
   if (seg.zone === 'Z3' || seg.zone === 'Z4') return 'tempo';

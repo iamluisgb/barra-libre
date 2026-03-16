@@ -1,6 +1,6 @@
 import { loadDB, saveDB, setOnSave, setOnQuotaError, setOnExternalChange, exportData, importData, clearAllData } from './data.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
-import { formatPace, parseRunDuration, formatRunDuration, getPaceZones, ZONE_COLORS } from './ui/running-helpers.js';
+import { formatPace, parseRunDuration, formatRunDuration, getPaceZones, getHRZones, ZONE_COLORS } from './ui/running-helpers.js';
 import { today, mergeDB, esc, trapFocus } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
@@ -142,6 +142,25 @@ async function init() {
   }
   $race5k.addEventListener('input', updateZonesPreview);
   updateZonesPreview();
+
+  // Max HR input for HR zones
+  const $maxHR = document.getElementById('settingsMaxHR');
+  const $hrZonesPreview = document.getElementById('settingsHRZonesPreview');
+  const effectiveMaxHR = () => db.settings.maxHR || (db.settings.age ? 220 - db.settings.age : 190);
+  if (db.settings.maxHR > 0) $maxHR.value = db.settings.maxHR;
+  function updateHRZonesPreview() {
+    const val = parseInt($maxHR.value) || 0;
+    db.settings.maxHR = val;
+    saveDB(db);
+    const zones = getHRZones(db);
+    const max = effectiveMaxHR();
+    $hrZonesPreview.innerHTML = zones.map(z => {
+      const color = ZONE_COLORS[z.zone];
+      return `<span class="zp-chip" style="background:${color}">${z.zone} ${z.min}-${z.max}</span>`;
+    }).join('') + `<span class="zp-hint">FC max: ${max} bpm</span>`;
+  }
+  $maxHR.addEventListener('change', updateHRZonesPreview);
+  updateHRZonesPreview();
 
   document.getElementById('timerBar').classList.add('active');
   initTimer();

@@ -19,9 +19,9 @@ if (typeof window !== 'undefined') {
   });
 }
 
-const CURRENT_SCHEMA = 3;
+const CURRENT_SCHEMA = 4;
 
-const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32, race5k: 0 } };
+const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32, race5k: 0, maxHR: 0 } };
 
 /** Schema migrations — each takes a db object and mutates it in place */
 const migrations = [
@@ -40,6 +40,13 @@ const migrations = [
   (db) => {
     if (!db.settings) db.settings = {};
     if (!db.settings.race5k) db.settings.race5k = 0;
+  },
+  // v3 → v4: add maxHR to settings for HR zone calculation
+  (db) => {
+    if (!db.settings) db.settings = {};
+    if (!db.settings.maxHR) {
+      db.settings.maxHR = db.settings.age ? 220 - db.settings.age : 0;
+    }
   },
 ];
 

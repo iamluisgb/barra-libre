@@ -108,6 +108,18 @@
     <div class="zones-preview" id="settingsZonesPreview"></div>
   </div>
 
+  <div class="sec-title sec-title-accent sec-title-mt">Frecuencia cardiaca</div>
+  <div class="settings-card">
+    <div class="sc-row">
+      <div style="flex:1">
+        <label style="margin-bottom:0">FC maxima</label>
+        <div class="input-hint">Dejar en 0 para estimar desde tu edad (220 - edad)</div>
+      </div>
+      <input type="number" id="settingsMaxHR" placeholder="190" min="100" max="230" inputmode="numeric" style="width:80px;text-align:center;flex:none">
+    </div>
+    <div class="zones-preview" id="settingsHRZonesPreview"></div>
+  </div>
+
   <div class="sec-title sec-title-accent sec-title-mt">Mis Planes</div>
   <div class="settings-card">
     <div id="customProgramsList"></div>
@@ -347,6 +359,10 @@
     <label>Ritmo objetivo (min:seg /km)</label>
     <input type="text" id="runTypeTargetPace" inputmode="numeric" placeholder="ej: 5:30">
   </div>
+  <button class="btn btn-outline run-type-hr-btn" id="runTypeHrBtn" style="margin-top:8px;width:100%;display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    Conectar pulsometro
+  </button>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn" id="runTypeStartBtn" style="flex:1">Empezar</button>
     <button class="btn btn-outline" id="runTypeCancelBtn">Cancelar</button>
@@ -364,6 +380,9 @@
       <button class="run-live-btn run-autopause-btn active" id="runAutoPauseBtn" title="Auto-pausa activada" aria-label="Auto-pausa">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/><path d="M2 12a10 10 0 0 1 10-10" stroke-linecap="round"/><path d="M22 12a10 10 0 0 1-10 10" stroke-linecap="round"/></svg>
       </button>
+      <button class="run-live-btn run-hr-btn" id="runHrBtn" title="Conectar pulsometro" aria-label="Frecuencia cardiaca" style="display:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
       <span class="run-live-type-badge" id="runLiveTypeBadge"></span>
       <div class="run-live-status" id="runLiveStatus">EN CURSO</div>
       <button class="run-live-btn" id="runStopBtn" aria-label="Detener carrera">
@@ -379,6 +398,10 @@
       <div class="run-live-metric">
         <div class="run-live-metric-value" id="runLivePace">--:--</div>
         <div class="run-live-metric-label">/km</div>
+      </div>
+      <div class="run-live-metric run-live-hr" id="runLiveHrMetric" style="display:none">
+        <div class="run-live-metric-value" id="runLiveHr">--</div>
+        <div class="run-live-metric-label">bpm</div>
       </div>
     </div>
     <div class="run-session-progress" id="runSessionProgress" style="display:none"></div>

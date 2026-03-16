@@ -4,7 +4,8 @@ import { safeNum, esc, confirmDanger, formatDate, today } from '../utils.js';
 import { toast } from './toast.js';
 import { GpsTracker } from './running-tracker.js';
 import { beep, vibrate, startCountdown, beepSplit, beepWorkStart, beepRestStart, beepAllDone, beepSegmentChange } from './running-audio.js';
-import { ZONE_COLORS, ZONE_LABELS, getPaceZones, RUN_TYPE_META, formatPace, formatRunDuration, parseRunDuration, estimateZone, parseSegDistance, parseSegDuration, segModeToRunType } from './running-helpers.js';
+import { ZONE_COLORS, ZONE_LABELS, getPaceZones, getHRZones, RUN_TYPE_META, formatPace, formatRunDuration, parseRunDuration, estimateZone, parseSegDistance, parseSegDuration, segModeToRunType } from './running-helpers.js';
+import { HRMonitor } from './hr-monitor.js';
 import { renderRunHistory as _renderRunHistory, shareRunCard } from './running-history.js';
 import { renderRunProgress as _renderRunProgress } from './running-progress.js';
 import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession } from './running-plan.js';
@@ -26,6 +27,7 @@ function saveActiveRun() {
   try {
     const snap = {
       tracker: tracker.serialize(),
+      hrMonitor: hrMonitor.serialize(),
       activeRunType,
       activeSegments,
       activePlanSession,
@@ -64,6 +66,7 @@ function getActiveRunSnap() {
 
 let editingId = null;
 const tracker = new GpsTracker();
+const hrMonitor = new HRMonitor();
 let liveMap = null;
 let livePolyline = null;
 let liveMarker = null;
@@ -77,12 +80,13 @@ let activePlanSession = '';  // session name from plan (for summary pre-fill)
 let targetDistance = 0;       // for competicion mode
 let intervalState = null;     // { rep, totalReps, isWork, segIdx, phaseStartDist, phaseStartTime, countdownStarted }
 let sessionState = null;      // { currentIdx, segStartTime, segStartDist, segDurations, completed, countdownFired }
+let _splitHrSum = 0, _splitHrCount = 0;  // per-split HR accumulation
 
 // ── DOM refs ─────────────────────────────────────────────
 
 let $overlay, $liveScreen, $summaryScreen;
 let $liveTimer, $liveDist, $livePace, $liveSplits, $liveMap, $liveStatus;
-let $pauseBtn, $stopBtn, $lockBtn, $autoPauseBtn;
+let $pauseBtn, $stopBtn, $lockBtn, $autoPauseBtn, $hrBtn, $hrMetric, $hrValue;
 let $goalCard, $goalBody, $goalArc, $goalCurrent, $goalUnit, $goalTarget, $goalSessions;
 let $prsGrid;
 let $weekSelect, $sessionSelect, $segments;
@@ -122,12 +126,64 @@ function cacheSelectors() {
   $statsPanel = document.getElementById('runStatsPanel');
   $typePanel = document.getElementById('runLiveTypePanel');
   $typeBadge = document.getElementById('runLiveTypeBadge');
+  $hrBtn = document.getElementById('runHrBtn');
+  $hrMetric = document.getElementById('runLiveHrMetric');
+  $hrValue = document.getElementById('runLiveHr');
 }
 
 // ── Init ─────────────────────────────────────────────────
 
 export function initRunning(db) {
   cacheSelectors();
+
+  // ── HR Monitor setup ──
+  const bleAvailable = typeof navigator !== 'undefined' && !!navigator.bluetooth;
+  if (bleAvailable) {
+    $hrBtn.style.display = '';
+    document.getElementById('runTypeHrBtn').style.display = '';
+  }
+  hrMonitor.setZones(getHRZones(db));
+  hrMonitor.onUpdate = (data) => {
+    if ($hrMetric) {
+      $hrMetric.style.display = '';
+      $hrValue.textContent = data.hr;
+      $hrValue.style.color = ZONE_COLORS[data.zone] || 'var(--text)';
+    }
+    // Accumulate per-split HR
+    _splitHrSum += data.hr;
+    _splitHrCount++;
+    saveActiveRun();
+  };
+  hrMonitor.onStateChange = (state) => {
+    $hrBtn.classList.remove('connected', 'connecting');
+    const $typeHrBtn = document.getElementById('runTypeHrBtn');
+    if (state === 'connected') {
+      $hrBtn.classList.add('connected');
+      $hrBtn.title = `${hrMonitor.deviceName || 'Pulsometro'} conectado`;
+      $typeHrBtn.classList.add('hr-connected');
+      $typeHrBtn.textContent = `♥ ${hrMonitor.deviceName || 'Conectado'}`;
+      toast(`Pulsometro conectado: ${hrMonitor.deviceName || 'HR'}`);
+    } else if (state === 'connecting') {
+      $hrBtn.classList.add('connecting');
+    } else {
+      $hrBtn.title = 'Conectar pulsometro';
+      $typeHrBtn.classList.remove('hr-connected');
+      $typeHrBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Conectar pulsometro';
+      if ($hrMetric && $hrValue.textContent !== '--') {
+        $hrValue.style.color = 'var(--red)';
+      }
+    }
+  };
+  hrMonitor.onZoneChange = (newZ, oldZ) => {
+    const freqs = { Z1: 440, Z2: 660, Z3: 880, Z4: 1000, Z5: 1200 };
+    beep(freqs[newZ] || 880, 200);
+    vibrate([100, 50, 100]);
+  };
+  const connectHR = async () => {
+    try { await hrMonitor.requestConnection(); } catch { /* user cancelled or unavailable */ }
+  };
+  $hrBtn.addEventListener('click', connectHR);
+  document.getElementById('runTypeHrBtn').addEventListener('click', connectHR);
 
   // Wire plan session start callback
   setOnStartSession((segs, runType, sessionLabel, d) => {
@@ -367,6 +423,9 @@ function restoreRun(snap, db) {
   // Restore tracker
   const restored = tracker.restore(snap.tracker);
   if (!restored) { clearActiveRun(); return; }
+
+  // Restore HR accumulator (BLE connection cannot be restored)
+  hrMonitor.restore(snap.hrMonitor);
 
   // Show overlay in correct state
   $overlay.classList.add('active');
@@ -623,7 +682,8 @@ function saveGpsRun(db) {
     distance: result.distance || 0,
     duration: result.duration || 0,
     pace: result.pace || 0,
-    hr: null,
+    hr: hrMonitor.hrAvg > 0 ? Math.round(hrMonitor.hrAvg) : null,
+    hrMax: hrMonitor.hrMax > 0 ? hrMonitor.hrMax : null,
     elevation: result.elevation || null,
     cadence: null,
     splits: result.splits || [],
@@ -663,9 +723,16 @@ function closeLiveOverlay() {
   intervalState = null;
   sessionState = null;
   targetDistance = 0;
+  _splitHrSum = 0;
+  _splitHrCount = 0;
   document.getElementById('runSessionProgress').style.display = 'none';
   $typeBadge?.classList.remove('visible');
   if ($typePanel) { $typePanel.innerHTML = ''; delete $typePanel.dataset.goalReached; }
+  // Reset HR monitor display
+  hrMonitor.disconnect();
+  hrMonitor.reset();
+  if ($hrMetric) $hrMetric.style.display = 'none';
+  if ($hrValue) { $hrValue.textContent = '--'; $hrValue.style.color = ''; }
 }
 
 // ── Live UI updates ──────────────────────────────────────
@@ -693,9 +760,16 @@ function updateLiveUI(data) {
 
 function onSplitComplete(split) {
   beepSplit();
+  // Attach per-split HR average
+  if (_splitHrCount > 0) {
+    split.hrAvg = Math.round(_splitHrSum / _splitHrCount);
+    _splitHrSum = 0;
+    _splitHrCount = 0;
+  }
+  const hrStr = split.hrAvg ? ` <span style="color:var(--red)">♥${split.hrAvg}</span>` : '';
   const el = document.createElement('div');
   el.className = 'run-live-split';
-  el.innerHTML = `<span class="run-live-split-km">Km ${split.km}</span><span class="run-live-split-pace">${formatPace(split.pace)} /km</span>`;
+  el.innerHTML = `<span class="run-live-split-km">Km ${split.km}</span><span class="run-live-split-pace">${formatPace(split.pace)} /km${hrStr}</span>`;
   $liveSplits.prepend(el);
 }
 
@@ -1164,9 +1238,10 @@ function renderSplitsUI(container, splits) {
       if (ratio < 0.33) barClass = 'run-split-fast';
       else if (ratio > 0.66) barClass = 'run-split-slow';
     }
+    const hrStr = s.hrAvg ? `<span class="run-split-hr">♥${s.hrAvg}</span>` : '';
     return `<div class="run-split-row">
       <span class="run-split-km">Km ${s.km}</span>
-      <span class="run-split-pace">${formatPace(s.pace)}</span>
+      <span class="run-split-pace">${formatPace(s.pace)}${hrStr}</span>
       <div class="run-split-bar"><div class="run-split-fill ${barClass}" style="width:${Math.max(pct, 10)}%"></div></div>
     </div>`;
   }).join('');
@@ -1361,7 +1436,8 @@ function openRunDetail(id, db) {
   if (log.distance) stats.push({ value: `${log.distance}`, label: 'km' });
   if (log.duration) stats.push({ value: formatRunDuration(log.duration), label: 'tiempo' });
   if (log.pace) stats.push({ value: formatPace(log.pace), label: '/km' });
-  if (log.hr) stats.push({ value: `${log.hr}`, label: 'bpm' });
+  if (log.hr) stats.push({ value: `${log.hr}`, label: 'bpm avg' });
+  if (log.hrMax) stats.push({ value: `${log.hrMax}`, label: 'bpm max' });
   if (log.elevation) stats.push({ value: `${log.elevation}`, label: 'm D+' });
   if (log.cadence) stats.push({ value: `${log.cadence}`, label: 'ppm' });
   document.getElementById('runDetailStats').innerHTML = stats.map(s =>

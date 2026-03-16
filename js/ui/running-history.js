@@ -27,6 +27,7 @@ export function renderRunHistory(db, $historyFilter, $historyList) {
     let details = [dist, dur, pace].filter(Boolean).join(' · ');
     let extras = [];
     if (log.hr) extras.push(`♥ ${log.hr}`);
+    if (log.hrMax) extras.push(`♥max ${log.hrMax}`);
     if (log.elevation) extras.push(`↑ ${log.elevation} m`);
     if (log.cadence) extras.push(`${log.cadence} ppm`);
 

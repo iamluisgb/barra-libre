@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v57';
+const CACHE_NAME = 'barra-libre-v58';
 const ASSETS = [
   './',
   './app.html',
@@ -25,6 +25,7 @@ const ASSETS = [
   './js/ui/audio.js',
   './js/ui/running-audio.js',
   './js/ui/training-timer.js',
+  './js/ui/hr-monitor.js',
   './js/ui/running-helpers.js',
   './js/ui/running-history.js',
   './js/ui/running-progress.js',
