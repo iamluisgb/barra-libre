@@ -73,14 +73,22 @@ function formatTime(seconds) {
 
 function updateTimerDisplay() {
   const d = document.getElementById('timerDisplay');
+  const mt = document.getElementById('miniTimerTime');
   if (timerMode === 'countdown') {
     const remaining = timerRunning ? getRemaining() : timerDuration;
-    d.textContent = formatTime(remaining);
-    d.classList.toggle('warning', timerRunning && remaining <= 10 && remaining > 0);
+    const text = formatTime(remaining);
+    const warn = timerRunning && remaining <= 10 && remaining > 0;
+    d.textContent = text;
+    d.classList.toggle('warning', warn);
+    if (mt) { mt.textContent = text; mt.classList.toggle('warning', warn); }
   } else {
     const elapsed = timerRunning ? getElapsed() : elapsedBase;
-    d.textContent = formatTime(elapsed);
+    const text = formatTime(elapsed);
+    d.textContent = text;
+    if (mt) { mt.textContent = text; mt.classList.remove('warning'); }
   }
+  // Show/hide mini-timer based on timer-bar visibility
+  updateMiniTimerVisibility();
 }
 
 function tick() {
@@ -186,6 +194,40 @@ export function resetStopwatch() {
   updateTimerDisplay();
 }
 
+// --- Mini-timer flotante ---
+
+let timerBarVisible = true;
+
+function updateMiniTimerVisibility() {
+  const mini = document.getElementById('miniTimer');
+  if (!mini) return;
+  mini.classList.toggle('visible', timerRunning && !timerBarVisible);
+}
+
+function setupMiniTimer() {
+  const timerBar = document.getElementById('timerBar');
+  const mini = document.getElementById('miniTimer');
+  if (!timerBar || !mini) return;
+
+  // IntersectionObserver to detect when timer-bar scrolls out of view
+  const observer = new IntersectionObserver(([entry]) => {
+    timerBarVisible = entry.isIntersecting;
+    updateMiniTimerVisibility();
+  }, { threshold: 0.1 });
+  observer.observe(timerBar);
+
+  // Click on mini-timer time → scroll to timer-bar
+  mini.querySelector('.mini-timer-time')?.addEventListener('click', () => {
+    timerBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // Stop button on mini-timer
+  document.getElementById('miniTimerStop')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    stopTimer();
+  });
+}
+
 /** Initialize timer: presets, mode toggles, and event bindings */
 export function initTimer() {
   // Duration preset buttons
@@ -223,4 +265,6 @@ export function initTimer() {
     getAudioCtx().resume();
     document.removeEventListener('touchstart', u);
   }, { once: true });
+
+  setupMiniTimer();
 }
