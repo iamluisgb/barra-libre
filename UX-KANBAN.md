@@ -3,13 +3,6 @@
 ## Backlog
 
 ### P1 — Pre-editor de programas
-- [ ] **P1.1** Componente Wizard/Stepper (M, Alto)
-- [ ] **P1.2** Lista reordenable drag-and-drop (M, Alto)
-- [ ] **P1.3** Sistematizar escala tipografica (M, Medio)
-- [ ] **P1.4** Sistematizar escala de espaciado (M, Medio)
-
-### P3 — Deleite
-- [ ] **P3.4** Onboarding primera vez (M, Medio)
 
 ## En Progreso
 
@@ -28,3 +21,8 @@
 - [x] **P3.1** Modo oscuro (M, Alto)
 - [x] **P3.2** Animacion check en serie completada (S, Bajo)
 - [x] **P3.3** Haptic feedback en acciones clave (S, Bajo)
+- [x] **P3.4** Onboarding primera vez (M, Medio)
+- [x] **P1.1** Componente Wizard/Stepper (M, Alto)
+- [x] **P1.2** Lista reordenable drag-and-drop (M, Alto)
+- [x] **P1.3** Sistematizar escala tipografica (M, Medio)
+- [x] **P1.4** Sistematizar escala de espaciado (M, Medio)
