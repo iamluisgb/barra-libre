@@ -1,4 +1,5 @@
 import { mergeDB } from './utils.js';
+import { getAllRunRoutes, splitAndStoreRoutes } from './run-store.js';
 
 // Google Drive backup/restore via GIS implicit flow + REST API
 
@@ -138,10 +139,22 @@ async function downloadFile(token, fileId) {
   return res.text();
 }
 
-/** Upload db to Google Drive appData folder */
+/** Upload db to Google Drive appData folder (reconstructs full running logs from IDB) */
 export async function backupToDrive(db) {
   const token = await ensureAuth();
-  const content = JSON.stringify(db, null, 2);
+  // Reconstruct full running logs with heavy fields from IndexedDB
+  let fullDB = db;
+  if (db.runningLogs?.length) {
+    const routes = await getAllRunRoutes();
+    if (routes.size > 0) {
+      const fullLogs = db.runningLogs.map(l => {
+        const heavy = routes.get(l.id);
+        return heavy ? { ...l, ...heavy } : l;
+      });
+      fullDB = { ...db, runningLogs: fullLogs };
+    }
+  }
+  const content = JSON.stringify(fullDB, null, 2);
   const existing = await findBackupFile(token);
   await uploadFile(token, content, existing ? existing.id : null);
   return { success: true, updated: !!existing };
@@ -239,6 +252,10 @@ export async function syncOnLoad(db, saveFn) {
       if (data.workouts) {
         const merged = mergeDB(db, data);
         Object.assign(db, merged);
+        // Split heavy route data from synced running logs to IndexedDB
+        if (db.runningLogs?.length) {
+          db.runningLogs = await splitAndStoreRoutes(db.runningLogs);
+        }
         saveFn(db);
         setLocalSyncTime();
         setSyncStatus('ok');

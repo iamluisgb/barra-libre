@@ -1,4 +1,5 @@
 import { loadDB, saveDB, setOnSave, setOnQuotaError, setOnExternalChange, exportData, importData, clearAllData } from './data.js';
+import { splitAndStoreRoutes } from './run-store.js';
 import { loadPrograms, setActiveProgram, getActiveProgram, getPrograms, getProgramList, isBuiltinProgram, validateProgram, importCustomProgram, deleteCustomProgram, getCustomPrograms } from './programs.js';
 import { formatPace, parseRunDuration, formatRunDuration, getPaceZones, getHRZones, ZONE_COLORS } from './ui/running-helpers.js';
 import { today, mergeDB, esc, trapFocus } from './utils.js';
@@ -105,6 +106,12 @@ async function init() {
       }
     } catch { /* ignore corrupt data */ }
     localStorage.removeItem('customPrograms');
+  }
+
+  // One-shot migration: move heavy route data from localStorage to IndexedDB
+  if (db.runningLogs?.some(l => l.route?.coords)) {
+    db.runningLogs = await splitAndStoreRoutes(db.runningLogs);
+    saveDB(db);
   }
 
   await loadPrograms(db);

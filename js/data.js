@@ -1,4 +1,5 @@
 import { mergeDB } from './utils.js';
+import { stripHeavyFields, splitAndStoreRoutes, clearRunStore, getAllRunRoutes } from './run-store.js';
 
 const SK = 'barraLibre';
 
@@ -109,7 +110,12 @@ export function saveDB(db) {
   if (!validateDB(db)) { console.error('saveDB: invalid db, aborting save', db); return; }
   pruneDeletedIds(db);
   try {
-    localStorage.setItem(SK, JSON.stringify(db));
+    // Strip heavy fields (route, splits, hrTimeSeries, etc.) from running logs
+    // to keep localStorage small. Heavy data lives in IndexedDB.
+    const dbForStorage = db.runningLogs?.length
+      ? { ...db, runningLogs: db.runningLogs.map(stripHeavyFields) }
+      : db;
+    localStorage.setItem(SK, JSON.stringify(dbForStorage));
     _saveRevision++;
   } catch (e) {
     console.error('saveDB: storage write failed', e);
@@ -119,9 +125,20 @@ export function saveDB(db) {
   if (_onSave) _onSave(db);
 }
 
-/** Download db as a JSON file */
-export function exportData(db) {
-  const b = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+/** Download db as a JSON file (reconstructs full running logs from IDB) */
+export async function exportData(db) {
+  let fullDB = db;
+  if (db.runningLogs?.length) {
+    const routes = await getAllRunRoutes();
+    if (routes.size > 0) {
+      const fullLogs = db.runningLogs.map(l => {
+        const heavy = routes.get(l.id);
+        return heavy ? { ...l, ...heavy } : l;
+      });
+      fullDB = { ...db, runningLogs: fullLogs };
+    }
+  }
+  const b = new Blob([JSON.stringify(fullDB, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
   a.download = `barra-libre-${new Date().toISOString().slice(0, 10)}.json`;
@@ -157,9 +174,13 @@ export function importData(event, db, onSuccess) {
       const err = validateImportData(d);
       if (err) { alert(`Formato no válido: ${err}`); return; }
       Object.assign(db, mergeDB(db, d));
-      saveDB(db);
-      alert('Datos importados');
-      location.reload();
+      // Split heavy route data to IndexedDB before saving
+      splitAndStoreRoutes(db.runningLogs).then(stripped => {
+        db.runningLogs = stripped;
+        saveDB(db);
+        alert('Datos importados');
+        location.reload();
+      });
     } catch (e) {
       console.warn('importData failed:', e);
       alert('Error al leer el archivo');
@@ -173,5 +194,5 @@ export function clearAllData() {
   if (!confirm('¿Borrar TODOS los datos?')) return;
   if (!confirm('Última oportunidad. ¿Borrar todo?')) return;
   localStorage.removeItem(SK);
-  location.reload();
+  clearRunStore().finally(() => location.reload());
 }

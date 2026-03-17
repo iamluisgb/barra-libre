@@ -1,4 +1,5 @@
 import { saveDB, markDeleted } from '../data.js';
+import { saveRunRoute, loadRunRoute, deleteRunRoute, extractHeavyFields } from '../run-store.js';
 import { getRunningProgramList, getRunningPhases } from '../programs.js';
 import { safeNum, esc, confirmDanger, formatDate, today } from '../utils.js';
 import { toast } from './toast.js';
@@ -714,6 +715,8 @@ function saveGpsRun(db) {
 
   if (!Array.isArray(db.runningLogs)) db.runningLogs = [];
   db.runningLogs.push(log);
+  // Store heavy fields (route, splits, etc.) in IndexedDB
+  saveRunRoute(log.id, extractHeavyFields(log));
   saveDB(db);
 
   // Check for new PRs
@@ -1447,6 +1450,9 @@ function saveManualLog(db) {
     db.runningLogs.push(log);
   }
 
+  // Store heavy fields in IndexedDB (splits for manual logs)
+  const heavy = extractHeavyFields(log);
+  if (heavy) saveRunRoute(log.id, heavy);
   saveDB(db);
   checkAndNotifyPRs(db, log);
   toast(editingId ? 'Sesion actualizada' : 'Sesion guardada');
@@ -1505,6 +1511,7 @@ function deleteRunLog(db, id) {
   if (!id) return;
   markDeleted(db, id);
   db.runningLogs = (db.runningLogs || []).filter(l => l.id !== id);
+  deleteRunRoute(id);
   saveDB(db);
   toast('Sesion eliminada');
   if (editingId === id) { editingId = null; closeManualModal(); }
@@ -1514,9 +1521,15 @@ function deleteRunLog(db, id) {
 
 // ── Run Detail Modal ─────────────────────────────────────
 
-function openRunDetail(id, db) {
+async function openRunDetail(id, db) {
   const log = (db.runningLogs || []).find(l => l.id === id);
   if (!log) return;
+
+  // Hydrate heavy fields from IndexedDB if not already in memory
+  if (!log.route) {
+    const heavy = await loadRunRoute(id);
+    if (heavy) Object.assign(log, heavy);
+  }
 
   const modal = document.getElementById('runDetailModal');
   modal.dataset.logId = id;
