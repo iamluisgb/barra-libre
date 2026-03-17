@@ -9,7 +9,7 @@ import { ZONE_COLORS, ZONE_LABELS, getPaceZones, getHRZones, RUN_TYPE_META, form
 import { HRMonitor } from './hr-monitor.js';
 import { renderRunHistory as _renderRunHistory, shareRunCard } from './running-history.js';
 import { renderRunProgress as _renderRunProgress } from './running-progress.js';
-import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession } from './running-plan.js';
+import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession, getNextPlanSession, buildSegmentBar } from './running-plan.js';
 
 // Re-export for backward compatibility
 export { formatPace, formatRunDuration, parseRunDuration, parseSegDuration, segModeToRunType };
@@ -733,6 +733,10 @@ function saveGpsRun(db) {
   checkAndNotifyPRs(db, log);
 
   toast('Carrera guardada');
+  if (activePlanSession) {
+    const next = getNextPlanSession(db);
+    if (next) setTimeout(() => toast(`Siguiente: ${next.name}`, 'info'), 1500);
+  }
   closeLiveOverlay();
   refreshRunning(db);
 }
@@ -1659,6 +1663,23 @@ function renderGoalWidget(db) {
   // Color based on progress
   const color = pct >= 1 ? '#34c759' : 'var(--accent)';
   $goalArc.setAttribute('stroke', color);
+
+  // Plan session pills
+  const $pills = document.getElementById('runPlanPills');
+  if ($pills) {
+    const phases = getRunningPhases(db.runningProgram);
+    const week = phases?.[db.runningWeek];
+    if (week?.sessions) {
+      const sessionNames = Object.keys(week.sessions);
+      const doneSessions = new Set(weekLogs.map(l => l.session).filter(Boolean));
+      $pills.innerHTML = `<div class="run-plan-pills">${sessionNames.map(name => {
+        const done = doneSessions.has(name);
+        return `<span class="run-plan-pill${done ? ' done' : ''}">${esc(name)}</span>`;
+      }).join('')}</div>`;
+    } else {
+      $pills.innerHTML = '';
+    }
+  }
 }
 
 function getThisWeekLogs(db) {
@@ -1756,8 +1777,52 @@ function loadRunSessionTemplate(db) { _loadRunSessionTemplate(db, $weekSelect, $
 export function renderRunHistory(db) { _renderRunHistory(db, $historyFilter, $historyList); }
 export function renderRunProgress(db) { _renderRunProgress(db, $weeklyChart, $paceChart, $statsPanel); }
 
+function renderNextSession(db) {
+  const $el = document.getElementById('runNextSession');
+  if (!$el) return;
+
+  const next = getNextPlanSession(db);
+  if (!next) { $el.innerHTML = ''; $el.style.display = 'none'; return; }
+
+  const segSummary = next.segments.map(s => {
+    let txt = s.name;
+    if (s.mode === 'run-intervals' && s.reps) txt += ` ${s.reps}x${s.distance || s.duration || ''}`;
+    else if (s.duration) txt += ` ${s.duration}`;
+    return txt;
+  }).join(' · ');
+
+  $el.style.display = '';
+  $el.innerHTML = `
+    <div class="run-next-card">
+      <div class="run-next-header">
+        <span class="run-next-label">Próxima sesión</span>
+        <span class="run-next-week">${esc(next.weekName)} · ${next.done}/${next.total}</span>
+      </div>
+      <div class="run-next-name">${esc(next.name)}</div>
+      <div class="run-next-desc">${esc(segSummary)}</div>
+      ${buildSegmentBar(next.segments, db)}
+      <button class="btn run-next-start">Iniciar</button>
+    </div>`;
+
+  $el.querySelector('.run-next-start').addEventListener('click', () => {
+    activeSegments = next.segments;
+    activeRunType = inferRunType(next.segments);
+    activePlanSession = next.name;
+    startGpsRun(db);
+  });
+}
+
 export function refreshRunning(db) {
   updateRunContextBar(db);
   renderGoalWidget(db);
   renderPRs(db);
+  renderNextSession(db);
+
+  // P1.3: Contextual start button label
+  const $startBtn = document.getElementById('runStartBtn');
+  if ($startBtn) {
+    const next = getNextPlanSession(db);
+    const svg = $startBtn.querySelector('svg')?.outerHTML || '';
+    $startBtn.innerHTML = next ? `${svg} Iniciar: ${esc(next.name)}` : `${svg} Iniciar carrera`;
+  }
 }

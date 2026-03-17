@@ -56,6 +56,7 @@
       <button class="prefill-clear">✕ Empezar de cero</button>
     </div>
     <div class="row mb"><div><label>Fecha</label><input type="date" id="trainDate"></div><div><label>Sesión</label><select id="trainSession"></select></div></div>
+    <div id="sessionOverview"></div>
     <div class="ex-dots" id="exerciseDots"></div>
     <div id="exerciseList"></div>
     <div class="mb"><label>Notas</label><textarea id="trainNotes" placeholder="Sensaciones, fatiga, ajustes..."></textarea></div>
@@ -308,6 +309,7 @@
         <div class="run-goal-info">
           <div class="run-goal-target" id="runGoalTarget">Objetivo: sin definir</div>
           <div class="run-goal-sessions" id="runGoalSessions">0 sesiones esta semana</div>
+          <div id="runPlanPills"></div>
         </div>
       </div>
     </div>
@@ -322,6 +324,9 @@
         <div class="run-pr-item"><div class="run-pr-dist">21.1 km</div><div class="run-pr-value" data-pr="21.1">--:--</div></div>
       </div>
     </div>
+
+    <!-- Próxima sesión del plan -->
+    <div id="runNextSession"></div>
 
     <!-- Botones principales -->
     <button class="run-start-btn" id="runStartBtn">

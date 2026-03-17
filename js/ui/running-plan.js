@@ -59,7 +59,7 @@ function inferZone(seg, db) {
   return 'Z2';
 }
 
-function buildSegmentBar(segs, db) {
+export function buildSegmentBar(segs, db) {
   const blocks = [];
   const GAP = { dur: 0, gap: true };
 
@@ -192,4 +192,39 @@ export function renderRunWeekModal(db) {
       <div class="po-text"><div class="po-title">${w.name || 'Semana ' + k}</div><div class="po-desc">${w.desc || Object.keys(w.sessions || {}).join(', ')}</div></div>
     </div>`;
   }).join('');
+}
+
+/** Return the next unfinished plan session for the current week, or null */
+export function getNextPlanSession(db) {
+  const programs = getRunningProgramList();
+  if (!programs.length || !db.runningProgram) return null;
+
+  const phases = getRunningPhases(db.runningProgram);
+  const week = phases[db.runningWeek];
+  if (!week?.sessions) return null;
+
+  // Get this week's logs (Monday–Sunday)
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - diff);
+  monday.setHours(0, 0, 0, 0);
+  const mondayStr = monday.toISOString().slice(0, 10);
+
+  const weekLogs = (db.runningLogs || []).filter(l => l.date >= mondayStr);
+  const doneSessions = new Set(weekLogs.map(l => l.session).filter(Boolean));
+
+  const sessionNames = Object.keys(week.sessions);
+  const nextName = sessionNames.find(name => !doneSessions.has(name));
+  if (!nextName) return null;
+
+  return {
+    name: nextName,
+    segments: week.sessions[nextName],
+    weekName: week.name || `Semana ${db.runningWeek}`,
+    weekKey: db.runningWeek,
+    done: doneSessions.size,
+    total: sessionNames.length
+  };
 }

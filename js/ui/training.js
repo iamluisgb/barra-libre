@@ -9,7 +9,8 @@ import { exFmtTime, parseDurationStr, buildTimerConfig, initExTimerEvents, stopE
 export { exFmtTime, parseDurationStr, buildTimerConfig };
 
 let editingId = null;
-let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList;
+let _formExpanded = false;
+let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList, $sessionOverview;
 
 // ── Session draft auto-save ──────────────────────────────
 const DRAFT_KEY = 'barraLibre_sessionDraft';
@@ -79,6 +80,7 @@ function cacheSelectors() {
   $saveBtn = document.querySelector('#strTrain .btn');
   $prCelebration = document.getElementById('prCelebration');
   $prList = document.getElementById('prList');
+  $sessionOverview = document.getElementById('sessionOverview');
 }
 
 function clearEditState() {
@@ -104,9 +106,10 @@ export function populateSessions(db) {
     const nextIdx = (lastIdx + 1) % ss.length;
     $trainSession.value = ss[nextIdx];
   }
+  _formExpanded = false;
   loadSessionTemplate(db, true);
-  // Restore draft if there's one saved for the current session
-  if (restoreDraft()) toast('Borrador restaurado', 'info');
+  // Restore draft if there's one saved for the current session (only when form shown)
+  if (_formExpanded && restoreDraft()) toast('Borrador restaurado', 'info');
 }
 
 // ── Exercise scroll spy dots ─────────────────────────────
@@ -144,6 +147,78 @@ function _setupExDots(count) {
   Array.from($exerciseList.children).forEach(card => _exObserver.observe(card));
 }
 
+function exTargetText(ex) {
+  const mode = ex.mode || (ex.type === 'hiit' || ex.type === 'density' ? 'result' : 'sets');
+  if (mode === 'sets') return `${ex.sets}×${ex.reps}`;
+  if (mode === 'superset') return `${ex.sets || ex.rounds || ''}× superset`;
+  if (mode === 'interval') return `${ex.intervals || ''}× intervalos`;
+  if (mode === 'tabata') return 'Tabata';
+  if (mode === 'rounds') return `${ex.rounds || ''}× rondas`;
+  if (mode === 'ladder') return 'Escalera';
+  if (mode === 'pyramid') return 'Pirámide';
+  if (mode === 'amrap') return `AMRAP ${ex.duration || ''}`;
+  if (mode === 'emom') return `EMOM ${ex.duration || ''}`;
+  if (ex.type === 'hiit') return 'HIIT';
+  if (ex.type === 'density') return 'Densidad';
+  return ex.reps || '';
+}
+
+function setFormVisible(show) {
+  const timerBar = document.getElementById('timerBar');
+  const miniTimer = document.getElementById('miniTimer');
+  const dots = document.getElementById('exerciseDots');
+  const notes = $trainNotes?.closest('.mb');
+  [timerBar, miniTimer, $prefillBanner, dots, $exerciseList, notes, $saveBtn].forEach(el => {
+    if (el) el.style.display = show ? '' : 'none';
+  });
+  if ($sessionOverview) $sessionOverview.style.display = show ? 'none' : '';
+}
+
+function renderSessionOverview(db, session, exercises) {
+  const prev = getPrevSession(db, session);
+  const hasDraft = (() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      return d.session === session && Date.now() - d.ts < 12 * 60 * 60 * 1000;
+    } catch { return false; }
+  })();
+
+  const lastDate = prev ? prev.date.slice(5).replace('-', '/') : null;
+  const btnText = hasDraft ? 'Continuar entreno' : 'Empezar entreno';
+
+  let draftInfo = '';
+  if (hasDraft) {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY));
+      const ago = Math.round((Date.now() - d.ts) / 60000);
+      const agoText = ago < 60 ? `hace ${ago}min` : `hace ${Math.round(ago / 60)}h`;
+      draftInfo = `<div class="so-draft">Borrador guardado ${agoText}</div>`;
+    } catch { /* */ }
+  }
+
+  $sessionOverview.innerHTML = `
+    <div class="session-overview-card">
+      <div class="so-header">
+        <span class="so-name">${esc(session)}</span>
+        <span class="so-count">${exercises.length} ejercicios</span>
+      </div>
+      <div class="so-list">${exercises.map(ex =>
+        `<div class="so-ex"><span class="so-ex-name">${esc(ex.name)}</span><span class="so-ex-target">${exTargetText(ex)}</span></div>`
+      ).join('')}</div>
+      ${lastDate ? `<div class="so-last">Última vez: ${lastDate}</div>` : ''}
+      ${draftInfo}
+      <button class="btn so-start">${btnText}</button>
+    </div>`;
+
+  $sessionOverview.querySelector('.so-start').addEventListener('click', () => {
+    _formExpanded = true;
+    loadSessionTemplate(db, true);
+    if (hasDraft && restoreDraft()) toast('Borrador restaurado', 'info');
+  });
+}
+
 /** Render exercise cards for the selected session template */
 export function loadSessionTemplate(db, autoPrefill) {
   if (isExTimerActive()) stopExTimer(false);
@@ -153,6 +228,24 @@ export function loadSessionTemplate(db, autoPrefill) {
   if (!progs[db.phase]) return;
   const exercises = progs[db.phase].sessions[session];
   if (!exercises) return;
+
+  // Show overview if form not yet expanded and not editing
+  const hasDraft = (() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      return d.session === session && Date.now() - d.ts < 12 * 60 * 60 * 1000;
+    } catch { return false; }
+  })();
+
+  if (!_formExpanded && !editingId && !hasDraft && $sessionOverview) {
+    renderSessionOverview(db, session, exercises);
+    setFormVisible(false);
+    return;
+  }
+
+  setFormVisible(true);
   const prev = getPrevSession(db, session);
   const shouldPrefill = autoPrefill && prev;
 
@@ -402,6 +495,7 @@ export function getExercisePR(db, name, excludeId) {
 
 /** Pre-fill the training form for editing an existing workout */
 export function startEdit(workout, db) {
+  _formExpanded = true;
   if (workout.phase !== db.phase) {
     db.phase = workout.phase;
     saveDB(db);
@@ -512,6 +606,7 @@ export function saveWorkout(db) {
 
   $trainNotes.value = '';
   clearDraft();
+  _formExpanded = false;
   loadSessionTemplate(db, true);
   toast(wasEditing ? 'Cambios guardados' : 'Sesión guardada');
 }
@@ -551,7 +646,7 @@ export function initTraining(db, { onCancelEdit }) {
     }
   }, true);
   $trainNotes.addEventListener('input', scheduleDraft);
-  $trainSession.addEventListener('change', () => { clearDraft(); loadSessionTemplate(db, true); });
+  $trainSession.addEventListener('change', () => { clearDraft(); _formExpanded = false; loadSessionTemplate(db, true); });
   $saveBtn.addEventListener('click', () => saveWorkout(db));
   $prefillBanner.addEventListener('click', (e) => {
     if (e.target.closest('.prefill-clear')) {
