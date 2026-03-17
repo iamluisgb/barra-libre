@@ -15,7 +15,7 @@ function normLift(name) {
 /** Render estimated 1RMs or personal records panel */
 export function render1RMs(db) {
   const prog = getActiveProgram();
-  const title = document.querySelector('#secSettings .sec-title');
+  const title = document.getElementById('rmTitle');
   if (prog !== 'barraLibre') {
     title.textContent = 'Records Personales';
     renderRecords(db, prog);
