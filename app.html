@@ -393,46 +393,56 @@
 <div class="run-tracking-overlay" id="runTrackingOverlay">
   <!-- Live tracking screen -->
   <div class="run-live" id="runLiveScreen">
-    <div class="run-live-top">
-      <button class="run-live-btn run-lock-btn" id="runLockBtn" title="Pantalla puede apagarse" aria-label="Bloqueo de pantalla">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      </button>
-      <button class="run-live-btn run-autopause-btn active" id="runAutoPauseBtn" title="Auto-pausa activada" aria-label="Auto-pausa">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/><path d="M2 12a10 10 0 0 1 10-10" stroke-linecap="round"/><path d="M22 12a10 10 0 0 1-10 10" stroke-linecap="round"/></svg>
-      </button>
-      <button class="run-live-btn run-hr-btn" id="runHrBtn" title="Conectar pulsometro" aria-label="Frecuencia cardiaca" style="display:none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      </button>
-      <span class="run-live-type-badge" id="runLiveTypeBadge"></span>
-      <div class="run-live-status" id="runLiveStatus">EN CURSO</div>
-      <button class="run-live-btn" id="runStopBtn" aria-label="Detener carrera">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-      </button>
+    <div class="run-live-data">
+      <div class="run-live-top">
+        <div class="run-live-controls">
+          <button class="run-live-btn run-lock-btn" id="runLockBtn" title="Pantalla puede apagarse" aria-label="Bloqueo de pantalla">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path class="lock-open" d="M7 11V7a5 5 0 0 1 9.9-1"/><path class="lock-closed" d="M7 11V7a5 5 0 0 1 10 0v4" style="display:none"/></svg>
+            <span class="run-live-btn-label">Pantalla</span>
+          </button>
+          <button class="run-live-btn run-autopause-btn active" id="runAutoPauseBtn" title="Auto-pausa activada" aria-label="Auto-pausa">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/><path d="M2 12a10 10 0 0 1 10-10" stroke-linecap="round"/><path d="M22 12a10 10 0 0 1-10 10" stroke-linecap="round"/></svg>
+            <span class="run-live-btn-label">A-Pausa</span>
+          </button>
+          <button class="run-live-btn run-hr-btn" id="runHrBtn" title="Conectar pulsometro" aria-label="Frecuencia cardiaca" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="run-live-btn-label">Pulso</span>
+          </button>
+        </div>
+        <div class="run-live-center-status">
+          <span class="run-live-type-badge" id="runLiveTypeBadge"></span>
+          <div class="run-live-status" id="runLiveStatus">EN CURSO</div>
+        </div>
+        <button class="run-live-btn run-stop-btn" id="runStopBtn" aria-label="Detener carrera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          <span class="run-live-btn-label">Parar</span>
+        </button>
+      </div>
+      <div class="run-live-timer" id="runLiveTimer">00:00</div>
+      <div class="run-live-metrics">
+        <div class="run-live-metric">
+          <div class="run-live-metric-value" id="runLiveDist">0.00</div>
+          <div class="run-live-metric-label">km</div>
+        </div>
+        <div class="run-live-metric">
+          <div class="run-live-metric-value" id="runLivePace">--:--</div>
+          <div class="run-live-metric-label">/km</div>
+        </div>
+        <div class="run-live-metric run-live-hr" id="runLiveHrMetric" style="display:none">
+          <div class="run-live-metric-value" id="runLiveHr">--</div>
+          <div class="run-live-metric-label" id="runLiveHrLabel">bpm</div>
+        </div>
+      </div>
+      <div class="run-session-progress" id="runSessionProgress" style="display:none"></div>
+      <div class="run-live-type-panel" id="runLiveTypePanel"></div>
+      <div class="run-live-splits" id="runLiveSplits"></div>
+      <div class="run-live-bottom">
+        <button class="run-pause-btn" id="runPauseBtn" aria-label="Pausar carrera">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="run-live-timer" id="runLiveTimer">00:00</div>
-    <div class="run-live-metrics">
-      <div class="run-live-metric">
-        <div class="run-live-metric-value" id="runLiveDist">0.00</div>
-        <div class="run-live-metric-label">km</div>
-      </div>
-      <div class="run-live-metric">
-        <div class="run-live-metric-value" id="runLivePace">--:--</div>
-        <div class="run-live-metric-label">/km</div>
-      </div>
-      <div class="run-live-metric run-live-hr" id="runLiveHrMetric" style="display:none">
-        <div class="run-live-metric-value" id="runLiveHr">--</div>
-        <div class="run-live-metric-label" id="runLiveHrLabel">bpm</div>
-      </div>
-    </div>
-    <div class="run-session-progress" id="runSessionProgress" style="display:none"></div>
-    <div class="run-live-type-panel" id="runLiveTypePanel"></div>
-    <div class="run-live-splits" id="runLiveSplits"></div>
     <div class="run-live-map" id="runLiveMap"></div>
-    <div class="run-live-bottom">
-      <button class="run-pause-btn" id="runPauseBtn" aria-label="Pausar carrera">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-      </button>
-    </div>
   </div>
 
   <!-- Post-run summary screen -->

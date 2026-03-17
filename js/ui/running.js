@@ -565,6 +565,9 @@ function startGpsRun(db) {
   $liveStatus.classList.remove('paused');
   $pauseBtn.classList.remove('paused');
   $lockBtn.classList.add('wake-active');
+  const lockOpen = $lockBtn.querySelector('.lock-open');
+  const lockClosed = $lockBtn.querySelector('.lock-closed');
+  if (lockOpen && lockClosed) { lockOpen.style.display = 'none'; lockClosed.style.display = ''; }
 
   // Set type badge
   const meta = RUN_TYPE_META[activeRunType];
@@ -624,6 +627,12 @@ async function toggleLock() {
   const screenOn = await tracker.toggleWakeLock();
   $lockBtn.classList.toggle('wake-active', screenOn);
   $lockBtn.title = screenOn ? 'Pantalla encendida' : 'Pantalla puede apagarse';
+  const lockOpen = $lockBtn.querySelector('.lock-open');
+  const lockClosed = $lockBtn.querySelector('.lock-closed');
+  if (lockOpen && lockClosed) {
+    lockOpen.style.display = screenOn ? 'none' : '';
+    lockClosed.style.display = screenOn ? '' : 'none';
+  }
 }
 
 function toggleAutoPause() {
@@ -1200,6 +1209,12 @@ function initLiveMap() {
     liveMap.setView(ll, 16);
     liveMarker.setLatLng(ll);
   }, () => {}, { enableHighAccuracy: true });
+
+  // Redraw map on container resize (desktop layout switch)
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => { if (liveMap) liveMap.invalidateSize(); });
+    ro.observe($liveMap);
+  }
 }
 
 function renderSummaryMap(coords) {
