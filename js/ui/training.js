@@ -109,6 +109,41 @@ export function populateSessions(db) {
   if (restoreDraft()) toast('Borrador restaurado', 'info');
 }
 
+// ── Exercise scroll spy dots ─────────────────────────────
+let _exObserver = null;
+
+function _setupExDots(count) {
+  const $dots = document.getElementById('exerciseDots');
+  if (!$dots) return;
+  if (count < 3) { $dots.classList.remove('visible'); return; }
+  $dots.innerHTML = Array.from({ length: count }, (_, i) =>
+    `<span class="ex-dot" data-dot="${i}"></span>`
+  ).join('');
+  $dots.classList.add('visible');
+
+  // Click to scroll
+  $dots.addEventListener('click', (e) => {
+    const dot = e.target.closest('.ex-dot');
+    if (!dot) return;
+    const card = $exerciseList.children[parseInt(dot.dataset.dot)];
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // IntersectionObserver
+  if (_exObserver) _exObserver.disconnect();
+  _exObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = Array.from($exerciseList.children).indexOf(entry.target);
+        if (idx >= 0) {
+          $dots.querySelectorAll('.ex-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        }
+      }
+    });
+  }, { threshold: 0.5 });
+  Array.from($exerciseList.children).forEach(card => _exObserver.observe(card));
+}
+
 /** Render exercise cards for the selected session template */
 export function loadSessionTemplate(db, autoPrefill) {
   if (isExTimerActive()) stopExTimer(false);
@@ -146,6 +181,7 @@ export function loadSessionTemplate(db, autoPrefill) {
       default: return renderResultCard(ex, i, prevEx, shouldPrefill, ex.type);
     }
   }).join('');
+  _setupExDots(exercises.length);
 }
 
 function timerBtnHtml(i, mode) {
@@ -487,6 +523,32 @@ export function initTraining(db, { onCancelEdit }) {
   $exerciseList.addEventListener('input', (e) => {
     e.target.classList.remove('prefilled');
     scheduleDraft();
+  }, true);
+  // Check animation when both kg+reps of a set are filled
+  $exerciseList.addEventListener('blur', (e) => {
+    const inp = e.target;
+    if (!inp.matches('input[data-field]')) return;
+    const ex = inp.dataset.ex, set = inp.dataset.set;
+    const kg = $exerciseList.querySelector(`[data-ex="${ex}"][data-set="${set}"][data-field="kg"]`);
+    const reps = $exerciseList.querySelector(`[data-ex="${ex}"][data-set="${set}"][data-field="reps"]`);
+    if (kg?.value && reps?.value) {
+      const label = $exerciseList.querySelector(`.set-label[data-ex="${ex}"][data-set="${set}"]`);
+      if (!label) {
+        // Find label by position in grid: set-labels don't have data attrs, find by DOM order
+        const grid = inp.closest('.sets-grid');
+        if (grid) {
+          const labels = grid.querySelectorAll('.set-label');
+          const l = labels[parseInt(set)];
+          if (l && !l.classList.contains('set-done')) {
+            l.classList.add('set-done');
+            l.dataset.original = l.textContent;
+            l.textContent = '✓';
+            l.style.color = 'var(--green)';
+            setTimeout(() => { l.textContent = l.dataset.original; l.style.color = ''; }, 800);
+          }
+        }
+      }
+    }
   }, true);
   $trainNotes.addEventListener('input', scheduleDraft);
   $trainSession.addEventListener('change', () => { clearDraft(); loadSessionTemplate(db, true); });

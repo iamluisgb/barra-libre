@@ -6,7 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Barra Libre">
-<meta name="theme-color" content="#0055ff">
+<meta name="theme-color" content="#0055ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png">
@@ -54,6 +55,7 @@
       <button class="prefill-clear">✕ Empezar de cero</button>
     </div>
     <div class="row mb"><div><label>Fecha</label><input type="date" id="trainDate"></div><div><label>Sesión</label><select id="trainSession"></select></div></div>
+    <div class="ex-dots" id="exerciseDots"></div>
     <div id="exerciseList"></div>
     <div class="mb"><label>Notas</label><textarea id="trainNotes" placeholder="Sensaciones, fatiga, ajustes..."></textarea></div>
     <button class="btn mb" id="saveWorkoutBtn">Guardar sesión</button>
