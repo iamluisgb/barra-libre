@@ -22,7 +22,7 @@ export function initDriveUI(db) {
       status.className = 'drive-status drive-success';
     } catch (e) {
       status.textContent = e.message === 'popup_closed_by_user'
-        ? 'Inicio de sesion cancelado'
+        ? 'Inicio de sesión cancelado'
         : `Error: ${e.message}`;
       status.className = 'drive-status drive-error';
     } finally {
@@ -47,7 +47,7 @@ export function initDriveUI(db) {
       }
       const when = new Date(result.modifiedTime).toLocaleString(LOCALE);
       if (!confirm(`Restaurar copia del ${when}?\nLos datos se fusionarán con los actuales.`)) {
-        status.textContent = 'Restauracion cancelada';
+        status.textContent = 'Restauración cancelada';
         status.className = 'drive-status';
         return;
       }
@@ -58,7 +58,7 @@ export function initDriveUI(db) {
       location.reload();
     } catch (e) {
       status.textContent = e.message === 'popup_closed_by_user'
-        ? 'Inicio de sesion cancelado'
+        ? 'Inicio de sesión cancelado'
         : `Error: ${e.message}`;
       status.className = 'drive-status drive-error';
     } finally {

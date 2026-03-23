@@ -16,7 +16,7 @@ function formatDate(dateStr) {
   const diff = Math.floor((now - d) / 86400000);
   if (diff === 0) return 'Hoy';
   if (diff === 1) return 'Ayer';
-  if (diff < 7) return `Hace ${diff} dias`;
+  if (diff < 7) return `Hace ${diff} días`;
   return d.toLocaleDateString('es', { day: 'numeric', month: 'short' });
 }
 
@@ -82,14 +82,14 @@ export function renderDashboard(db) {
   const streak = calcStreak(db.workouts);
   const streakEl = document.getElementById('dashStreakValue');
   const streakSub = document.getElementById('dashStreakSub');
-  if (streakEl) streakEl.textContent = `${streak} ${streak === 1 ? 'dia' : 'dias'}`;
-  if (streakSub) streakSub.textContent = streak === 0 ? 'Empieza hoy' : streak >= 7 ? 'Imparable' : 'Sigue asi';
+  if (streakEl) streakEl.textContent = `${streak} ${streak === 1 ? 'día' : 'días'}`;
+  if (streakSub) streakSub.textContent = streak === 0 ? 'Empieza hoy' : streak >= 7 ? 'Imparable' : 'Sigue así';
 
   // Greeting based on time
   const hour = new Date().getHours();
   const greetEl = document.getElementById('dashGreeting');
   if (greetEl) {
-    const greeting = hour < 12 ? 'Buenos dias' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
+    const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
     greetEl.textContent = greeting;
   }
 
@@ -99,7 +99,7 @@ export function renderDashboard(db) {
   if (!listEl) return;
 
   if (!recent.length) {
-    listEl.innerHTML = '<div class="dash-empty">Sin actividad aun</div>';
+    listEl.innerHTML = '<div class="dash-empty">Sin actividad aún</div>';
     return;
   }
 

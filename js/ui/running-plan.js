@@ -129,7 +129,7 @@ export function loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segment
       </div>`;
   }).join('');
 
-  $segments.innerHTML += `<button class="btn run-seg-start-btn" id="runSegStartBtn" style="width:100%;margin-top:8px">Iniciar esta sesion</button>`;
+  $segments.innerHTML += `<button class="btn run-seg-start-btn" id="runSegStartBtn" style="width:100%;margin-top:8px">Iniciar esta sesión</button>`;
   document.getElementById('runSegStartBtn').addEventListener('click', () => {
     const runType = inferRunType(segs);
     const sessionLabel = $sessionSelect.value || '';

@@ -1,7 +1,7 @@
 // ── Running constants and helpers ────────────────────────
 
 export const ZONE_COLORS = { Z1: '#999', Z2: '#34c759', Z3: '#ff9f0a', Z4: '#ff6b35', Z5: '#ff3b30' };
-export const ZONE_LABELS = { Z1: 'Recuperacion', Z2: 'Aerobico', Z3: 'Tempo', Z4: 'Umbral', Z5: 'VAM/VO2max' };
+export const ZONE_LABELS = { Z1: 'Recuperación', Z2: 'Aeróbico', Z3: 'Tempo', Z4: 'Umbral', Z5: 'VAM/VO2max' };
 
 // ── VDOT-based pace zones (Jack Daniels) ─────────────────
 
@@ -56,12 +56,12 @@ export function getPaceZones(db) {
 
 export const RUN_TYPE_META = {
   libre:       { label: 'Libre',       desc: 'Sin estructura, corre a tu ritmo',     zone: null },
-  rodaje:      { label: 'Rodaje',      desc: 'Carrera suave en zona aerobica',       zone: 'Z2' },
+  rodaje:      { label: 'Rodaje',      desc: 'Carrera suave en zona aeróbica',       zone: 'Z2' },
   intervalos:  { label: 'Intervalos',  desc: 'Series de alta intensidad',            zone: 'Z5' },
   tempo:       { label: 'Tempo',       desc: 'Ritmo sostenido en zona umbral',       zone: 'Z3' },
   fartlek:     { label: 'Fartlek',     desc: 'Cambios de ritmo libres',              zone: null },
   cuestas:     { label: 'Cuestas',     desc: 'Trabajo de fuerza en pendiente',       zone: 'Z4' },
-  competicion: { label: 'Competicion', desc: 'Carrera con distancia objetivo',        zone: null }
+  competicion: { label: 'Competición', desc: 'Carrera con distancia objetivo',        zone: null }
 };
 
 /** Format seconds as "m:ss /km" */

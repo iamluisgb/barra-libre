@@ -31,7 +31,7 @@ export function renderHistory(db, dateFilter) {
 
   const list = document.getElementById('historyList');
   if (items.length === 0) {
-    list.innerHTML = '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:40px 0">Sin registros aun.<br><span style="font-size:.72rem;color:var(--text3)">Completa tu primera sesion en la pestana Entreno.</span></p>';
+    list.innerHTML = '<p style="color:var(--text2);font-size:.8rem;text-align:center;padding:40px 0">Sin registros aún.<br><span style="font-size:.72rem;color:var(--text3)">Completa tu primera sesión en la pestaña Entreno.</span></p>';
     return;
   }
 
@@ -170,7 +170,7 @@ export function deleteWorkout(db) {
     closeDetailModal();
     renderHistory(db);
     renderCalendar(db);
-    toast('Sesion eliminada', 'info', {
+    toast('Sesión eliminada', 'info', {
       action: 'Deshacer',
       onAction: () => {
         if (deleted) {
@@ -179,7 +179,7 @@ export function deleteWorkout(db) {
           saveDB(db);
           renderHistory(db);
           renderCalendar(db);
-          toast('Sesion restaurada');
+          toast('Sesión restaurada');
         }
       }
     });

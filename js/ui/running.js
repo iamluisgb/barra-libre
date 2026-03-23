@@ -849,7 +849,7 @@ function updateTempoUI(data) {
   const absDelta = Math.abs(delta);
   const sign = delta > 0 ? '+' : '-';
   const cls = delta <= 0 ? 'faster' : 'slower';
-  const label = delta <= 0 ? 'mas rapido' : 'mas lento';
+  const label = delta <= 0 ? 'más rápido' : 'más lento';
   $typePanel.innerHTML = `<div class="run-type-pace-compare">
     <div class="run-type-pace-target">
       <div class="run-type-pace-target-value">${formatPace(targetPace)}</div>
@@ -1066,7 +1066,7 @@ function updateIntervalosUI(data) {
   const repLabel = intervalState.totalReps
     ? `Rep ${intervalState.rep + (intervalState.isWork ? 1 : 0)}/${intervalState.totalReps}`
     : `Rep ${intervalState.rep}`;
-  const phaseLabel = intervalState.isWork ? 'TRABAJO' : 'RECUPERACION';
+  const phaseLabel = intervalState.isWork ? 'TRABAJO' : 'RECUPERACIÓN';
   const phaseCls = intervalState.isWork ? 'work' : 'rest';
 
   const segInfo = activeSegments
@@ -1391,7 +1391,7 @@ function openManualModal(db) {
   document.getElementById('runPaceDisplay').style.display = 'none';
   document.getElementById('runEditBanner').style.display = 'none';
   document.getElementById('runDeleteBtn').style.display = 'none';
-  document.getElementById('runSaveBtn').textContent = 'Guardar sesion';
+  document.getElementById('runSaveBtn').textContent = 'Guardar sesión';
   document.getElementById('runSplitInputs').innerHTML = '';
   document.getElementById('runManualModal').classList.add('open');
 }
@@ -1444,7 +1444,7 @@ function saveManualLog(db) {
   const duration = parseRunDuration($duration.value);
 
   if (!distance && !duration) {
-    toast('Introduce al menos distancia o duracion', 'warn');
+    toast('Introduce al menos distancia o duración', 'warn');
     return;
   }
 
@@ -1485,7 +1485,7 @@ function saveManualLog(db) {
   if (heavy) saveRunRoute(log.id, heavy);
   saveDB(db);
   checkAndNotifyPRs(db, log);
-  toast(editingId ? 'Sesion actualizada' : 'Sesion guardada');
+  toast(editingId ? 'Sesión actualizada' : 'Sesión guardada');
   closeManualModal();
   refreshRunning(db);
 }
@@ -1527,7 +1527,7 @@ function startRunEdit(id, db) {
   }
 
   document.getElementById('runEditBanner').style.display = '';
-  document.getElementById('runEditText').textContent = `Editando sesion del ${formatDate(log.date)}`;
+  document.getElementById('runEditText').textContent = `Editando sesión del ${formatDate(log.date)}`;
   document.getElementById('runDeleteBtn').style.display = '';
   document.getElementById('runSaveBtn').textContent = 'Guardar cambios';
 }
@@ -1543,7 +1543,7 @@ function deleteRunLog(db, id) {
   db.runningLogs = (db.runningLogs || []).filter(l => l.id !== id);
   deleteRunRoute(id);
   saveDB(db);
-  toast('Sesion eliminada');
+  toast('Sesión eliminada');
   if (editingId === id) { editingId = null; closeManualModal(); }
   renderRunHistory(db);
   refreshRunning(db);
