@@ -51,7 +51,10 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-card .ex-name{font-size:var(--fs-md);font-weight:700;margin-bottom:3px}
 .ex-card .ex-target{font-size:var(--fs-sm);color:var(--text2);margin-bottom:var(--sp-2);font-weight:500}
 .ex-card .sets-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:var(--sp-2) 10px;align-items:center}
-.ex-card .set-label{font-size:var(--fs-sm);color:var(--text3);text-align:center;font-weight:600}
+.ex-card .set-label{font-size:var(--fs-sm);color:var(--text3);text-align:center;font-weight:600;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s,transform .15s;padding:0;font-family:var(--font)}
+.ex-card .set-label:active{transform:scale(.92)}
+.ex-card .set-label.set-done{background:rgba(22,163,74,.12);border-color:var(--green);color:var(--green)}
+.ex-card .set-label.active-set{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
 .ex-card input{padding:12px 8px;font-size:var(--fs-xl);text-align:center;border-radius:8px;min-height:44px}
 .ex-card .sets-header{font-size:var(--fs-xs);color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:.5px;padding-bottom:2px;font-weight:600}
 .ex-card .prev-data{font-size:var(--fs-sm);color:var(--text2);margin-top:10px;padding-top:8px;font-weight:500}

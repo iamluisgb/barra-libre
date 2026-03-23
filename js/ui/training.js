@@ -26,13 +26,19 @@ function saveDraft() {
     values.push(inp.value);
     if (inp.value && !inp.classList.contains('prefilled')) hasData = true;
   });
-  if (!hasData) { localStorage.removeItem(DRAFT_KEY); return; }
+  // Collect set-done checks
+  const checks = [];
+  $exerciseList.querySelectorAll('.set-label.set-done').forEach(l => {
+    checks.push({ ex: l.dataset.ex, set: l.dataset.set });
+  });
+  if (!hasData && !checks.length) { localStorage.removeItem(DRAFT_KEY); return; }
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({
       session: $trainSession.value,
       date: $trainDate.value,
       notes: $trainNotes.value,
       values,
+      checks,
       ts: Date.now()
     }));
   } catch { /* quota */ }
@@ -63,6 +69,13 @@ function restoreDraft() {
     });
     if (draft.notes) $trainNotes.value = draft.notes;
     if (draft.date) $trainDate.value = draft.date;
+    // Restore set-done checks
+    if (draft.checks?.length) {
+      draft.checks.forEach(({ ex, set }) => {
+        const label = $exerciseList.querySelector(`.set-label[data-ex="${ex}"][data-set="${set}"]`);
+        if (label) _markSetDone(label);
+      });
+    }
     return true;
   } catch { return false; }
 }
@@ -290,7 +303,8 @@ function renderSetsCard(ex, i, prevEx, shouldPrefill) {
     const vR = shouldPrefill && pR ? pR : '';
     const cK = vK ? ' prefilled' : '';
     const cR = vR ? ' prefilled' : '';
-    sh += `<div class="set-label">S${s + 1}</div><input type="number" class="${cK}" data-ex="${i}" data-set="${s}" data-field="kg" placeholder="${pK || '—'}" value="${vK}" step="0.5" aria-label="Peso serie ${s + 1} de ${esc(ex.name)}"><input type="text" class="${cR}" data-ex="${i}" data-set="${s}" data-field="reps" placeholder="${pR || ex.reps}" value="${vR}" inputmode="numeric" aria-label="Reps serie ${s + 1} de ${esc(ex.name)}">`;
+    const activeClass = s === 0 ? ' active-set' : '';
+    sh += `<button type="button" class="set-label${activeClass}" data-ex="${i}" data-set="${s}">S${s + 1}</button><input type="number" class="${cK}" data-ex="${i}" data-set="${s}" data-field="kg" placeholder="${pK || '—'}" value="${vK}" step="0.5" aria-label="Peso serie ${s + 1} de ${esc(ex.name)}"><input type="text" class="${cR}" data-ex="${i}" data-set="${s}" data-field="reps" placeholder="${pR || ex.reps}" value="${vR}" inputmode="numeric" aria-label="Reps serie ${s + 1} de ${esc(ex.name)}">`;
   }
   sh += '</div>';
   const pi = prevEx ? `<div class="prev-data">Anterior: ${prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ')}</div>` : '';
@@ -611,6 +625,35 @@ export function saveWorkout(db) {
   toast(wasEditing ? 'Cambios guardados' : 'Sesión guardada');
 }
 
+// ── Set completion helpers ────────────────────────────────
+
+function _markSetDone(label) {
+  if (!label.dataset.original) label.dataset.original = label.textContent;
+  label.classList.add('set-done');
+  label.classList.remove('active-set');
+  label.textContent = '✓';
+  _updateActiveSet(label.closest('.sets-grid'));
+}
+
+function _unmarkSetDone(label) {
+  label.classList.remove('set-done');
+  label.textContent = label.dataset.original || `S${(parseInt(label.dataset.set) || 0) + 1}`;
+  _updateActiveSet(label.closest('.sets-grid'));
+}
+
+function _updateActiveSet(grid) {
+  if (!grid) return;
+  const labels = grid.querySelectorAll('.set-label');
+  let found = false;
+  labels.forEach(l => {
+    l.classList.remove('active-set');
+    if (!found && !l.classList.contains('set-done')) {
+      l.classList.add('active-set');
+      found = true;
+    }
+  });
+}
+
 /** Initialize training section: cache selectors and bind events */
 export function initTraining(db, { onCancelEdit }) {
   cacheSelectors();
@@ -619,32 +662,32 @@ export function initTraining(db, { onCancelEdit }) {
     e.target.classList.remove('prefilled');
     scheduleDraft();
   }, true);
-  // Check animation when both kg+reps of a set are filled
+  // Auto-mark set done when both kg+reps filled (no prefill case)
   $exerciseList.addEventListener('blur', (e) => {
     const inp = e.target;
     if (!inp.matches('input[data-field]')) return;
+    if (inp.classList.contains('prefilled')) return;
     const ex = inp.dataset.ex, set = inp.dataset.set;
     const kg = $exerciseList.querySelector(`[data-ex="${ex}"][data-set="${set}"][data-field="kg"]`);
     const reps = $exerciseList.querySelector(`[data-ex="${ex}"][data-set="${set}"][data-field="reps"]`);
     if (kg?.value && reps?.value) {
       const label = $exerciseList.querySelector(`.set-label[data-ex="${ex}"][data-set="${set}"]`);
-      if (!label) {
-        // Find label by position in grid: set-labels don't have data attrs, find by DOM order
-        const grid = inp.closest('.sets-grid');
-        if (grid) {
-          const labels = grid.querySelectorAll('.set-label');
-          const l = labels[parseInt(set)];
-          if (l && !l.classList.contains('set-done')) {
-            l.classList.add('set-done');
-            l.dataset.original = l.textContent;
-            l.textContent = '✓';
-            l.style.color = 'var(--green)';
-            setTimeout(() => { l.textContent = l.dataset.original; l.style.color = ''; }, 800);
-          }
-        }
+      if (label && !label.classList.contains('set-done')) {
+        _markSetDone(label);
       }
     }
   }, true);
+  // Tap on set label to toggle done (essential for prefill case)
+  $exerciseList.addEventListener('click', (e) => {
+    const label = e.target.closest('.set-label');
+    if (!label) return;
+    if (label.classList.contains('set-done')) {
+      _unmarkSetDone(label);
+    } else {
+      _markSetDone(label);
+    }
+    scheduleDraft();
+  });
   $trainNotes.addEventListener('input', scheduleDraft);
   $trainSession.addEventListener('change', () => { clearDraft(); _formExpanded = false; loadSessionTemplate(db, true); });
   $saveBtn.addEventListener('click', () => saveWorkout(db));
