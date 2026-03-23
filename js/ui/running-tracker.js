@@ -325,7 +325,7 @@ export class GpsTracker {
     this._bgPollInterval = setInterval(() => {
       if (this.state !== 'tracking') return;
       // Only poll if watchPosition hasn't fired recently (> 6s)
-      if (Date.now() - this._lastGpsTime > 6000) {
+      if (Date.now() - this._lastGpsTime > 4000) {
         navigator.geolocation.getCurrentPosition(
           pos => this._onPosition(pos),
           () => {},

@@ -23,35 +23,47 @@ export function vibrate(pattern) {
   try { navigator.vibrate?.(pattern); } catch (e) { /* silent fail */ }
 }
 
-// ── Keep-alive: silent audio to prevent Chrome from suspending the page ──
+// ── Keep-alive: prevent Chrome Android from suspending the page ──
+// Chrome checks audio buffers for non-zero samples. A silent MP3 alone won't
+// create the foreground service needed to keep JS alive with screen locked.
+// Primary mechanism: Web Audio oscillator at 200Hz / gain 0.005 — produces
+// non-zero samples that Chrome recognises as real media playback.
+// Secondary: <audio> element for Media Session lock-screen notification.
 
 let _keepAliveAudio = null;
 let _keepAliveOsc = null;
+let _keepAliveActive = false;
 
-/** Start silent audio loop to keep the page alive in background (e.g. screen locked) */
-export function startKeepAlive() {
-  if (_keepAliveAudio) return;
-
-  // Primary: <audio> element with silent MP3 loop — registers with OS media session
+function _createKeepAliveAudio() {
   const audio = new Audio('assets/silence.mp3');
   audio.loop = true;
-  audio.volume = 0.01;
-  audio.play().catch(() => {});
-  _keepAliveAudio = audio;
+  audio.volume = 0.05;
+  return audio;
+}
 
-  // Reinforcement: Web Audio oscillator at near-zero gain
+async function _startOscillator() {
   try {
     const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') await ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    gain.gain.value = 0.001;
+    osc.frequency.value = 200;
+    gain.gain.value = 0.005;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
     _keepAliveOsc = osc;
   } catch (e) { /* silent fail */ }
+}
 
-  // Show meaningful info in media notification
+/** Start keep-alive audio to maintain background execution (e.g. screen locked) */
+export async function startKeepAlive() {
+  if (_keepAliveActive) return;
+  _keepAliveActive = true;
+
+  _keepAliveAudio = _createKeepAliveAudio();
+  _keepAliveAudio.play().catch(() => {});
+  await _startOscillator();
+
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: 'Carrera en curso',
@@ -62,14 +74,23 @@ export function startKeepAlive() {
 
 /** Stop the keep-alive audio */
 export function stopKeepAlive() {
+  _keepAliveActive = false;
   if (_keepAliveAudio) { _keepAliveAudio.pause(); _keepAliveAudio.src = ''; _keepAliveAudio = null; }
   if (_keepAliveOsc) { try { _keepAliveOsc.stop(); } catch (e) {} _keepAliveOsc = null; }
   if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
 }
 
-/** Resume keep-alive after returning to foreground */
+/** Resume or recreate keep-alive after returning to foreground */
 export function resumeKeepAlive() {
-  if (!_keepAliveAudio) return;
-  _keepAliveAudio.play().catch(() => {});
+  if (!_keepAliveActive) return;
+
   try { const ctx = getAudioCtx(); if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+
+  if (!_keepAliveAudio || _keepAliveAudio.paused) {
+    if (_keepAliveAudio) { _keepAliveAudio.src = ''; }
+    _keepAliveAudio = _createKeepAliveAudio();
+    _keepAliveAudio.play().catch(() => {});
+  }
+
+  if (!_keepAliveOsc) _startOscillator();
 }
