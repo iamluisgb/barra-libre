@@ -24,20 +24,63 @@ export function vibrate(pattern) {
 }
 
 // ── Keep-alive: prevent Chrome Android from suspending the page ──
-// Chrome checks audio buffers for non-zero samples. A silent MP3 alone won't
-// create the foreground service needed to keep JS alive with screen locked.
-// Primary mechanism: Web Audio oscillator at 200Hz / gain 0.005 — produces
-// non-zero samples that Chrome recognises as real media playback.
-// Secondary: <audio> element for Media Session lock-screen notification.
+// Chrome inspects <audio> element buffers for non-zero PCM samples.
+// If it finds real audio, it creates an Android foreground service that
+// keeps JS timers and GPS alive even with the screen locked.
+//
+// Primary: <audio> element playing a generated WAV with a near-inaudible
+//   200Hz tone (~-50dB). Chrome sees non-zero samples → foreground service.
+// Secondary: Web Audio oscillator as extra insurance.
+// Tertiary: Media Session API for lock-screen notification.
 
 let _keepAliveAudio = null;
 let _keepAliveOsc = null;
 let _keepAliveActive = false;
+let _keepAliveWavUrl = null;
+
+function _writeString(view, offset, str) {
+  for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+}
+
+function _getKeepAliveWavUrl() {
+  if (_keepAliveWavUrl) return _keepAliveWavUrl;
+
+  const sampleRate = 44100;
+  const numSamples = sampleRate; // 1 second
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+
+  // WAV header
+  _writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + numSamples * 2, true);
+  _writeString(view, 8, 'WAVE');
+  _writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);  // PCM
+  view.setUint16(22, 1, true);  // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);  // block align
+  view.setUint16(34, 16, true); // bits per sample
+
+  _writeString(view, 36, 'data');
+  view.setUint32(40, numSamples * 2, true);
+
+  // 200Hz tone at amplitude 100/32767 ≈ -50dB — inaudible but non-zero
+  const amplitude = 100;
+  for (let i = 0; i < numSamples; i++) {
+    const sample = Math.round(amplitude * Math.sin(2 * Math.PI * 200 * i / sampleRate));
+    view.setInt16(44 + i * 2, sample, true);
+  }
+
+  _keepAliveWavUrl = URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+  return _keepAliveWavUrl;
+}
 
 function _createKeepAliveAudio() {
-  const audio = new Audio('assets/silence.mp3');
+  const audio = new Audio(_getKeepAliveWavUrl());
   audio.loop = true;
-  audio.volume = 0.05;
+  audio.volume = 0.01;
   return audio;
 }
 

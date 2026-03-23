@@ -27,7 +27,8 @@ export class GpsTracker {
     this._totalPaused = 0;
     this._timerRaf = null;
     this._timerInterval = null;
-    this._bgPollInterval = null;   // background GPS polling fallback
+    this._bgPollInterval = null;   // background GPS polling fallback (main thread)
+    this._bgWorker = null;         // Web Worker for background timer (less throttled)
     this._lastGpsTime = 0;         // timestamp of last GPS callback
     this._wakeLock = null;
     this._wakeLockEnabled = false; // opt-in: user toggles this
@@ -304,6 +305,12 @@ export class GpsTracker {
         // Restart GPS watcher in case browser suspended it in background
         this._stopGps();
         this._startGps();
+        // Immediate position request for fast recovery after screen unlock
+        navigator.geolocation.getCurrentPosition(
+          pos => this._onPosition(pos),
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        );
       }
     };
     document.addEventListener('visibilitychange', this._visibilityHandler);
@@ -317,25 +324,41 @@ export class GpsTracker {
   }
 
   // ── Background GPS polling ─────────────────────────────
-  // Fallback: if watchPosition stops delivering (screen off on some devices),
-  // poll getCurrentPosition every 5s to keep collecting data.
+  // Primary: Web Worker timer (less throttled when screen is locked).
+  // Fallback: main-thread setInterval (in case Worker is unavailable).
+
+  _bgPollTick() {
+    if (this.state !== 'tracking') return;
+    if (Date.now() - this._lastGpsTime > 4000) {
+      navigator.geolocation.getCurrentPosition(
+        pos => this._onPosition(pos),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 5000 }
+      );
+    }
+  }
 
   _startBgPoll() {
     this._stopBgPoll();
-    this._bgPollInterval = setInterval(() => {
-      if (this.state !== 'tracking') return;
-      // Only poll if watchPosition hasn't fired recently (> 6s)
-      if (Date.now() - this._lastGpsTime > 4000) {
-        navigator.geolocation.getCurrentPosition(
-          pos => this._onPosition(pos),
-          () => {},
-          { enableHighAccuracy: true, maximumAge: 3000, timeout: 5000 }
-        );
-      }
-    }, 5000);
+
+    // Primary: Web Worker (timers are less throttled in background)
+    if (typeof Worker !== 'undefined') {
+      try {
+        this._bgWorker = new Worker('js/bg-worker.js');
+        this._bgWorker.onmessage = () => this._bgPollTick();
+        this._bgWorker.postMessage('start');
+      } catch (e) { /* Worker failed, fall through to setInterval */ }
+    }
+
+    // Fallback: main-thread interval
+    this._bgPollInterval = setInterval(() => this._bgPollTick(), 5000);
   }
 
   _stopBgPoll() {
+    if (this._bgWorker) {
+      try { this._bgWorker.postMessage('stop'); this._bgWorker.terminate(); } catch (e) {}
+      this._bgWorker = null;
+    }
     if (this._bgPollInterval) {
       clearInterval(this._bgPollInterval);
       this._bgPollInterval = null;
