@@ -150,8 +150,10 @@ export function initNav(db) {
     if (option) selectPhase(parseInt(option.dataset.phase), db);
   });
   document.querySelector('#phaseModal .btn-outline').addEventListener('click', () => closePhaseModal());
+}
 
-  // Restore last active view
+/** Restore last active tab after all UI modules are initialized */
+export function restoreLastTab(db) {
   const lastTab = localStorage.getItem('barraLibreLastTab');
   if (lastTab && lastTab !== 'secDashboard') {
     const savedBtn = document.querySelector(`nav button[data-sec="${lastTab}"]`);

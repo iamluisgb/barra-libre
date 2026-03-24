@@ -5,7 +5,7 @@ import { formatPace, parseRunDuration, formatRunDuration, getPaceZones, getHRZon
 import { today, mergeDB, esc, trapFocus } from './utils.js';
 import { DEBOUNCE_BACKUP_MS, GIS_CHECK_INTERVAL_MS, GIS_CHECK_TIMEOUT_MS, SYNC_INDICATOR_MS, DEFAULT_HEIGHT, DEFAULT_AGE, LOCALE, REVISION_PREVIEW_LIMIT, APP_VERSION } from './constants.js';
 import { initTimer } from './ui/timer.js';
-import { initNav, switchTab, switchStrTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection } from './ui/nav.js';
+import { initNav, switchTab, switchStrTab, updatePhaseUI, updatePhaseDisplay, refreshActiveSection, restoreLastTab } from './ui/nav.js';
 import { initTraining, populateSessions, startEdit, cancelEdit } from './ui/training.js';
 import { initCalendar } from './ui/calendar.js';
 import { initHistory } from './ui/history.js';
@@ -305,6 +305,7 @@ function bindEvents() {
   });
   initBody(db);
   initRunning(db);
+  restoreLastTab(db);
 
   // Program selector modal
   document.getElementById('programContext').addEventListener('click', () => {
