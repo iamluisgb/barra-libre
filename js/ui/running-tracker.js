@@ -33,6 +33,8 @@ export class GpsTracker {
     this._wakeLock = null;
     this._wakeLockEnabled = false; // opt-in: user toggles this
     this._visibilityHandler = null;
+    this._swMessageHandler = null;
+    this._runStartWallTime = 0; // Date.now() at start, for SW notification
 
     // Auto-pause
     this._autoPauseEnabled = true;  // on by default
@@ -107,10 +109,12 @@ export class GpsTracker {
     this._lastSplitTime = 0;
     this._recentPoints = [];
 
+    this._runStartWallTime = Date.now();
     this._startGps();
     this._startTimer();
     this._startBgPoll();
     this._bindVisibility();
+    this._bindSwMessages();
     // Auto-enable wake lock on start (user can toggle off)
     this._wakeLockEnabled = true;
     this._acquireWakeLock();
@@ -132,6 +136,7 @@ export class GpsTracker {
     this._stopGps();
     this._stopTimer();
     this._stopBgPoll();
+    this._swPost({ type: 'run-clear' });
   }
 
   resume() {
@@ -141,6 +146,10 @@ export class GpsTracker {
     this._startGps();
     this._startTimer();
     this._startBgPoll();
+    // If resuming while in background, re-activate SW notification
+    if (document.visibilityState === 'hidden') {
+      this._swPost({ type: 'run-start-live', startedAt: this._runStartWallTime, distance: this.distance * 1000 });
+    }
   }
 
   // ── Stop tracking ───────────────────────────────────────
@@ -157,6 +166,8 @@ export class GpsTracker {
     this._stopBgPoll();
     this._releaseWakeLock();
     this._unbindVisibility();
+    this._unbindSwMessages();
+    this._swPost({ type: 'run-clear' });
     this._wakeLockEnabled = false;
     this._updateElapsed();
     this.state = 'idle';
@@ -297,15 +308,22 @@ export class GpsTracker {
 
   // ── Visibility handling (restart GPS on foreground) ──────
 
+  _swPost(msg) {
+    if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage(msg);
+  }
+
   _bindVisibility() {
     this._visibilityHandler = () => {
-      if (document.visibilityState === 'visible' && this.state === 'tracking') {
-        // Re-acquire wake lock if user had it enabled (it's auto-released on hidden)
+      if (this.state !== 'tracking') return;
+      if (document.visibilityState === 'hidden') {
+        // Activate SW notification + GPS heartbeat (same pattern as timer)
+        this._swPost({ type: 'run-start-live', startedAt: this._runStartWallTime, distance: this.distance * 1000 });
+      } else {
+        // Back to foreground: clear SW notification, re-sync GPS
+        this._swPost({ type: 'run-clear' });
         if (this._wakeLockEnabled) this._acquireWakeLock();
-        // Restart GPS watcher in case browser suspended it in background
         this._stopGps();
         this._startGps();
-        // Immediate position request for fast recovery after screen unlock
         navigator.geolocation.getCurrentPosition(
           pos => this._onPosition(pos),
           () => {},
@@ -320,6 +338,30 @@ export class GpsTracker {
     if (this._visibilityHandler) {
       document.removeEventListener('visibilitychange', this._visibilityHandler);
       this._visibilityHandler = null;
+    }
+  }
+
+  // Listen for SW heartbeat pings to request GPS in background
+  _bindSwMessages() {
+    this._swMessageHandler = (event) => {
+      if (event.data?.type === 'run-gps-poll' && this.state === 'tracking') {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            this._onPosition(pos);
+            this._swPost({ type: 'run-update', distance: this.distance * 1000 });
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 3000, timeout: 5000 }
+        );
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', this._swMessageHandler);
+  }
+
+  _unbindSwMessages() {
+    if (this._swMessageHandler) {
+      navigator.serviceWorker?.removeEventListener('message', this._swMessageHandler);
+      this._swMessageHandler = null;
     }
   }
 

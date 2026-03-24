@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v76';
+const CACHE_NAME = 'barra-libre-v77';
 const ASSETS = [
   './',
   './app.html',
@@ -196,7 +196,53 @@ self.addEventListener('message', event => {
   if (event.data?.type === 'timer-clear') {
     stopTimerNotification();
   }
+
+  // Running GPS heartbeat
+  if (event.data?.type === 'run-start-live') {
+    runState = { startedAt: event.data.startedAt, distance: event.data.distance || 0 };
+    updateRunNotification();
+    if (runInterval) clearInterval(runInterval);
+    runInterval = setInterval(updateRunNotification, 5000);
+  }
+  if (event.data?.type === 'run-update') {
+    if (runState) runState.distance = event.data.distance || 0;
+  }
+  if (event.data?.type === 'run-clear') {
+    stopRunNotification();
+  }
 });
+
+// === Live run notification (GPS heartbeat) ===
+
+let runInterval = null;
+let runState = null;
+
+function updateRunNotification() {
+  if (!runState) return;
+  const elapsed = Math.floor((Date.now() - runState.startedAt) / 1000);
+  const min = Math.floor(elapsed / 60);
+  const sec = elapsed % 60;
+  const km = (runState.distance / 1000).toFixed(2);
+  self.registration.showNotification('Carrera en curso', {
+    body: `${min}:${sec.toString().padStart(2, '0')} · ${km} km`,
+    icon: './assets/icons/icon-192.png',
+    badge: './assets/icons/icon-192.png',
+    tag: 'barra-libre-run',
+    requireInteraction: true,
+    silent: true,
+  });
+  // Ping app to request GPS position
+  self.clients.matchAll({ type: 'window' }).then(cls => {
+    cls.forEach(c => c.postMessage({ type: 'run-gps-poll' }));
+  });
+}
+
+function stopRunNotification() {
+  if (runInterval) { clearInterval(runInterval); runInterval = null; }
+  runState = null;
+  self.registration.getNotifications({ tag: 'barra-libre-run' })
+    .then(ns => ns.forEach(n => n.close()));
+}
 
 // Tap notification → focus app
 self.addEventListener('notificationclick', event => {
