@@ -62,12 +62,15 @@ export class GpsTracker {
     this._onUpdate = null;
     this._onSplit = null;
     this._onError = null;
+    this._onGapDetected = null;
+    this.gapSeconds = 0;
   }
 
-  onUpdate(cb)     { this._onUpdate = cb; }
-  onSplit(cb)      { this._onSplit = cb; }
-  onError(cb)      { this._onError = cb; }
-  onAutoPause(cb)  { this._onAutoPause = cb; }
+  onUpdate(cb)       { this._onUpdate = cb; }
+  onSplit(cb)        { this._onSplit = cb; }
+  onError(cb)        { this._onError = cb; }
+  onAutoPause(cb)    { this._onAutoPause = cb; }
+  onGapDetected(cb)  { this._onGapDetected = cb; }
 
   get autoPauseEnabled() { return this._autoPauseEnabled; }
   get isAutoPaused() { return this._autoPaused; }
@@ -102,6 +105,7 @@ export class GpsTracker {
     this.distance = 0;
     this.currentPace = 0;
     this.avgPace = 0;
+    this.gapSeconds = 0;
     this.splits = [];
     this.coords = [];
     this._lastPos = null;
@@ -259,6 +263,7 @@ export class GpsTracker {
       this._startTimer();
       this._startBgPoll();
       this._bindVisibility();
+      this._bindSwMessages();
       if (this._wakeLockEnabled) this._acquireWakeLock();
     } else if (this.state === 'paused') {
       // Paused: just recalc elapsed, don't start GPS
@@ -433,7 +438,16 @@ export class GpsTracker {
 
   _onPosition(pos) {
     if (this.state !== 'tracking') return;
-    this._lastGpsTime = Date.now();
+    const now = Date.now();
+    const prevGpsTime = this._lastGpsTime;
+    this._lastGpsTime = now;
+
+    // Detect GPS gaps (> 15s without a fix)
+    if (prevGpsTime > 0 && now - prevGpsTime > 15000) {
+      const gapSec = (now - prevGpsTime) / 1000;
+      this.gapSeconds += gapSec;
+      this._onGapDetected?.(gapSec);
+    }
 
     const { latitude: lat, longitude: lng, altitude: alt, accuracy, speed } = pos.coords;
     const ts = pos.timestamp;

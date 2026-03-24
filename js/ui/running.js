@@ -88,6 +88,7 @@ let _splitHrSum = 0, _splitHrCount = 0;  // per-split HR accumulation
 let $overlay, $liveScreen, $summaryScreen;
 let $liveTimer, $liveDist, $livePace, $liveSplits, $liveMap, $liveStatus;
 let $pauseBtn, $stopBtn, $lockBtn, $autoPauseBtn, $hrBtn, $hrMetric, $hrValue;
+let $uiLock, $uiLockProgress;
 let $goalCard, $goalBody, $goalArc, $goalCurrent, $goalUnit, $goalTarget, $goalSessions;
 let $prsGrid;
 let $weekSelect, $sessionSelect, $segments;
@@ -109,6 +110,8 @@ function cacheSelectors() {
   $stopBtn = document.getElementById('runStopBtn');
   $lockBtn = document.getElementById('runLockBtn');
   $autoPauseBtn = document.getElementById('runAutoPauseBtn');
+  $uiLock = document.getElementById('runUiLock');
+  $uiLockProgress = document.getElementById('runUiLockProgress');
   $goalCard = document.getElementById('runGoalCard');
   $goalBody = document.getElementById('runGoalBody');
   $goalArc = document.getElementById('runGoalArc');
@@ -264,6 +267,35 @@ export function initRunning(db) {
   $stopBtn.addEventListener('click', () => stopGpsRun(db));
   $lockBtn.addEventListener('click', () => toggleLock());
   $autoPauseBtn.addEventListener('click', () => toggleAutoPause());
+
+  // UI Lock (black screen keep-alive)
+  document.getElementById('runUiLockBtn').addEventListener('click', () => {
+    $uiLock.classList.add('active');
+  });
+  let _uiLockTimer = null;
+  const UNLOCK_MS = 1500;
+  $uiLock.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const start = Date.now();
+    $uiLockProgress.style.width = '0%';
+    _uiLockTimer = setInterval(() => {
+      const pct = Math.min(100, ((Date.now() - start) / UNLOCK_MS) * 100);
+      $uiLockProgress.style.width = pct + '%';
+      if (pct >= 100) {
+        clearInterval(_uiLockTimer); _uiLockTimer = null;
+        $uiLock.classList.remove('active');
+        $uiLockProgress.style.width = '0%';
+      }
+    }, 50);
+  });
+  $uiLock.addEventListener('touchend', () => {
+    if (_uiLockTimer) { clearInterval(_uiLockTimer); _uiLockTimer = null; }
+    $uiLockProgress.style.width = '0%';
+  });
+  $uiLock.addEventListener('touchcancel', () => {
+    if (_uiLockTimer) { clearInterval(_uiLockTimer); _uiLockTimer = null; }
+    $uiLockProgress.style.width = '0%';
+  });
 
   // Post-run summary
   document.getElementById('runSumSaveBtn').addEventListener('click', () => saveGpsRun(db));
@@ -566,6 +598,13 @@ function startGpsRun(db) {
   if (!started) return;
   startKeepAlive();
 
+  // GPS gap detection
+  tracker.onGapDetected((gapSec) => {
+    toast(`GPS pausado ${Math.round(gapSec)}s — mantén la pantalla encendida`, 'warning');
+  });
+
+  toast('Mantén la pantalla encendida para GPS continuo', 'info');
+
   // Show overlay
   $overlay.classList.add('active');
   $liveScreen.style.display = '';
@@ -659,6 +698,7 @@ function toggleAutoPause() {
 function stopGpsRun(db) {
   clearActiveRun();
   stopKeepAlive();
+  $uiLock.classList.remove('active'); // Deactivate UI lock if active
   const result = tracker.stop();
   if (!result) { closeLiveOverlay(); return; }
 
@@ -686,6 +726,17 @@ function stopGpsRun(db) {
   document.getElementById('runSumDist').textContent = result.distance.toFixed(2);
   document.getElementById('runSumTime').textContent = formatRunDuration(result.duration);
   document.getElementById('runSumPace').textContent = result.pace > 0 ? formatPace(result.pace) : '--:--';
+
+  // Gap warning
+  const $gapWarn = document.getElementById('runSumGapWarn');
+  if ($gapWarn) {
+    if (tracker.gapSeconds > 0) {
+      $gapWarn.textContent = `GPS interrumpido ${Math.round(tracker.gapSeconds)}s durante la carrera`;
+      $gapWarn.style.display = '';
+    } else {
+      $gapWarn.style.display = 'none';
+    }
+  }
 
   // Render splits
   renderSplitsUI(document.getElementById('runSumSplits'), result.splits);

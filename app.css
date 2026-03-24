@@ -458,6 +458,18 @@ input.prefilled:focus{background:var(--surface);border:none}
 .run-secondary-btn:active{color:var(--text)}
 .run-secondary-sep{width:1px;height:20px;background:var(--border)}
 
+/* ── Running: UI Lock (black screen keep-alive) ──────── */
+.run-ui-lock{display:none;position:fixed;inset:0;z-index:600;background:#000;flex-direction:column;align-items:center;justify-content:center;color:#555;user-select:none;-webkit-user-select:none;touch-action:none}
+.run-ui-lock.active{display:flex}
+.run-ui-lock-content{text-align:center}
+.run-ui-lock-content .material-symbols-outlined{font-size:48px}
+.run-ui-lock-content p{margin:8px 0 0;font-size:var(--fs-base);font-weight:600}
+.run-ui-lock-hint{font-size:var(--fs-sm)!important;font-weight:400!important;color:#444}
+.run-ui-lock-progress{position:absolute;bottom:0;left:0;height:4px;background:var(--accent);width:0;transition:width .05s linear}
+
+/* ── Running: GPS gap warning in summary ─────────────── */
+.run-sum-gap-warn{background:rgba(255,170,0,.12);border:1px solid rgba(255,170,0,.3);border-radius:var(--radius);padding:10px 14px;font-size:var(--fs-sm);color:#fa0;text-align:center;margin-bottom:12px}
+
 /* ── Running: GPS Tracking Overlay ───────────────────── */
 .run-tracking-overlay{display:none;position:fixed;inset:0;z-index:500;background:var(--bg);flex-direction:column;overflow:hidden}
 .run-tracking-overlay.active{display:flex}

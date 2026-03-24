@@ -464,6 +464,10 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/><path d="M2 12a10 10 0 0 1 10-10" stroke-linecap="round"/><path d="M22 12a10 10 0 0 1-10 10" stroke-linecap="round"/></svg>
             <span class="run-live-btn-label">A-Pausa</span>
           </button>
+          <button class="run-live-btn" id="runUiLockBtn" title="Bloquear pantalla" aria-label="Bloquear interfaz">
+            <span class="material-symbols-outlined" style="font-size:20px">screen_lock_portrait</span>
+            <span class="run-live-btn-label">Bloqueo</span>
+          </button>
           <button class="run-live-btn run-hr-btn" id="runHrBtn" title="Conectar pulsometro" aria-label="Frecuencia cardiaca" style="display:none">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <span class="run-live-btn-label">Pulso</span>
@@ -505,6 +509,16 @@
     <div class="run-live-map" id="runLiveMap"></div>
   </div>
 
+  <!-- UI Lock overlay (black screen, keeps wake lock active) -->
+  <div class="run-ui-lock" id="runUiLock">
+    <div class="run-ui-lock-content">
+      <span class="material-symbols-outlined">lock</span>
+      <p>Pantalla bloqueada</p>
+      <p class="run-ui-lock-hint">Mantén pulsado para desbloquear</p>
+    </div>
+    <div class="run-ui-lock-progress" id="runUiLockProgress"></div>
+  </div>
+
   <!-- Post-run summary screen -->
   <div class="run-summary-screen" id="runSummaryScreen" style="display:none">
     <div class="run-summary-header">Resumen de carrera</div>
@@ -513,6 +527,7 @@
       <div class="run-summary-stat"><div class="run-summary-stat-value" id="runSumTime">00:00</div><div class="run-summary-stat-label">tiempo</div></div>
       <div class="run-summary-stat"><div class="run-summary-stat-value" id="runSumPace">--:--</div><div class="run-summary-stat-label">/km</div></div>
     </div>
+    <div class="run-sum-gap-warn" id="runSumGapWarn" style="display:none"></div>
     <div class="run-summary-map" id="runSummaryMap"></div>
     <div class="run-summary-splits-title">Splits por km</div>
     <div class="run-summary-splits" id="runSumSplits"></div>
