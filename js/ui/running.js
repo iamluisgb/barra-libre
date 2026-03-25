@@ -48,6 +48,28 @@ function clearActiveRun() {
   localStorage.removeItem(RUN_SAVE_KEY);
 }
 
+function emergencySaveRun(snap, db) {
+  const t = snap.tracker;
+  if (!t || !t.distance || t.distance < 0.01) return;
+  const log = {
+    id: Date.now(),
+    date: new Date(t.startTime || snap.savedAt).toISOString().slice(0, 10),
+    type: snap.activeRunType || 'libre',
+    session: snap.activePlanSession || '',
+    distance: +(t.distance || 0).toFixed(3),
+    duration: Math.round(t.elapsed || 0),
+    pace: t.distance > 0 ? Math.round((t.elapsed || 0) / t.distance) : 0,
+    elevation: t.elevation || null,
+    splits: t.splits || [],
+    route: t.coords?.length > 1 ? { coords: t.coords } : null,
+    notes: 'Guardado automático (sesión interrumpida)',
+  };
+  db.runningLogs = db.runningLogs || [];
+  db.runningLogs.push(log);
+  saveDB(db);
+  toast('Carrera guardada automáticamente (datos parciales)', 'info');
+}
+
 function getActiveRunSnap() {
   try {
     const raw = localStorage.getItem(RUN_SAVE_KEY);
@@ -492,11 +514,19 @@ function restoreRun(snap, db) {
 
   // Restore tracker
   const restored = tracker.restore(snap.tracker);
-  if (!restored) { clearActiveRun(); return; }
+  if (!restored) {
+    emergencySaveRun(snap, db);
+    clearActiveRun();
+    return;
+  }
   startKeepAlive();
 
   // Restore HR accumulator (BLE connection cannot be restored)
   hrMonitor.restore(snap.hrMonitor);
+
+  // Clear UI lock (may have been active when app was interrupted)
+  $uiLock.classList.remove('active');
+  $uiLockProgress.style.width = '0%';
 
   // Show overlay in correct state
   $overlay.classList.add('active');
