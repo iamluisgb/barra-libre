@@ -649,15 +649,22 @@
     <div class="se-loading" id="seLoading"><div class="se-spinner"></div></div>
   </div>
   <div class="se-controls">
-    <div class="se-format-toggle" role="radiogroup" aria-label="Formato de imagen">
-      <button class="se-format-btn active" data-format="9:16" role="radio" aria-checked="true">9:16</button>
-      <button class="se-format-btn" data-format="1:1" role="radio" aria-checked="false">1:1</button>
+    <div class="se-toggles-row">
+      <div class="se-format-toggle" role="radiogroup" aria-label="Formato de imagen">
+        <button class="se-format-btn active" data-format="9:16" role="radio" aria-checked="true">9:16</button>
+        <button class="se-format-btn" data-format="1:1" role="radio" aria-checked="false">1:1</button>
+      </div>
+      <div class="se-theme-toggle" role="radiogroup" aria-label="Tema">
+        <button class="se-theme-btn active" data-theme="dark" role="radio" aria-checked="true">Oscuro</button>
+        <button class="se-theme-btn" data-theme="light" role="radio" aria-checked="false">Claro</button>
+      </div>
     </div>
     <div class="se-presets" role="radiogroup" aria-label="Estilo visual">
       <button class="se-preset-chip active" data-preset="minimal" role="radio" aria-checked="true">Minimal</button>
       <button class="se-preset-chip" data-preset="statsPro" role="radio" aria-checked="false">Stats Pro</button>
       <button class="se-preset-chip" data-preset="routeHero" role="radio" aria-checked="false">Ruta</button>
     </div>
+
     <button class="btn se-share-btn" id="seShareBtn">
       <span class="material-symbols-outlined">share</span> Compartir
     </button>

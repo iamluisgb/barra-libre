@@ -8,11 +8,52 @@ let _data = null;       // normalized data
 let _mode = 'running';  // 'running' | 'strength'
 let _preset = 'minimal';
 let _format = '9:16';
+let _theme = 'dark';
 let _projected = null;  // cached projected coords
 let _onClose = null;
 
 const PREF_KEY = 'barraLibreSharePrefs';
 const FONT = "'Inter', -apple-system, system-ui, sans-serif";
+
+// ── Themes ──────────────────────────────────────────────────
+const THEMES = {
+  dark: {
+    bg: ['#0f0f0f', '#1a1a1a', '#0f0f0f'],
+    bgFlat: ['#111111', '#111111'],
+    bgRoute: ['#0a0a0a', '#111827'],
+    text: '#ffffff',
+    sub: (o) => `rgba(255,255,255,${o})`,
+    accent: '#ff5545',
+    card: 'rgba(255,255,255,.05)',
+    cardBorder: 'rgba(255,255,255,.08)',
+    separator: 'rgba(255,255,255,.25)',
+    separatorLight: 'rgba(255,255,255,.06)',
+    glowColor: 'rgba(212,55,44,.08)',
+    route: '#ff5545',
+    routeBg: '#ff5545',
+    brandLine: 'rgba(255,255,255,.08)',
+    brandText: 'rgba(255,255,255,.2)',
+    brandAccent: 'rgba(255,85,69,.3)',
+  },
+  light: {
+    bg: ['#f5f5f7', '#ffffff', '#f5f5f7'],
+    bgFlat: ['#ffffff', '#ffffff'],
+    bgRoute: ['#f0f0f2', '#e8e8ee'],
+    text: '#1d1d1f',
+    sub: (o) => `rgba(0,0,0,${o})`,
+    accent: '#d4372c',
+    card: 'rgba(0,0,0,.04)',
+    cardBorder: 'rgba(0,0,0,.08)',
+    separator: 'rgba(0,0,0,.15)',
+    separatorLight: 'rgba(0,0,0,.06)',
+    glowColor: 'rgba(212,55,44,.06)',
+    route: '#d4372c',
+    routeBg: '#d4372c',
+    brandLine: 'rgba(0,0,0,.08)',
+    brandText: 'rgba(0,0,0,.2)',
+    brandAccent: 'rgba(212,55,44,.35)',
+  }
+};
 
 // ── Presets ─────────────────────────────────────────────────
 
@@ -158,9 +199,10 @@ function drawBackground(ctx, W, H, colors) {
   ctx.fillRect(0, 0, W, H);
 }
 
-function drawAccentGlow(ctx, W, H) {
+function drawAccentGlow(ctx, W, H, theme) {
+  const t = theme || THEMES.dark;
   const glow = ctx.createRadialGradient(W / 2, H * 0.6, 0, W / 2, H * 0.6, W * 0.8);
-  glow.addColorStop(0, 'rgba(212,55,44,.08)');
+  glow.addColorStop(0, t.glowColor);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
@@ -194,12 +236,12 @@ function drawRouteEndpoints(ctx, points) {
   const start = points[0], end = points[points.length - 1];
   // Start point (green)
   ctx.beginPath();
-  ctx.arc(start[0], start[1], 10, 0, Math.PI * 2);
+  ctx.arc(start[0], start[1], 7, 0, Math.PI * 2);
   ctx.fillStyle = '#30d158';
   ctx.fill();
   // End point (red)
   ctx.beginPath();
-  ctx.arc(end[0], end[1], 10, 0, Math.PI * 2);
+  ctx.arc(end[0], end[1], 7, 0, Math.PI * 2);
   ctx.fillStyle = '#ff453a';
   ctx.fill();
 }
@@ -215,18 +257,19 @@ function drawText(ctx, text, x, y, { size = 16, weight = 400, color = '#fff', al
   if (spacing > 0) ctx.letterSpacing = '0em';
 }
 
-function drawBranding(ctx, W, y) {
+function drawBranding(ctx, W, y, theme) {
+  const t = theme || THEMES.dark;
   // Line decoration
-  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.strokeStyle = t.brandLine;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(W / 2 - 20, y - 16);
   ctx.lineTo(W / 2 + 20, y - 16);
   ctx.stroke();
   // BARRA
-  drawText(ctx, 'BARRA ', W / 2 - 30, y, { size: 13, weight: 700, color: 'rgba(255,255,255,.2)', spacing: 0.2, upper: true, align: 'right' });
+  drawText(ctx, 'BARRA ', W / 2 - 30, y, { size: 13, weight: 700, color: t.brandText, spacing: 0.2, upper: true, align: 'right' });
   // LIBRE
-  drawText(ctx, 'LIBRE', W / 2 - 28, y, { size: 13, weight: 700, color: 'rgba(255,85,69,.3)', spacing: 0.2, upper: true, align: 'left' });
+  drawText(ctx, 'LIBRE', W / 2 - 28, y, { size: 13, weight: 700, color: t.brandAccent, spacing: 0.2, upper: true, align: 'left' });
 }
 
 function drawRoundedRect(ctx, x, y, w, h, r) {
@@ -236,65 +279,75 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
 
 // ── Running presets rendering ───────────────────────────────
 
-function renderMinimal(ctx, W, H, data) {
-  drawBackground(ctx, W, H, ['#0f0f0f', '#1a1a1a', '#0f0f0f']);
-  drawAccentGlow(ctx, W, H);
+function renderMinimal(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bg);
+  drawAccentGlow(ctx, W, H, t);
 
   // Route as subtle background decoration
   if (data.coords.length > 1) {
     const simplified = simplifyRoute(data.coords);
     const region = { x: W * 0.1, y: H * 0.15, w: W * 0.8, h: H * 0.7 };
     const pts = projectCoords(simplified, region, 40);
-    drawRoute(ctx, pts, '#ffffff', 2, 0, 0.06);
+    drawRoute(ctx, pts, t.routeBg, 1.5, 6, 0.12);
   }
 
   const centerY = H * 0.42;
 
   // Distance hero
-  drawText(ctx, data.distanceStr, W / 2, centerY, { size: H > 1200 ? 160 : 120, weight: 800, color: '#ffffff' });
-  drawText(ctx, 'KM', W / 2, centerY + (H > 1200 ? 85 : 65), { size: 28, weight: 600, color: 'rgba(255,255,255,.5)', spacing: 0.15, upper: true });
+  drawText(ctx, data.distanceStr, W / 2, centerY, { size: H > 1200 ? 160 : 120, weight: 800, color: t.text });
+  drawText(ctx, 'KM', W / 2, centerY + (H > 1200 ? 85 : 65), { size: 28, weight: 600, color: t.sub(.5), spacing: 0.15, upper: true });
 
   // Time | Pace
   const subY = centerY + (H > 1200 ? 160 : 130);
-  drawText(ctx, data.durationStr, W / 2 - 80, subY, { size: 42, weight: 700 });
+  drawText(ctx, data.durationStr, W / 2 - 130, subY, { size: 38, weight: 700, color: t.text });
   // separator
-  ctx.fillStyle = 'rgba(255,255,255,.15)';
-  ctx.fillRect(W / 2, subY - 16, 1, 32);
-  drawText(ctx, data.paceStr + '/km', W / 2 + 80, subY, { size: 42, weight: 700 });
+  ctx.fillStyle = t.separator;
+  ctx.fillRect(W / 2 - 1, subY - 18, 2, 36);
+  drawText(ctx, data.paceStr + '/km', W / 2 + 130, subY, { size: 38, weight: 700, color: t.text });
 
   // Labels
-  drawText(ctx, 'tiempo', W / 2 - 80, subY + 32, { size: 14, weight: 500, color: 'rgba(255,255,255,.4)', upper: true, spacing: 0.1 });
-  drawText(ctx, 'ritmo', W / 2 + 80, subY + 32, { size: 14, weight: 500, color: 'rgba(255,255,255,.4)', upper: true, spacing: 0.1 });
+  drawText(ctx, 'tiempo', W / 2 - 130, subY + 32, { size: 16, weight: 500, color: t.sub(.45), upper: true, spacing: 0.1 });
+  drawText(ctx, 'ritmo', W / 2 + 130, subY + 32, { size: 16, weight: 500, color: t.sub(.45), upper: true, spacing: 0.1 });
 
   // Date + type
   const meta = [data.dateStr, data.typeStr].filter(Boolean).join('  ·  ');
-  drawText(ctx, meta, W / 2, H * 0.22, { size: 16, weight: 500, color: 'rgba(255,255,255,.35)' });
+  drawText(ctx, meta, W / 2, H * 0.22, { size: 16, weight: 500, color: t.sub(.35) });
 
-  drawBranding(ctx, W, H * 0.92);
+  drawBranding(ctx, W, H * 0.92, t);
 }
 
-function renderStatsPro(ctx, W, H, data) {
-  drawBackground(ctx, W, H, ['#111111', '#111111']);
+function renderStatsPro(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bgFlat);
+
+  // Route as subtle background decoration
+  if (data.coords?.length > 1) {
+    const simplified = simplifyRoute(data.coords);
+    const region = { x: W * 0.05, y: H * 0.3, w: W * 0.9, h: H * 0.5 };
+    const pts = projectCoords(simplified, region, 50);
+    drawRoute(ctx, pts, t.route, 1.5, 6, 0.06);
+  }
 
   const pad = 60;
   const is916 = H > 1200;
   let y = pad;
 
   // Date in accent
-  drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 18, weight: 700, color: '#ff5545', align: 'left' });
+  drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 18, weight: 700, color: t.accent, align: 'left' });
   y += 28;
-  drawText(ctx, data.typeStr, pad, y + 10, { size: 14, weight: 600, color: 'rgba(255,255,255,.5)', align: 'left', upper: true, spacing: 0.1 });
+  drawText(ctx, data.typeStr, pad, y + 10, { size: 14, weight: 600, color: t.sub(.5), align: 'left', upper: true, spacing: 0.1 });
   y += 50;
 
   // Distance hero card
-  drawRoundedRect(ctx, pad, y, W - 2 * pad, 120, 16);
-  ctx.fillStyle = 'rgba(255,255,255,.05)';
+  drawRoundedRect(ctx, pad, y, W - 2 * pad, 150, 16);
+  ctx.fillStyle = t.card;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.strokeStyle = t.cardBorder;
   ctx.lineWidth = 1;
   ctx.stroke();
-  drawText(ctx, data.distanceStr + ' km', W / 2, y + 60, { size: 56, weight: 800 });
-  y += 140;
+  drawText(ctx, data.distanceStr + ' km', W / 2, y + 75, { size: 64, weight: 800, color: t.text });
+  y += 170;
 
   // Stat grid (2 columns)
   const stats = [
@@ -308,22 +361,22 @@ function renderStatsPro(ctx, W, H, data) {
 
   const cols = 2;
   const cardW = (W - 2 * pad - 16) / cols;
-  const cardH = 90;
+  const cardH = 110;
   for (let i = 0; i < stats.length && i < 6; i++) {
     const col = i % cols, row = Math.floor(i / cols);
     const cx = pad + col * (cardW + 16);
     const cy = y + row * (cardH + 12);
     drawRoundedRect(ctx, cx, cy, cardW, cardH, 12);
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillStyle = t.card;
     ctx.fill();
-    drawText(ctx, stats[i].val, cx + cardW / 2, cy + 38, { size: 36, weight: 700 });
-    drawText(ctx, stats[i].label, cx + cardW / 2, cy + 70, { size: 12, weight: 600, color: 'rgba(255,255,255,.4)', spacing: 0.12 });
+    drawText(ctx, stats[i].val, cx + cardW / 2, cy + 45, { size: 44, weight: 700, color: t.text });
+    drawText(ctx, stats[i].label, cx + cardW / 2, cy + 88, { size: 14, weight: 600, color: t.sub(.4), spacing: 0.12 });
   }
   y += Math.ceil(stats.length / cols) * (cardH + 12) + 20;
 
   // Splits (only in 9:16 and if available)
   if (is916 && data.splits?.length > 0) {
-    drawText(ctx, 'SPLITS', pad, y + 8, { size: 12, weight: 700, color: 'rgba(255,255,255,.4)', align: 'left', spacing: 0.15 });
+    drawText(ctx, 'SPLITS', pad, y + 8, { size: 12, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
     y += 32;
     const maxSplits = Math.min(data.splits.length, 10);
     const fastestPace = Math.min(...data.splits.slice(0, maxSplits).map(s => s.pace || Infinity));
@@ -333,8 +386,8 @@ function renderStatsPro(ctx, W, H, data) {
     for (let i = 0; i < maxSplits; i++) {
       const sp = data.splits[i];
       const sy = y + i * 36;
-      drawText(ctx, `KM ${sp.km || i + 1}`, pad + 10, sy + 12, { size: 14, weight: 600, color: 'rgba(255,255,255,.5)', align: 'left' });
-      drawText(ctx, formatPace(sp.pace), pad + 100, sy + 12, { size: 18, weight: 700, align: 'left' });
+      drawText(ctx, `KM ${sp.km || i + 1}`, pad + 10, sy + 12, { size: 14, weight: 600, color: t.sub(.5), align: 'left' });
+      drawText(ctx, formatPace(sp.pace), pad + 100, sy + 12, { size: 18, weight: 700, color: t.text, align: 'left' });
       // Bar
       const pct = slowestPace > fastestPace ? 1 - (sp.pace - fastestPace) / (slowestPace - fastestPace) : 1;
       const barW = Math.max(20, pct * barMaxW);
@@ -346,15 +399,16 @@ function renderStatsPro(ctx, W, H, data) {
     y += maxSplits * 36 + 10;
   }
 
-  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90));
+  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90), t);
 }
 
-function renderRouteHero(ctx, W, H, data) {
-  drawBackground(ctx, W, H, ['#0a0a0a', '#111827']);
+function renderRouteHero(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bgRoute);
 
   // Subtle accent glow centered on route
   const glow = ctx.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, W * 0.6);
-  glow.addColorStop(0, 'rgba(255,85,69,.04)');
+  glow.addColorStop(0, t.glowColor);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
@@ -362,7 +416,7 @@ function renderRouteHero(ctx, W, H, data) {
   const is916 = H > 1200;
 
   // Date
-  drawText(ctx, data.dateStr?.toUpperCase?.() || '', 50, 50, { size: 16, weight: 700, color: 'rgba(255,255,255,.4)', align: 'left' });
+  drawText(ctx, data.dateStr?.toUpperCase?.() || '', 50, 50, { size: 16, weight: 700, color: t.sub(.4), align: 'left' });
 
   // Route
   if (data.coords.length > 1) {
@@ -370,17 +424,17 @@ function renderRouteHero(ctx, W, H, data) {
     const routeH = is916 ? H * 0.55 : H * 0.60;
     const region = { x: 0, y: H * 0.08, w: W, h: routeH };
     const pts = projectCoords(simplified, region, 60);
-    drawRoute(ctx, pts, '#ff5545', 5, 18, 1);
+    drawRoute(ctx, pts, t.route, 3, 10, 1);
     drawRouteEndpoints(ctx, pts);
     _projected = pts; // cache
   }
 
   // Stats bar at bottom (glass effect)
-  const barY = is916 ? H * 0.78 : H * 0.74;
-  const barH = 80;
+  const barH = 110;
   const barPad = 40;
+  const barY = is916 ? H * 0.76 : H * 0.72;
   drawRoundedRect(ctx, barPad, barY, W - 2 * barPad, barH, 16);
-  ctx.fillStyle = 'rgba(255,255,255,.08)';
+  ctx.fillStyle = t.card;
   ctx.fill();
 
   const fields = [
@@ -391,118 +445,119 @@ function renderRouteHero(ctx, W, H, data) {
   const fw = (W - 2 * barPad) / fields.length;
   fields.forEach((f, i) => {
     const fx = barPad + fw * i + fw / 2;
-    drawText(ctx, f.val, fx, barY + 32, { size: 28, weight: 700 });
-    drawText(ctx, f.label, fx, barY + 58, { size: 11, weight: 600, color: 'rgba(255,255,255,.4)', upper: true, spacing: 0.12 });
+    drawText(ctx, f.val, fx, barY + 40, { size: 36, weight: 700, color: t.text });
+    drawText(ctx, f.label, fx, barY + 72, { size: 13, weight: 600, color: t.sub(.4), upper: true, spacing: 0.12 });
     // separator
     if (i < fields.length - 1) {
-      ctx.fillStyle = 'rgba(255,255,255,.1)';
-      ctx.fillRect(barPad + fw * (i + 1), barY + 20, 1, 40);
+      ctx.fillStyle = t.sub(.1);
+      ctx.fillRect(barPad + fw * (i + 1), barY + 22, 1, barH - 44);
     }
   });
 
-  drawBranding(ctx, W, is916 ? H * 0.96 : H * 0.93);
+  drawBranding(ctx, W, is916 ? H * 0.96 : H * 0.93, t);
 }
 
 // ── Strength presets rendering ──────────────────────────────
 
-function renderMinimalStrength(ctx, W, H, data) {
-  drawBackground(ctx, W, H, ['#0f0f0f', '#1a1a1a', '#0f0f0f']);
-  drawAccentGlow(ctx, W, H);
+function renderMinimalStrength(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bg);
+  drawAccentGlow(ctx, W, H, t);
 
-  const centerY = H * 0.38;
-
-  // Session name hero
-  const name = data.sessionStr || 'Entrenamiento';
-  const fontSize = name.length > 20 ? (H > 1200 ? 64 : 48) : (H > 1200 ? 80 : 60);
-  drawText(ctx, name, W / 2, centerY, { size: fontSize, weight: 800 });
+  const is916 = H > 1200;
 
   // Date
-  drawText(ctx, data.dateStr, W / 2, H * 0.22, { size: 16, weight: 500, color: 'rgba(255,255,255,.35)' });
+  drawText(ctx, data.dateStr, W / 2, H * 0.18, { size: 16, weight: 500, color: t.sub(.35) });
 
-  // Stats row
-  const subY = centerY + (H > 1200 ? 100 : 80);
-  drawText(ctx, `${data.totalSets}`, W / 2 - 100, subY, { size: 48, weight: 700 });
-  drawText(ctx, 'series', W / 2 - 100, subY + 34, { size: 14, weight: 500, color: 'rgba(255,255,255,.4)', upper: true, spacing: 0.1 });
+  // Session name hero (smaller to leave room for exercises)
+  const name = data.sessionStr || 'Entrenamiento';
+  const nameSize = name.length > 20 ? (is916 ? 48 : 40) : (is916 ? 60 : 48);
+  const nameY = H * 0.26;
+  drawText(ctx, name, W / 2, nameY, { size: nameSize, weight: 800, color: t.text });
 
-  ctx.fillStyle = 'rgba(255,255,255,.15)';
-  ctx.fillRect(W / 2, subY - 20, 1, 40);
+  // Exercises with best set (protagonist)
+  const exStartY = nameY + (is916 ? 90 : 70);
+  const maxEx = is916 ? 7 : 5;
+  const lineH = is916 ? 52 : 46;
 
-  drawText(ctx, data.volumeStr, W / 2 + 100, subY, { size: 48, weight: 700 });
-  drawText(ctx, 'volumen', W / 2 + 100, subY + 34, { size: 14, weight: 500, color: 'rgba(255,255,255,.4)', upper: true, spacing: 0.1 });
-
-  // Exercises list
-  const exY = subY + 90;
-  const maxExercises = Math.min(data.exercises.length, H > 1200 ? 8 : 5);
-  for (let i = 0; i < maxExercises; i++) {
+  for (let i = 0; i < Math.min(data.exercises.length, maxEx); i++) {
     const ex = data.exercises[i];
-    const ey = exY + i * 36;
-    drawText(ctx, ex.name, W / 2, ey, { size: 18, weight: 500, color: 'rgba(255,255,255,.5)' });
+    const ey = exStartY + i * lineH;
+    const isPR = data.prs?.some(p => p.exercise === ex.name);
+
+    // Exercise name
+    drawText(ctx, ex.name, W / 2, ey, {
+      size: 24, weight: 600, color: isPR ? t.accent : t.sub(.8)
+    });
+
+    // Best set (heaviest kg)
+    const bestSet = ex.sets?.reduce((a, b) =>
+      (parseFloat(b.kg) || 0) > (parseFloat(a.kg) || 0) ? b : a, ex.sets[0]);
+    if (bestSet && (parseFloat(bestSet.kg) || 0) > 0) {
+      drawText(ctx, `${bestSet.kg}kg × ${bestSet.reps}`, W / 2, ey + 24, {
+        size: 16, weight: 500, color: t.sub(.4)
+      });
+    }
   }
-  if (data.exercises.length > maxExercises) {
-    drawText(ctx, `+${data.exercises.length - maxExercises} más`, W / 2, exY + maxExercises * 36, {
-      size: 14, weight: 500, color: 'rgba(255,255,255,.3)'
+  if (data.exercises.length > maxEx) {
+    drawText(ctx, `+${data.exercises.length - maxEx} más`, W / 2, exStartY + maxEx * lineH, {
+      size: 14, weight: 500, color: t.sub(.3)
     });
   }
 
-  // PRs
+  // PRs badge
   if (data.prs?.length > 0) {
-    const prY = H * 0.78;
+    const prY = exStartY + Math.min(data.exercises.length, maxEx) * lineH + 30;
     drawText(ctx, `${data.prs.length} PR${data.prs.length > 1 ? 's' : ''} batido${data.prs.length > 1 ? 's' : ''}`, W / 2, prY, {
-      size: 20, weight: 700, color: '#ff5545'
+      size: 22, weight: 700, color: t.accent
     });
   }
 
-  drawBranding(ctx, W, H * 0.92);
+  drawBranding(ctx, W, H * 0.92, t);
 }
 
-function renderStatsStrength(ctx, W, H, data) {
-  drawBackground(ctx, W, H, ['#111111', '#111111']);
+function renderStatsStrength(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bgFlat);
 
   const pad = 60;
   const is916 = H > 1200;
   let y = pad;
 
   // Date + session
-  drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 18, weight: 700, color: '#ff5545', align: 'left' });
+  drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 18, weight: 700, color: t.accent, align: 'left' });
   y += 28;
-  drawText(ctx, data.sessionStr, pad, y + 10, { size: 24, weight: 800, align: 'left' });
+  drawText(ctx, data.sessionStr, pad, y + 10, { size: 24, weight: 800, color: t.text, align: 'left' });
+  y += 36;
+
+  // Inline summary (replaces big cards)
+  const summaryText = `${data.totalSets} series  ·  ${data.volumeStr}`;
+  drawText(ctx, summaryText, pad, y + 10, { size: 15, weight: 500, color: t.sub(.4), align: 'left' });
   y += 50;
 
-  // Summary cards
-  const cardW = (W - 2 * pad - 16) / 2;
-  const cardH = 90;
-  const summaryCards = [
-    { val: `${data.totalSets}`, label: 'SERIES' },
-    { val: data.volumeStr, label: 'VOLUMEN' },
-  ];
-  summaryCards.forEach((c, i) => {
-    const cx = pad + i * (cardW + 16);
-    drawRoundedRect(ctx, cx, y, cardW, cardH, 12);
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
-    ctx.fill();
-    drawText(ctx, c.val, cx + cardW / 2, y + 38, { size: 36, weight: 700 });
-    drawText(ctx, c.label, cx + cardW / 2, y + 70, { size: 12, weight: 600, color: 'rgba(255,255,255,.4)', spacing: 0.12 });
-  });
-  y += cardH + 30;
-
   // Exercises with sets
-  drawText(ctx, 'EJERCICIOS', pad, y + 8, { size: 12, weight: 700, color: 'rgba(255,255,255,.4)', align: 'left', spacing: 0.15 });
-  y += 32;
+  drawText(ctx, 'EJERCICIOS', pad, y + 8, { size: 13, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
+  y += 36;
 
-  const maxEx = is916 ? 8 : 5;
+  const maxEx = is916 ? 8 : 6;
   for (let i = 0; i < Math.min(data.exercises.length, maxEx); i++) {
     const ex = data.exercises[i];
     const isPR = data.prs?.some(p => p.exercise === ex.name);
     drawText(ctx, ex.name + (isPR ? ' PR' : ''), pad + 10, y + 12, {
-      size: 18, weight: 700, color: isPR ? '#ff5545' : '#ffffff', align: 'left'
+      size: 22, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
     });
-    y += 30;
+    y += 34;
     const setsStr = ex.sets.map(s => `${s.kg || 0}kg × ${s.reps || 0}`).join('  ·  ');
-    drawText(ctx, setsStr, pad + 10, y + 8, { size: 14, weight: 500, color: 'rgba(255,255,255,.5)', align: 'left' });
-    y += 36;
+    drawText(ctx, setsStr, pad + 10, y + 8, { size: 17, weight: 500, color: t.sub(.55), align: 'left' });
+    y += 42;
+    // Separator between exercises
+    if (i < Math.min(data.exercises.length, maxEx) - 1) {
+      ctx.fillStyle = t.separatorLight;
+      ctx.fillRect(pad + 10, y - 8, W - 2 * pad - 20, 1);
+    }
   }
 
-  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90));
+  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90), t);
 }
 
 // ── Main render ─────────────────────────────────────────────
@@ -522,14 +577,15 @@ async function renderToCanvas() {
   }
 
   _projected = null;
+  const theme = THEMES[_theme] || THEMES.dark;
 
   if (_mode === 'running') {
-    if (_preset === 'minimal') renderMinimal(ctx, W, H, _data);
-    else if (_preset === 'statsPro') renderStatsPro(ctx, W, H, _data);
-    else if (_preset === 'routeHero') renderRouteHero(ctx, W, H, _data);
+    if (_preset === 'minimal') renderMinimal(ctx, W, H, _data, theme);
+    else if (_preset === 'statsPro') renderStatsPro(ctx, W, H, _data, theme);
+    else if (_preset === 'routeHero') renderRouteHero(ctx, W, H, _data, theme);
   } else {
-    if (_preset === 'minimal') renderMinimalStrength(ctx, W, H, _data);
-    else if (_preset === 'statsPro') renderStatsStrength(ctx, W, H, _data);
+    if (_preset === 'minimal') renderMinimalStrength(ctx, W, H, _data, theme);
+    else if (_preset === 'statsPro') renderStatsStrength(ctx, W, H, _data, theme);
   }
 }
 
@@ -582,7 +638,7 @@ function loadPrefs() {
 }
 
 function savePrefs() {
-  localStorage.setItem(PREF_KEY, JSON.stringify({ preset: _preset, format: _format }));
+  localStorage.setItem(PREF_KEY, JSON.stringify({ preset: _preset, format: _format, theme: _theme }));
 }
 
 // ── UI ──────────────────────────────────────────────────────
@@ -602,6 +658,17 @@ function _bindUI() {
       document.querySelectorAll('.se-format-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       _format = btn.dataset.format;
+      savePrefs();
+      renderToCanvas();
+    });
+  });
+
+  // Theme toggle
+  document.querySelectorAll('.se-theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.se-theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _theme = btn.dataset.theme;
       savePrefs();
       renderToCanvas();
     });
@@ -676,6 +743,7 @@ export function openShareEditor(logData, options = {}) {
   const presets = _mode === 'running' ? RUN_PRESETS : STR_PRESETS;
   _preset = (prefs.preset && presets[prefs.preset]) ? prefs.preset : 'minimal';
   _format = prefs.format || '9:16';
+  _theme = (prefs.theme && THEMES[prefs.theme]) ? prefs.theme : 'dark';
 
   // Validate Route Hero availability
   if (_preset === 'routeHero' && (!_data.coords || _data.coords.length < 2)) {
@@ -686,6 +754,7 @@ export function openShareEditor(logData, options = {}) {
 
   // Set active states
   document.querySelectorAll('.se-format-btn').forEach(b => b.classList.toggle('active', b.dataset.format === _format));
+  document.querySelectorAll('.se-theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === _theme));
   _updatePresetChips();
 
   // Show overlay
