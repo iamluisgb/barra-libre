@@ -381,31 +381,22 @@ function renderMinimal(ctx, W, H, data, theme) {
     glowColor: t.sub(.15), glowBlur: 40
   });
 
-  // "KILÓMETROS" label in accent + decorative line
+  // "KILÓMETROS" label in accent
   const kmY = heroY + (is916 ? 190 : 150);
   drawFauxItalic(ctx, 'KILÓMETROS', W / 2, kmY, { size: 72, weight: 700, color: t.accent, upper: true, spacing: 0.08 });
-  // Decorative line
-  ctx.strokeStyle = t.accent;
-  ctx.lineWidth = 3;
-  ctx.globalAlpha = 0.4;
-  ctx.beginPath();
-  ctx.moveTo(W / 2 + 200, kmY);
-  ctx.lineTo(W - 80, kmY);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
 
   // Time block
-  const timeY = kmY + (is916 ? 120 : 100);
-  drawText(ctx, 'TIEMPO', W / 2, timeY - 30, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
-  drawTextGlow(ctx, data.durationStr, W / 2, timeY + 20, {
+  const timeY = kmY + (is916 ? 140 : 110);
+  drawText(ctx, 'TIEMPO', W / 2, timeY, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
+  drawTextGlow(ctx, data.durationStr, W / 2, timeY + 70, {
     size: 96, weight: 900, color: t.text, italic: true,
     glowColor: t.sub(.1), glowBlur: 20
   });
 
   // Pace block - in RED with glow
-  const paceY = timeY + (is916 ? 140 : 115);
-  drawText(ctx, 'RITMO', W / 2, paceY - 30, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
-  drawTextGlow(ctx, data.paceStr + '/km', W / 2, paceY + 20, {
+  const paceY = timeY + (is916 ? 180 : 150);
+  drawText(ctx, 'RITMO', W / 2, paceY, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
+  drawTextGlow(ctx, data.paceStr + '/km', W / 2, paceY + 70, {
     size: 96, weight: 900, color: t.accent, italic: true,
     glowColor: t.accentGlow, glowBlur: 25
   });
