@@ -34,6 +34,9 @@ const THEMES = {
     brandLine: 'rgba(255,255,255,.08)',
     brandText: 'rgba(255,255,255,.2)',
     brandAccent: 'rgba(255,85,69,.3)',
+    accentGlow: 'rgba(255,85,69,0.6)',
+    glassBg: 'rgba(255,255,255,.05)',
+    glassBorder: 'rgba(255,255,255,.10)',
   },
   light: {
     bg: ['#f5f5f7', '#ffffff', '#f5f5f7'],
@@ -52,6 +55,9 @@ const THEMES = {
     brandLine: 'rgba(0,0,0,.08)',
     brandText: 'rgba(0,0,0,.2)',
     brandAccent: 'rgba(212,55,44,.35)',
+    accentGlow: 'rgba(212,55,44,0.4)',
+    glassBg: 'rgba(0,0,0,.04)',
+    glassBorder: 'rgba(0,0,0,.10)',
   }
 };
 
@@ -257,6 +263,67 @@ function drawText(ctx, text, x, y, { size = 16, weight = 400, color = '#fff', al
   if (spacing > 0) ctx.letterSpacing = '0em';
 }
 
+function drawFauxItalic(ctx, text, x, y, opts = {}) {
+  const skew = opts.skew || -0.15;
+  ctx.save();
+  ctx.transform(1, 0, skew, 1, 0, 0);
+  // Compensate x for the skew displacement at this y
+  const adjustedX = x - y * skew;
+  drawText(ctx, text, adjustedX, y, opts);
+  ctx.restore();
+}
+
+function drawTextGlow(ctx, text, x, y, opts = {}) {
+  const { glowColor, glowBlur = 30, italic = false, ...rest } = opts;
+  ctx.save();
+  ctx.shadowColor = glowColor || opts.color || '#fff';
+  ctx.shadowBlur = glowBlur;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  if (italic) {
+    drawFauxItalic(ctx, text, x, y, rest);
+  } else {
+    drawText(ctx, text, x, y, rest);
+  }
+  ctx.restore();
+}
+
+function drawGlassPanel(ctx, x, y, w, h, r, theme) {
+  drawRoundedRect(ctx, x, y, w, h, r);
+  ctx.fillStyle = theme.glassBg || theme.card;
+  ctx.fill();
+  ctx.strokeStyle = theme.glassBorder || theme.cardBorder;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawPillBadge(ctx, text, cx, y, theme) {
+  ctx.font = `700 26px ${FONT}`;
+  const tw = ctx.measureText(text.toUpperCase()).width;
+  const pillW = tw + 48, pillH = 44, pillR = pillH / 2;
+  const px = cx - pillW / 2;
+  drawRoundedRect(ctx, px, y, pillW, pillH, pillR);
+  ctx.fillStyle = theme.accent;
+  ctx.fill();
+  drawText(ctx, text, cx, y + pillH / 2, { size: 26, weight: 700, color: '#ffffff', upper: true, spacing: 0.05 });
+}
+
+function drawBrandingTopRight(ctx, W, theme) {
+  ctx.save();
+  const skew = -0.15;
+  ctx.transform(1, 0, skew, 1, 0, 0);
+  const y = 52;
+  const x = W - 60 - y * skew;
+  ctx.font = `800 28px ${FONT}`;
+  ctx.fillStyle = theme.accent;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '0.08em';
+  ctx.fillText('BARRA LIBRE', x, y);
+  ctx.letterSpacing = '0em';
+  ctx.restore();
+}
+
 function drawBranding(ctx, W, y, theme) {
   const t = theme || THEMES.dark;
   // Line decoration
@@ -287,34 +354,63 @@ function renderMinimal(ctx, W, H, data, theme) {
   // Route as subtle background decoration
   if (data.coords.length > 1) {
     const simplified = simplifyRoute(data.coords);
-    const region = { x: W * 0.1, y: H * 0.15, w: W * 0.8, h: H * 0.7 };
+    const region = { x: W * 0.05, y: H * 0.1, w: W * 0.9, h: H * 0.6 };
     const pts = projectCoords(simplified, region, 40);
-    drawRoute(ctx, pts, t.routeBg, 1.5, 6, 0.18);
+    drawRoute(ctx, pts, t.routeBg, 1.5, 6, 0.10);
   }
 
-  const centerY = H * 0.42;
+  const is916 = H > 1200;
 
-  // Distance hero
-  drawText(ctx, data.distanceStr, W / 2, centerY, { size: H > 1200 ? 200 : 160, weight: 800, color: t.text });
-  drawText(ctx, 'KM', W / 2, centerY + (H > 1200 ? 105 : 85), { size: 36, weight: 600, color: t.sub(.5), spacing: 0.15, upper: true });
+  // Brand top-right
+  drawBrandingTopRight(ctx, W, t);
 
-  // Time | Pace
-  const subY = centerY + (H > 1200 ? 190 : 155);
-  drawText(ctx, data.durationStr, W / 2 - 160, subY, { size: 52, weight: 700, color: t.text });
-  // separator
-  ctx.fillStyle = t.separator;
-  ctx.fillRect(W / 2 - 1, subY - 24, 2, 48);
-  drawText(ctx, data.paceStr + '/km', W / 2 + 160, subY, { size: 52, weight: 700, color: t.text });
-
-  // Labels
-  drawText(ctx, 'tiempo', W / 2 - 160, subY + 42, { size: 22, weight: 500, color: t.sub(.45), upper: true, spacing: 0.1 });
-  drawText(ctx, 'ritmo', W / 2 + 160, subY + 42, { size: 22, weight: 500, color: t.sub(.45), upper: true, spacing: 0.1 });
-
-  // Date + type
+  // Date glass pill top-left
   const meta = [data.dateStr, data.typeStr].filter(Boolean).join('  ·  ');
-  drawText(ctx, meta, W / 2, H * 0.22, { size: 24, weight: 500, color: t.sub(.35) });
+  if (meta) {
+    ctx.font = `600 20px ${FONT}`;
+    const mw = ctx.measureText(meta).width;
+    drawGlassPanel(ctx, 40, 36, mw + 40, 40, 20, t);
+    drawText(ctx, meta, 60, 56, { size: 20, weight: 600, color: t.sub(.5), align: 'left' });
+  }
 
-  drawBranding(ctx, W, H * 0.92, t);
+  // Distance HERO - faux italic + glow
+  const heroY = is916 ? H * 0.38 : H * 0.36;
+  const heroSize = is916 ? 360 : 280;
+  drawTextGlow(ctx, data.distanceStr, W / 2, heroY, {
+    size: heroSize, weight: 900, color: t.text, italic: true,
+    glowColor: t.sub(.15), glowBlur: 40
+  });
+
+  // "KILÓMETROS" label in accent + decorative line
+  const kmY = heroY + (is916 ? 190 : 150);
+  drawFauxItalic(ctx, 'KILÓMETROS', W / 2, kmY, { size: 72, weight: 700, color: t.accent, upper: true, spacing: 0.08 });
+  // Decorative line
+  ctx.strokeStyle = t.accent;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.4;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 + 200, kmY);
+  ctx.lineTo(W - 80, kmY);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Time block
+  const timeY = kmY + (is916 ? 120 : 100);
+  drawText(ctx, 'TIEMPO', W / 2, timeY - 30, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
+  drawTextGlow(ctx, data.durationStr, W / 2, timeY + 20, {
+    size: 96, weight: 900, color: t.text, italic: true,
+    glowColor: t.sub(.1), glowBlur: 20
+  });
+
+  // Pace block - in RED with glow
+  const paceY = timeY + (is916 ? 140 : 115);
+  drawText(ctx, 'RITMO', W / 2, paceY - 30, { size: 24, weight: 600, color: t.sub(.4), upper: true, spacing: 0.25 });
+  drawTextGlow(ctx, data.paceStr + '/km', W / 2, paceY + 20, {
+    size: 96, weight: 900, color: t.accent, italic: true,
+    glowColor: t.accentGlow, glowBlur: 25
+  });
+
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
 }
 
 function renderStatsPro(ctx, W, H, data, theme) {
@@ -324,14 +420,17 @@ function renderStatsPro(ctx, W, H, data, theme) {
   // Route as subtle background decoration
   if (data.coords?.length > 1) {
     const simplified = simplifyRoute(data.coords);
-    const region = { x: W * 0.05, y: H * 0.3, w: W * 0.9, h: H * 0.5 };
+    const region = { x: W * 0.05, y: H * 0.25, w: W * 0.9, h: H * 0.45 };
     const pts = projectCoords(simplified, region, 50);
-    drawRoute(ctx, pts, t.route, 1.5, 6, 0.10);
+    drawRoute(ctx, pts, t.route, 1.5, 6, 0.08);
   }
 
   const pad = 60;
   const is916 = H > 1200;
   let y = pad;
+
+  // Brand top-right
+  drawBrandingTopRight(ctx, W, t);
 
   // Date in accent
   drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 24, weight: 700, color: t.accent, align: 'left' });
@@ -339,17 +438,16 @@ function renderStatsPro(ctx, W, H, data, theme) {
   drawText(ctx, data.typeStr, pad, y + 10, { size: 18, weight: 600, color: t.sub(.5), align: 'left', upper: true, spacing: 0.1 });
   y += 54;
 
-  // Distance hero card
-  drawRoundedRect(ctx, pad, y, W - 2 * pad, 180, 16);
-  ctx.fillStyle = t.card;
-  ctx.fill();
-  ctx.strokeStyle = t.cardBorder;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  drawText(ctx, data.distanceStr + ' km', W / 2, y + 90, { size: 80, weight: 800, color: t.text });
-  y += 200;
+  // Distance hero glass card
+  drawGlassPanel(ctx, pad, y, W - 2 * pad, 220, 20, t);
+  drawTextGlow(ctx, data.distanceStr, W / 2, y + 90, {
+    size: 120, weight: 900, color: t.text, italic: true,
+    glowColor: t.sub(.08), glowBlur: 30
+  });
+  drawFauxItalic(ctx, 'KM', W / 2, y + 170, { size: 32, weight: 700, color: t.accent, spacing: 0.15 });
+  y += 240;
 
-  // Stat grid (2 columns)
+  // Stat grid (2 columns) - glass panels with accent labels
   const stats = [
     { val: data.durationStr, label: 'TIEMPO' },
     { val: data.paceStr, label: '/KM' },
@@ -360,46 +458,64 @@ function renderStatsPro(ctx, W, H, data, theme) {
   if (data.hrMax) stats.push({ val: `${data.hrMax}`, label: 'BPM MAX' });
 
   const cols = 2;
-  const cardW = (W - 2 * pad - 16) / cols;
-  const cardH = 130;
+  const cardW = (W - 2 * pad - 14) / cols;
+  const cardH = 140;
   for (let i = 0; i < stats.length && i < 6; i++) {
     const col = i % cols, row = Math.floor(i / cols);
-    const cx = pad + col * (cardW + 16);
+    const cx = pad + col * (cardW + 14);
     const cy = y + row * (cardH + 12);
-    drawRoundedRect(ctx, cx, cy, cardW, cardH, 12);
-    ctx.fillStyle = t.card;
-    ctx.fill();
-    drawText(ctx, stats[i].val, cx + cardW / 2, cy + 52, { size: 56, weight: 700, color: t.text });
-    drawText(ctx, stats[i].label, cx + cardW / 2, cy + 105, { size: 20, weight: 600, color: t.sub(.4), spacing: 0.12 });
+    drawGlassPanel(ctx, cx, cy, cardW, cardH, 16, t);
+    drawFauxItalic(ctx, stats[i].val, cx + cardW / 2, cy + 55, { size: 64, weight: 900, color: t.text });
+    drawText(ctx, stats[i].label, cx + cardW / 2, cy + 112, { size: 22, weight: 700, color: t.accent, spacing: 0.12 });
   }
-  y += Math.ceil(stats.length / cols) * (cardH + 12) + 20;
+  y += Math.ceil(stats.length / cols) * (cardH + 12) + 24;
 
-  // Splits (only in 9:16 and if available)
+  // Vertical splits bar chart (only in 9:16 and if available)
   if (is916 && data.splits?.length > 0) {
-    drawText(ctx, 'SPLITS', pad, y + 8, { size: 18, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
-    y += 38;
-    const maxSplits = Math.min(data.splits.length, 10);
+    drawGlassPanel(ctx, pad, y, W - 2 * pad, 340, 24, t);
+    const panelPad = 24;
+    const innerX = pad + panelPad;
+    const innerW = W - 2 * pad - 2 * panelPad;
+
+    drawText(ctx, 'PERFORMANCE SPLITS', innerX, y + 28, { size: 20, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
+
+    const maxSplits = Math.min(data.splits.length, 12);
     const fastestPace = Math.min(...data.splits.slice(0, maxSplits).map(s => s.pace || Infinity));
     const slowestPace = Math.max(...data.splits.slice(0, maxSplits).map(s => s.pace || 0));
-    const barMaxW = W - 2 * pad - 210;
+
+    const barGap = 8;
+    const barW = (innerW - (maxSplits - 1) * barGap) / maxSplits;
+    const barMaxH = 220;
+    const barBaseY = y + 300;
 
     for (let i = 0; i < maxSplits; i++) {
       const sp = data.splits[i];
-      const sy = y + i * 44;
-      drawText(ctx, `KM ${sp.km || i + 1}`, pad + 10, sy + 14, { size: 18, weight: 600, color: t.sub(.5), align: 'left' });
-      drawText(ctx, formatPace(sp.pace), pad + 120, sy + 14, { size: 24, weight: 700, color: t.text, align: 'left' });
-      // Bar
       const pct = slowestPace > fastestPace ? 1 - (sp.pace - fastestPace) / (slowestPace - fastestPace) : 1;
-      const barW = Math.max(20, pct * barMaxW);
-      const barColor = pct > 0.66 ? '#30d158' : pct > 0.33 ? '#ff9f0a' : '#ff453a';
-      drawRoundedRect(ctx, pad + 210, sy + 4, barW, 22, 5);
-      ctx.fillStyle = barColor;
-      ctx.fill();
+      const barH = Math.max(20, 0.3 * barMaxH + pct * 0.7 * barMaxH);
+      const bx = innerX + i * (barW + barGap);
+      const by = barBaseY - barH;
+      const isFastest = sp.pace === fastestPace;
+
+      drawRoundedRect(ctx, bx, by, barW, barH, 3);
+      if (isFastest) {
+        // Fastest bar in accent with glow
+        ctx.save();
+        ctx.shadowColor = t.accentGlow;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = t.accent;
+        ctx.fill();
+        ctx.restore();
+        // Pace label above
+        drawText(ctx, formatPace(sp.pace), bx + barW / 2, by - 16, { size: 18, weight: 700, color: t.accent });
+      } else {
+        ctx.fillStyle = t.sub(.12);
+        ctx.fill();
+      }
     }
-    y += maxSplits * 44 + 10;
+    y += 350;
   }
 
-  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90), t);
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
 }
 
 function renderRouteHero(ctx, W, H, data, theme) {
@@ -415,8 +531,17 @@ function renderRouteHero(ctx, W, H, data, theme) {
 
   const is916 = H > 1200;
 
-  // Date
-  drawText(ctx, data.dateStr?.toUpperCase?.() || '', 50, 50, { size: 22, weight: 700, color: t.sub(.4), align: 'left' });
+  // Brand top-right
+  drawBrandingTopRight(ctx, W, t);
+
+  // Date glass pill top-left
+  const dateStr = data.dateStr?.toUpperCase?.() || '';
+  if (dateStr) {
+    ctx.font = `600 20px ${FONT}`;
+    const dtw = ctx.measureText(dateStr).width;
+    drawGlassPanel(ctx, 40, 36, dtw + 40, 40, 20, t);
+    drawText(ctx, dateStr, 60, 56, { size: 20, weight: 600, color: t.sub(.5), align: 'left' });
+  }
 
   // Route
   if (data.coords.length > 1) {
@@ -424,33 +549,36 @@ function renderRouteHero(ctx, W, H, data, theme) {
     const routeH = is916 ? H * 0.55 : H * 0.60;
     const region = { x: 0, y: H * 0.08, w: W, h: routeH };
     const pts = projectCoords(simplified, region, 60);
-    drawRoute(ctx, pts, t.route, 4, 12, 1);
+    drawRoute(ctx, pts, t.route, 5, 16, 1);
     drawRouteEndpoints(ctx, pts);
-    _projected = pts; // cache
+    _projected = pts;
   }
 
-  // Stats bar at bottom (glass effect)
-  const barH = 130;
+  // Stats glass bar at bottom
+  const barH = 200;
   const barPad = 40;
-  const barY = is916 ? H * 0.76 : H * 0.72;
-  drawRoundedRect(ctx, barPad, barY, W - 2 * barPad, barH, 16);
-  ctx.fillStyle = t.card;
-  ctx.fill();
+  const barY = is916 ? H * 0.74 : H * 0.68;
+  drawGlassPanel(ctx, barPad, barY, W - 2 * barPad, barH, 24, t);
 
   const fields = [
-    { val: data.distanceStr, label: 'km' },
-    { val: data.durationStr, label: 'tiempo' },
-    { val: data.paceStr, label: '/km' },
+    { val: data.distanceStr, label: 'km', isAccent: true },
+    { val: data.durationStr, label: 'tiempo', isAccent: false },
+    { val: data.paceStr, label: '/km', isAccent: true },
   ];
   const fw = (W - 2 * barPad) / fields.length;
   fields.forEach((f, i) => {
     const fx = barPad + fw * i + fw / 2;
-    drawText(ctx, f.val, fx, barY + 48, { size: 48, weight: 700, color: t.text });
-    drawText(ctx, f.label, fx, barY + 90, { size: 20, weight: 600, color: t.sub(.4), upper: true, spacing: 0.12 });
+    const valColor = (i === 2) ? t.accent : t.text; // pace in red
+    if (i === 2) {
+      drawTextGlow(ctx, f.val, fx, barY + 72, { size: 56, weight: 900, color: valColor, italic: true, glowColor: t.accentGlow, glowBlur: 20 });
+    } else {
+      drawFauxItalic(ctx, f.val, fx, barY + 72, { size: i === 0 ? 72 : 56, weight: 900, color: valColor });
+    }
+    drawText(ctx, f.label, fx, barY + 130, { size: 20, weight: 600, color: f.isAccent ? t.accent : t.sub(.4), upper: true, spacing: 0.12 });
     // separator
     if (i < fields.length - 1) {
       ctx.fillStyle = t.sub(.1);
-      ctx.fillRect(barPad + fw * (i + 1), barY + 26, 1, barH - 52);
+      ctx.fillRect(barPad + fw * (i + 1), barY + 40, 1, barH - 80);
     }
   });
 
@@ -465,55 +593,72 @@ function renderMinimalStrength(ctx, W, H, data, theme) {
   drawAccentGlow(ctx, W, H, t);
 
   const is916 = H > 1200;
+  const pad = 60;
 
-  // Date
-  drawText(ctx, data.dateStr, W / 2, H * 0.16, { size: 22, weight: 500, color: t.sub(.35) });
+  // Brand top-right
+  drawBrandingTopRight(ctx, W, t);
 
-  // Session name hero
+  // PR pill badge (if any)
+  let headerY = 120;
+  if (data.prs?.length > 0) {
+    drawPillBadge(ctx, `${data.prs.length} PR batido${data.prs.length > 1 ? 's' : ''}`, W / 2, headerY - 22, t);
+    headerY += 50;
+  }
+
+  // Session name HERO - faux italic + glow
   const name = data.sessionStr || 'Entrenamiento';
-  const nameSize = name.length > 20 ? (is916 ? 64 : 52) : (is916 ? 80 : 64);
-  const nameY = H * 0.22;
-  drawText(ctx, name, W / 2, nameY, { size: nameSize, weight: 800, color: t.text });
+  const nameSize = name.length > 15 ? (is916 ? 96 : 80) : (is916 ? 140 : 110);
+  drawTextGlow(ctx, name, W / 2, headerY + 60, {
+    size: nameSize, weight: 900, color: t.text, italic: true,
+    glowColor: t.sub(.1), glowBlur: 30
+  });
 
-  // Exercises with best set (protagonist)
-  const exStartY = nameY + (is916 ? 110 : 85);
-  const maxEx = is916 ? 8 : 5;
-  const lineH = is916 ? 70 : 60;
+  // Date below name
+  const dateY = headerY + 60 + (nameSize > 100 ? 85 : 65);
+  drawText(ctx, data.dateStr || '', W / 2, dateY, { size: 24, weight: 500, color: t.sub(.35) });
+
+  // Exercises as glass cards
+  const exStartY = dateY + (is916 ? 80 : 60);
+  const maxEx = is916 ? 7 : 5;
+  const cardH = 90;
+  const cardGap = 12;
 
   for (let i = 0; i < Math.min(data.exercises.length, maxEx); i++) {
     const ex = data.exercises[i];
-    const ey = exStartY + i * lineH;
+    const ey = exStartY + i * (cardH + cardGap);
     const isPR = data.prs?.some(p => p.exercise === ex.name);
 
-    // Exercise name
-    drawText(ctx, ex.name, W / 2, ey, {
-      size: 32, weight: 600, color: isPR ? t.accent : t.sub(.8)
+    // Glass card
+    drawGlassPanel(ctx, pad, ey, W - 2 * pad, cardH, 16, t);
+
+    // Exercise name (left)
+    drawText(ctx, ex.name, pad + 30, ey + 35, {
+      size: 36, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
     });
 
-    // Best set (heaviest kg)
+    // Best set (right) - "80 kg × 5"
     const bestSet = ex.sets?.reduce((a, b) =>
       (parseFloat(b.kg) || 0) > (parseFloat(a.kg) || 0) ? b : a, ex.sets[0]);
     if (bestSet && (parseFloat(bestSet.kg) || 0) > 0) {
-      drawText(ctx, `${bestSet.kg}kg × ${bestSet.reps}`, W / 2, ey + 30, {
-        size: 22, weight: 500, color: t.sub(.4)
-      });
+      const rx = W - pad - 30;
+      drawFauxItalic(ctx, `${bestSet.kg}`, rx - 120, ey + 35, { size: 36, weight: 900, color: t.text, align: 'right' });
+      drawText(ctx, 'kg', rx - 60, ey + 35, { size: 28, weight: 700, color: t.accent, align: 'center' });
+      drawFauxItalic(ctx, `×${bestSet.reps}`, rx, ey + 35, { size: 28, weight: 500, color: t.sub(.6), align: 'right' });
+    }
+
+    // PR indicator
+    if (isPR) {
+      drawText(ctx, 'PR', pad + 30, ey + 68, { size: 18, weight: 700, color: t.accent, align: 'left', spacing: 0.1 });
     }
   }
   if (data.exercises.length > maxEx) {
-    drawText(ctx, `+${data.exercises.length - maxEx} más`, W / 2, exStartY + maxEx * lineH, {
-      size: 20, weight: 500, color: t.sub(.3)
+    const overY = exStartY + maxEx * (cardH + cardGap) + 10;
+    drawText(ctx, `+${data.exercises.length - maxEx} más`, W / 2, overY, {
+      size: 22, weight: 500, color: t.sub(.3)
     });
   }
 
-  // PRs badge
-  if (data.prs?.length > 0) {
-    const prY = exStartY + Math.min(data.exercises.length, maxEx) * lineH + 40;
-    drawText(ctx, `${data.prs.length} PR${data.prs.length > 1 ? 's' : ''} batido${data.prs.length > 1 ? 's' : ''}`, W / 2, prY, {
-      size: 30, weight: 700, color: t.accent
-    });
-  }
-
-  drawBranding(ctx, W, H * 0.92, t);
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
 }
 
 function renderStatsStrength(ctx, W, H, data, theme) {
@@ -524,40 +669,62 @@ function renderStatsStrength(ctx, W, H, data, theme) {
   const is916 = H > 1200;
   let y = pad;
 
+  // Brand top-right
+  drawBrandingTopRight(ctx, W, t);
+
   // Date + session
   drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 24, weight: 700, color: t.accent, align: 'left' });
   y += 34;
-  drawText(ctx, data.sessionStr, pad, y + 10, { size: 34, weight: 800, color: t.text, align: 'left' });
-  y += 44;
-
-  // Inline summary (replaces big cards)
-  const summaryText = `${data.totalSets} series  ·  ${data.volumeStr}`;
-  drawText(ctx, summaryText, pad, y + 10, { size: 20, weight: 500, color: t.sub(.4), align: 'left' });
+  drawFauxItalic(ctx, data.sessionStr, pad, y + 10, { size: 44, weight: 800, color: t.text, align: 'left' });
   y += 56;
 
-  // Exercises with sets
-  drawText(ctx, 'EJERCICIOS', pad, y + 8, { size: 18, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
+  // Bento grid summary (3 columns)
+  const bentoGap = 14;
+  const bentoW = (W - 2 * pad - 2 * bentoGap) / 3;
+  const bentoH = 120;
+  const bentoItems = [
+    { val: `${data.totalSets}`, label: 'SERIES' },
+    { val: data.volumeStr, label: 'VOLUMEN' },
+    { val: `${data.prs?.length || 0}`, label: 'PRs' },
+  ];
+  for (let i = 0; i < 3; i++) {
+    const bx = pad + i * (bentoW + bentoGap);
+    drawGlassPanel(ctx, bx, y, bentoW, bentoH, 16, t);
+    drawText(ctx, bentoItems[i].label, bx + bentoW / 2, y + 30, { size: 22, weight: 700, color: t.accent, spacing: 0.1 });
+    drawFauxItalic(ctx, bentoItems[i].val, bx + bentoW / 2, y + 78, { size: 52, weight: 900, color: t.text });
+  }
+  y += bentoH + 30;
+
+  // Exercises section
+  drawText(ctx, 'EJERCICIOS', pad, y + 8, { size: 20, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
   y += 42;
 
-  const maxEx = is916 ? 8 : 6;
+  const maxEx = is916 ? 7 : 5;
   for (let i = 0; i < Math.min(data.exercises.length, maxEx); i++) {
     const ex = data.exercises[i];
     const isPR = data.prs?.some(p => p.exercise === ex.name);
-    drawText(ctx, ex.name + (isPR ? ' PR' : ''), pad + 10, y + 12, {
-      size: 28, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
-    });
-    y += 40;
+
+    // Glass card for each exercise
     const setsStr = ex.sets.map(s => `${s.kg || 0}kg × ${s.reps || 0}`).join('  ·  ');
-    drawText(ctx, setsStr, pad + 10, y + 8, { size: 22, weight: 500, color: t.sub(.55), align: 'left' });
-    y += 50;
-    // Separator between exercises
-    if (i < Math.min(data.exercises.length, maxEx) - 1) {
-      ctx.fillStyle = t.separatorLight;
-      ctx.fillRect(pad + 10, y - 8, W - 2 * pad - 20, 1);
+    const exCardH = 100;
+    drawGlassPanel(ctx, pad, y, W - 2 * pad, exCardH, 16, t);
+
+    // Exercise name + PR pill
+    drawText(ctx, ex.name, pad + 24, y + 32, {
+      size: 30, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
+    });
+    if (isPR) {
+      ctx.font = `700 16px ${FONT}`;
+      const nameW = ctx.measureText(ex.name).width;
+      drawPillBadge(ctx, 'PR', pad + 24 + nameW + 40, y + 18, t);
     }
+
+    // Sets row
+    drawText(ctx, setsStr, pad + 24, y + 70, { size: 24, weight: 500, color: t.sub(.55), align: 'left' });
+    y += exCardH + 10;
   }
 
-  drawBranding(ctx, W, H * (is916 ? 0.93 : 0.90), t);
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
 }
 
 // ── Main render ─────────────────────────────────────────────
