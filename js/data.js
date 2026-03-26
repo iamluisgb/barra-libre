@@ -1,7 +1,7 @@
 import { mergeDB } from './utils.js';
 import { stripHeavyFields, splitAndStoreRoutes, clearRunStore, getAllRunRoutes } from './run-store.js';
 
-const SK = 'barraLibre';
+const SK = 'arete';
 
 let _onSave = null;
 let _onQuotaError = null;
@@ -22,14 +22,14 @@ if (typeof window !== 'undefined') {
 
 const CURRENT_SCHEMA = 4;
 
-const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'barraLibre', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32, race5k: 0, maxHR: 0 } };
+const DEFAULTS = { schemaVersion: CURRENT_SCHEMA, program: 'arete', phase: 1, workouts: [], bodyLogs: [], deletedIds: [], customPrograms: [], runningLogs: [], runningProgram: '', runningWeek: 1, runningGoal: { type: 'km', target: 0, enabled: false }, settings: { height: 175, age: 32, race5k: 0, maxHR: 0 } };
 
 /** Schema migrations — each takes a db object and mutates it in place */
 const migrations = [
   // v1 → v2: ensure all workouts have a program field; ensure settings exists
   (db) => {
     for (const w of (db.workouts || [])) {
-      if (!w.program) w.program = db.program || 'barraLibre';
+      if (!w.program) w.program = db.program || 'arete';
     }
     if (!db.settings || typeof db.settings !== 'object') {
       db.settings = { height: 175, age: 32 };
@@ -141,7 +141,7 @@ export async function exportData(db) {
   const b = new Blob([JSON.stringify(fullDB, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(b);
-  a.download = `barra-libre-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `arete-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

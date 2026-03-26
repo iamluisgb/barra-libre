@@ -13,7 +13,7 @@ let _formExpanded = false;
 let $exerciseList, $trainSession, $trainDate, $trainNotes, $prefillBanner, $prefillText, $saveBtn, $prCelebration, $prList, $sessionOverview;
 
 // ── Session draft auto-save ──────────────────────────────
-const DRAFT_KEY = 'barraLibre_sessionDraft';
+const DRAFT_KEY = 'arete_sessionDraft';
 let _draftTimer = null;
 
 function saveDraft() {
@@ -113,7 +113,7 @@ export function populateSessions(db) {
   document.getElementById('historyFilter').innerHTML = '<option value="">Todas</option>' + ss.map(s => `<option value="${s}">${s}</option>`).join('');
 
   const prog = getActiveProgram();
-  const lastW = db.workouts.filter(w => w.phase === db.phase && (w.program || 'barraLibre') === prog).sort((a, b) => a.date.localeCompare(b.date)).pop();
+  const lastW = db.workouts.filter(w => w.phase === db.phase && (w.program || 'arete') === prog).sort((a, b) => a.date.localeCompare(b.date)).pop();
   if (lastW && ss.length > 1) {
     const lastIdx = ss.indexOf(lastW.session);
     const nextIdx = (lastIdx + 1) % ss.length;
@@ -459,7 +459,7 @@ export function clearPrefill() {
 
 function getPrevSession(db, n) {
   const prog = getActiveProgram();
-  const f = db.workouts.filter(w => w.session === n && w.phase === db.phase && (w.program || 'barraLibre') === prog);
+  const f = db.workouts.filter(w => w.session === n && w.phase === db.phase && (w.program || 'arete') === prog);
   return f.length ? f[f.length - 1] : null;
 }
 

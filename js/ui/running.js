@@ -17,7 +17,7 @@ export { formatPace, formatRunDuration, parseRunDuration, parseSegDuration, segM
 
 // ── Active run persistence (survive reload) ──────────────
 
-const RUN_SAVE_KEY = 'barra-libre-activeRun';
+const RUN_SAVE_KEY = 'arete-activeRun';
 let _lastSaveTime = 0;
 
 function saveActiveRun() {

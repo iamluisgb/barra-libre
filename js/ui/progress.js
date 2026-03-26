@@ -15,7 +15,7 @@ export function initProgress(db) {
   const prog = getActiveProgram();
   const exercises = new Set();
   db.workouts
-    .filter(w => (w.program || 'barraLibre') === prog)
+    .filter(w => (w.program || 'arete') === prog)
     .forEach(w => w.exercises.forEach(e => exercises.add(e.name)));
   const sorted = [...exercises].sort();
   const prev = sel.value;
@@ -40,7 +40,7 @@ export function renderProgressChart(db) {
   const prog = getActiveProgram();
   const points = [];
   db.workouts
-    .filter(w => (w.program || 'barraLibre') === prog)
+    .filter(w => (w.program || 'arete') === prog)
     .slice().sort((a, b) => a.date.localeCompare(b.date))
     .forEach(w => {
       const ex = w.exercises.find(e => e.name === name); if (!ex) return;

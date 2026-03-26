@@ -3,13 +3,13 @@ import { setActiveProgram, getActiveProgram, getPrograms, getProgramList, getAll
 
 describe('activeProgram getter/setter', () => {
   it('returns default program initially', () => {
-    expect(getActiveProgram()).toBe('barraLibre');
+    expect(getActiveProgram()).toBe('arete');
   });
 
   it('sets and gets active program', () => {
     setActiveProgram('ppl');
     expect(getActiveProgram()).toBe('ppl');
-    setActiveProgram('barraLibre'); // restore
+    setActiveProgram('arete'); // restore
   });
 });
 

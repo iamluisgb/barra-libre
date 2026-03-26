@@ -13,7 +13,7 @@
     { "id": "pantorrilla", "label": "Pantorrilla" }
   ],
   "catalog": [
-    { "id": "barraLibre", "file": "programs/barra-libre.json" },
+    { "id": "arete", "file": "programs/arete.json" },
     { "id": "kettlebell", "file": "programs/kettlebell.json" },
     { "id": "mediaMaraton1h40", "file": "programs/running/media-maraton-1h40.json", "sport": "running" }
   ]

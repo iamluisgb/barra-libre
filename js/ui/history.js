@@ -26,7 +26,7 @@ export function renderHistory(db, dateFilter) {
   const filter = document.getElementById('historyFilter').value;
   const prog = getActiveProgram();
   let items = [...db.workouts].reverse();
-  items = items.filter(w => (w.program || 'barraLibre') === prog);
+  items = items.filter(w => (w.program || 'arete') === prog);
   if (filter) items = items.filter(w => w.session === filter);
   if (dateFilter) items = items.filter(w => w.date === dateFilter);
 
@@ -49,7 +49,7 @@ function loadMore() {
   const filter = document.getElementById('historyFilter').value;
   const prog = getActiveProgram();
   let items = [..._currentDb.workouts].reverse();
-  items = items.filter(w => (w.program || 'barraLibre') === prog);
+  items = items.filter(w => (w.program || 'arete') === prog);
   if (filter) items = items.filter(w => w.session === filter);
 
   const end = (historyPage + 1) * PAGE_SIZE;

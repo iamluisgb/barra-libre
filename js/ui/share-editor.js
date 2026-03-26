@@ -12,7 +12,7 @@ let _theme = 'dark';
 let _projected = null;  // cached projected coords
 let _onClose = null;
 
-const PREF_KEY = 'barraLibreSharePrefs';
+const PREF_KEY = 'areteSharePrefs';
 const FONT = "'Inter', -apple-system, system-ui, sans-serif";
 
 // ── Themes ──────────────────────────────────────────────────
@@ -319,7 +319,7 @@ function drawBrandingTopRight(ctx, W, theme) {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   ctx.letterSpacing = '0.08em';
-  ctx.fillText('BARRA LIBRE', x, y);
+  ctx.fillText('ARETÉ', x, y);
   ctx.letterSpacing = '0em';
   ctx.restore();
 }
@@ -333,10 +333,8 @@ function drawBranding(ctx, W, y, theme) {
   ctx.moveTo(W / 2 - 28, y - 18);
   ctx.lineTo(W / 2 + 28, y - 18);
   ctx.stroke();
-  // BARRA
-  drawText(ctx, 'BARRA ', W / 2 - 40, y, { size: 18, weight: 700, color: t.brandText, spacing: 0.2, upper: true, align: 'right' });
-  // LIBRE
-  drawText(ctx, 'LIBRE', W / 2 - 38, y, { size: 18, weight: 700, color: t.brandAccent, spacing: 0.2, upper: true, align: 'left' });
+  // ARETÉ
+  drawText(ctx, 'ARETÉ', W / 2, y, { size: 18, weight: 700, color: t.brandAccent, spacing: 0.2, upper: true, align: 'center' });
 }
 
 function drawRoundedRect(ctx, x, y, w, h, r) {
@@ -765,12 +763,12 @@ async function exportImage() {
 
     const date = _data?.date || new Date().toISOString().slice(0, 10);
     const prefix = _mode === 'running' ? 'run' : 'workout';
-    const fileName = `barra-libre-${prefix}-${date}.png`;
+    const fileName = `arete-${prefix}-${date}.png`;
     const file = new File([blob], fileName, { type: 'image/png' });
 
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: _mode === 'running' ? 'Mi carrera — Barra Libre' : 'Mi entreno — Barra Libre' });
+        await navigator.share({ files: [file], title: _mode === 'running' ? 'Mi carrera — Areté' : 'Mi entreno — Areté' });
       } catch (e) {
         if (e.name !== 'AbortError') toast('Error al compartir', 'error');
       }

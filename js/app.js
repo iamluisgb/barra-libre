@@ -17,8 +17,8 @@ import { initRunning } from './ui/running.js';
 import { renderDashboard } from './ui/dashboard.js';
 
 const db = loadDB();
-const AUTOSYNC_KEY = 'barraLibreAutoSync';
-const THEME_KEY = 'barraLibreTheme';
+const AUTOSYNC_KEY = 'areteAutoSync';
+const THEME_KEY = 'areteTheme';
 
 // --- Theme ---
 function applyTheme(theme) {
@@ -91,7 +91,7 @@ function renderCustomProgramsList() {
 
 function renderProgramSelector() {
   const progList = getProgramList();
-  const active = db.program || 'barraLibre';
+  const active = db.program || 'arete';
   const activeProg = progList.find(p => p.id === active);
   document.getElementById('activeProgramName').textContent = activeProg?.name || active;
 
@@ -150,7 +150,7 @@ async function init() {
   await loadPrograms(db);
 
   // Set active program from saved state + render selector
-  setActiveProgram(db.program || 'barraLibre');
+  setActiveProgram(db.program || 'arete');
   renderProgramSelector();
 
   document.getElementById('trainDate').value = today();
@@ -203,7 +203,7 @@ async function init() {
   updateHRZonesPreview();
 
   // Onboarding for first-time users
-  if (!localStorage.getItem('barraLibreOnboarded')) {
+  if (!localStorage.getItem('areteOnboarded')) {
     const $ob = document.getElementById('onboarding');
     const $btn = document.getElementById('onboardingBtn');
     let step = 0;
@@ -212,7 +212,7 @@ async function init() {
       step++;
       if (step >= 3) {
         $ob.classList.remove('visible');
-        localStorage.setItem('barraLibreOnboarded', '1');
+        localStorage.setItem('areteOnboarded', '1');
         return;
       }
       $ob.querySelectorAll('.onboarding-step').forEach((s, i) => s.classList.toggle('active', i === step));
@@ -231,7 +231,7 @@ async function init() {
     const btn = document.querySelector('nav button[data-sec="secStrength"]');
     if (btn) { switchTab(btn, db); }
   });
-  document.getElementById('appVersion').textContent = `Barra Libre v${APP_VERSION}`;
+  document.getElementById('appVersion').textContent = `Areté v${APP_VERSION}`;
   bindEvents();
 
   // Sync indicator
@@ -400,8 +400,8 @@ function bindEvents() {
     if (!confirm('¿Eliminar este plan?')) return;
     deleteCustomProgram(db, id);
     if (db.program === id) {
-      db.program = 'barraLibre';
-      setActiveProgram('barraLibre');
+      db.program = 'arete';
+      setActiveProgram('arete');
       db.phase = parseInt(Object.keys(getPrograms())[0]) || 1;
       saveDB(db);
       updatePhaseUI(db);

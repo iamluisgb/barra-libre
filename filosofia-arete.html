@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Areté: el manifiesto</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface-2: #1c1c1c;
+    --border: #2a2a2a;
+    --text: #e8e4df;
+    --text-muted: #9a9590;
+    --accent: #c5a05e;
+    --accent-dim: rgba(197, 160, 94, 0.12);
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --max-w: 720px;
+    --space: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: clamp(1rem, 2.2vw, 1.125rem);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .site-nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem var(--space);
+    background: rgba(14,14,14,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+  .article-header {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 6rem) var(--space) 2rem;
+  }
+  .back {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .back:hover { color: var(--accent); }
+  .phase-tag {
+    display: inline-block;
+    margin: 1.5rem 0 1rem;
+    padding: 0.25rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 4px;
+  }
+  .article-header h1 {
+    font-size: clamp(2rem, 5.5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .article-body {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--space) 4rem;
+  }
+  .article-body h2 {
+    font-size: clamp(1.3rem, 3.5vw, 1.65rem);
+    font-weight: 600;
+    color: var(--text);
+    margin: 3rem 0 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+  .article-body h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .article-body h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 2rem 0 0.75rem;
+  }
+  .article-body p { margin-bottom: 1.25rem; }
+  .article-body strong { font-weight: 600; }
+  .article-body ul, .article-body ol {
+    margin: 0.75rem 0 1.5rem 1.25rem;
+  }
+  .article-body li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+  }
+
+  .hook {
+    font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hook p:last-child { margin-bottom: 0; }
+
+  .greek {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .stoic-block {
+    margin: 2.5rem 0;
+    padding: 1.75rem 2rem;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .stoic-block .stoic-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .stoic-block p { margin-bottom: 0.75rem; }
+  .stoic-block p:last-child { margin-bottom: 0; }
+  .stoic-block .stoic-source {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .info-box {
+    margin: 1.5rem 0;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .info-box .box-title {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+  .info-box p {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  .info-box p:last-child { margin-bottom: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+  }
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .protocol {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+  }
+  .protocol .protocol-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .protocol .protocol-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .protocol ol { margin: 0 0 0 1.25rem; }
+  .protocol li {
+    margin-bottom: 0.75rem;
+    padding-left: 0.25rem;
+  }
+  .protocol li strong { color: var(--accent); }
+
+  .pillar {
+    margin: 2rem 0;
+    padding: 1.75rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+  }
+  .pillar::before {
+    content: attr(data-number);
+    position: absolute;
+    top: -14px;
+    left: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 0.2rem 0.65rem;
+    border-radius: 3px;
+  }
+  .pillar h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0.5rem 0 0.75rem;
+  }
+  .pillar p { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .pillar p:last-child { margin-bottom: 0; }
+
+  .dual-metric {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+  .metric-card {
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+  }
+  .metric-card .metric-icon {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .metric-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .metric-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  @media (max-width: 520px) {
+    .dual-metric { grid-template-columns: 1fr; }
+  }
+
+  blockquote {
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    font-style: italic;
+    color: var(--text-muted);
+    border-left: 2px solid var(--accent);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .authority-close {
+    margin: 3rem 0 2rem;
+    padding: 2rem 0;
+    border-top: 2px solid var(--accent);
+    text-align: center;
+  }
+  .authority-close p {
+    font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+    font-weight: 600;
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .authority-close .sign {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 1rem;
+  }
+
+  .article-nav {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--space) 4rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .article-nav a {
+    text-decoration: none;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    max-width: 48%;
+    text-align: right;
+  }
+  .article-nav a:hover { border-color: var(--accent); }
+  .article-nav .nav-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .article-nav .nav-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  @media (max-width: 600px) {
+    table { font-size: 0.82rem; }
+    th, td { padding: 0.6rem 0.65rem; }
+    .stoic-block, .pillar { padding: 1.25rem; }
+    .protocol { padding: 1.5rem; }
+    .article-nav a { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="../index.html" class="logo">Aret<span>é</span></a>
+  <div class="nav-links">
+    <a href="../index.html" class="active">Guía</a>
+    <a href="../app.html">Mi Entreno</a>
+  </div>
+</nav>
+
+<div class="article-header">
+  <a href="../index.html" class="back">&larr; Volver a la guía</a>
+  <div class="phase-tag">Manifiesto</div>
+  <h1>Areté: el manifiesto</h1>
+  <div class="subtitle">Fuerza, resistencia, proporción y carácter. La plataforma para quienes rechazan elegir entre ser fuertes y ser resistentes &mdash; y persiguen ambas cosas con la misma disciplina.</div>
+</div>
+
+<div class="article-body">
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL GANCHO                                      -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="hook">
+<p>Los griegos tenían una palabra para la persona que era a la vez fuerte, resistente, proporcionada y virtuosa: <span class="greek">kalós kagathós</span>. No existía la idea de un cuerpo poderoso sin capacidad de aguantar, ni la de un corredor incansable sin fuerza para cargar. La excelencia física era indivisible.</p>
+<p>Dos mil quinientos años después, la industria del fitness te dice que elijas. Que si quieres ser fuerte no puedes correr. Que si corres perderás músculo. Que el gimnasio y la carretera son caminos que se bifurcan. Es una mentira que vende programas simples a personas que no quieren pensar.</p>
+<p>Areté existe para recuperar esa idea original. No es una app de fuerza con cardio añadido. No es una app de running con algo de gimnasio. Es la plataforma para construir al Atleta Híbrido: alguien que levanta pesado, corre lejos, tiene un cuerpo proporcionado, y posee la mentalidad para sostener todo eso durante décadas.</p>
+<p>Este artículo es el manifiesto. La brújula que orienta todo lo demás.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- KALOKAGATHÍA                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Lo que los griegos sabían y nosotros olvidamos</h2>
+
+<p>En la Atenas clásica, el ideal de persona completa se expresaba con el concepto de <span class="greek">kalokagathía</span> &mdash; la unión inseparable de lo bello (<span class="greek">kalós</span>) y lo bueno (<span class="greek">agathós</span>). Un cuerpo proporcionado y capaz no era vanidad: era la manifestación externa de una vida vivida con disciplina, coraje y propósito. El guerrero que no podía correr era tan incompleto como el corredor que no podía luchar.</p>
+
+<p>Junto a este ideal existía la <span class="greek">areté</span> &mdash; la excelencia como virtud. No la excelencia comparativa (ser mejor que otro), sino la excelencia intrínseca: desarrollar tu potencial hasta su máxima expresión como una <strong>obligación moral contigo mismo</strong>. Para los griegos, tener un cuerpo capaz y no desarrollarlo era una forma de negligencia. No porque el físico fuera lo más importante, sino porque era la prueba visible de que sabías gobernar lo que estaba bajo tu control.</p>
+
+<p>Areté lleva ese nombre porque eso es exactamente lo que persigue. No te ofrece el atajo, ni el truco, ni el programa de 30 días. Te ofrece las herramientas para perseguir tu excelencia física durante años &mdash; fuerza, resistencia, proporción y carácter como un solo objetivo indivisible.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL DESAJUSTE                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>El cuerpo que heredaste y el cuerpo que habitas</h2>
+
+<p>Tu genoma lleva escrito un manual de operaciones que tiene 200.000 años. Ese manual espera que camines entre 12 y 20 kilómetros diarios, que cargues objetos pesados con regularidad, que sprintes cuando tu vida dependa de ello, y que alternes períodos de abundancia y escasez calórica.</p>
+
+<p>Lo que recibe: 8 horas sentado, comida hiperpalateable las 24 horas, cero demandas de fuerza, y un sistema cardiovascular que nunca se acerca a su capacidad real. La literatura científica lo llama <strong>mismatch evolutivo</strong>. Tú lo experimentas como fatiga crónica, composición corporal deficiente, y la sensación de que tu cuerpo no funciona como debería.</p>
+
+<p>Los datos son concretos. Los niveles de testosterona en hombres de sociedades industrializadas llevan cayendo una media del 1% anual desde los años 80. El VO2max promedio &mdash; la medida más directa de tu capacidad cardiovascular y uno de los mejores predictores de longevidad que existen &mdash; ha descendido de forma sostenida en las últimas décadas. No es solo envejecimiento: los adultos jóvenes de hoy tienen peores marcadores de fuerza y de capacidad aeróbica que los de la generación anterior a su misma edad.</p>
+
+<p>La solución no es compleja. Es exigente. Consiste en devolverle a tu cuerpo los dos estímulos fundamentales que espera recibir: <strong>carga mecánica progresiva</strong> (fuerza) y <strong>demanda cardiovascular real</strong> (carrera). Combinados con alimentación de densidad nutricional y la disciplina mental para ejecutar todo esto de forma consistente, no durante semanas &mdash; durante años.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LA BARRA                                        -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Los dos caminos que son uno</h2>
+
+<h3>La barra: fuerza y estructura</h3>
+
+<p>La barra libre es la herramienta más eficiente que existe para desarrollar fuerza y masa muscular funcional. No por tradición, sino por tres propiedades biomecánicas que ninguna máquina replica.</p>
+
+<p><strong>Trayectoria libre.</strong> Sin raíles, sin guías. Tu cuerpo debe estabilizar la carga en el espacio, lo que activa musculatura profunda (rotadores del hombro, erectores espinales, core completo) que una máquina anula. Esto produce transferencia al mundo real: tu fuerza es útil fuera del gimnasio.</p>
+
+<p><strong>Capacidad de carga progresiva.</strong> Puedes añadir 1.25 kg a una barra. Inténtalo con una banda elástica. La micrograduación es lo que permite la progresión lineal &mdash; el mecanismo de crecimiento más predecible para un principiante y la base de cualquier programa de fuerza serio.</p>
+
+<p><strong>Movimientos compuestos.</strong> Una sentadilla trabaja cuádriceps, glúteos, isquiotibiales, erectores, abdominales y oblicuos en una sola repetición. El retorno de inversión por minuto de entrenamiento no tiene comparación con ejercicios de aislamiento o máquinas.</p>
+
+<p>Con una barra olímpica, un rack y discos puedes ejecutar los patrones de movimiento fundamentales del cuerpo humano: empuje de pierna (sentadilla), tirón de pierna (peso muerto), empuje horizontal (press de banca), empuje vertical (press militar), tirón vertical (dominada) y potencia (clean). Es todo lo que necesitas para ir de principiante a avanzado.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LA CARRERA                                      -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h3>La carrera: resistencia y motor</h3>
+
+<p>La barra construye la estructura. La carrera construye el motor que la mueve.</p>
+
+<p>Correr produce adaptaciones que ningún entrenamiento de fuerza puede replicar. Tu corazón aumenta su volumen sistólico &mdash; bombea más sangre por latido, lo que reduce tu frecuencia cardíaca en reposo y mejora la eficiencia de todo tu sistema circulatorio. Tus músculos desarrollan más mitocondrias (las centrales energéticas de la célula) y más capilares por fibra muscular, lo que mejora el transporte de oxígeno y la capacidad de oxidar grasas como combustible.</p>
+
+<p>El indicador más directo de estas adaptaciones es el <strong>VO2max</strong>: la cantidad máxima de oxígeno que tu cuerpo puede utilizar por minuto. La investigación epidemiológica lo sitúa como uno de los mejores predictores de mortalidad por todas las causas &mdash; más predictivo que la presión arterial, el colesterol o el hábito tabáquico. Dicho de forma directa: tu capacidad cardiovascular es el marcador más honesto de cuánto tiempo y con qué calidad vivirás.</p>
+
+<p>Pero no toda carrera produce las mismas adaptaciones. Areté programa tres estímulos de carrera distintos, cada uno con un objetivo fisiológico específico:</p>
+
+<div class="info-box">
+  <div class="box-title">Zona 2 &mdash; La base invisible</div>
+  <p>Ritmo conversacional, frecuencia cardíaca baja (60-70% de tu FC máxima). Parece demasiado fácil. No lo es &mdash; es la sesión más importante de tu semana de carrera. Zona 2 entrena la oxidación de grasas como combustible primario, aumenta la densidad mitocondrial y expande la red capilar. Es la base aeróbica sobre la que se sostiene todo lo demás. Sin ella, las series de alta intensidad son castillos de arena.</p>
+</div>
+
+<div class="info-box">
+  <div class="box-title">Carrera larga &mdash; Resistencia estructural</div>
+  <p>Distancia mayor a tu carrera habitual, a ritmo moderado. Aquí entrenas la resistencia del sistema musculoesquelético al impacto repetido, la capacidad de gestionar glucógeno durante esfuerzos prolongados, y la fortaleza mental de mantener el ritmo cuando tu cuerpo te pide parar. La tirada larga enseña paciencia &mdash; algo que ningún intervalo puede hacer.</p>
+</div>
+
+<div class="info-box">
+  <div class="box-title">Series e intervalos &mdash; Potencia aeróbica</div>
+  <p>Esfuerzos cortos a alta intensidad (85-95% FC máxima) con recuperación controlada. Aquí se entrena el VO2max directamente: empujas el límite de oxígeno que tu cuerpo puede procesar. También mejora tu tolerancia al lactato &mdash; la capacidad de mantener intensidades altas antes de que la acidez muscular te obligue a frenar. Formatos típicos: 400m, 800m, 1000m, cuestas, fartlek.</p>
+</div>
+
+<p>Cada uno de estos estímulos produce adaptaciones diferentes y complementarias. Un programa de carrera que solo tiene intervalos se quema rápidamente y no construye base. Uno que solo tiene zona 2 mejora la eficiencia pero nunca mueve el techo del VO2max. Areté los combina con la proporción adecuada &mdash; la famosa distribución polarizada (80% baja intensidad, 20% alta) que la fisiología del deporte ha validado como la más eficaz para el rendimiento a largo plazo.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL ATLETA HÍBRIDO                               -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h3>El Atleta Híbrido: la ciencia de combinar ambos</h3>
+
+<p>Aquí es donde la mayoría se equivoca. Y donde Areté se diferencia.</p>
+
+<p>En 1980, Robert Hickson publicó el primer estudio sobre el <strong>efecto de interferencia</strong>: entrenar fuerza y resistencia simultáneamente puede comprometer las adaptaciones de ambas. El mecanismo molecular es real: la vía <strong>AMPK</strong>, activada por el ejercicio aeróbico, puede inhibir parcialmente la vía <strong>mTOR</strong>, responsable de la síntesis de proteína muscular. Dicho en claro: si corres demasiado, tu músculo puede crecer menos.</p>
+
+<p>Pero la investigación de las últimas dos décadas ha demostrado que la interferencia es <strong>gestionable</strong>. No es un muro &mdash; es una variable que se optimiza. Las tres claves que la evidencia actual señala:</p>
+
+<p><strong>Separar estímulos.</strong> Al menos 6 horas entre una sesión de fuerza y una de carrera. Idealmente, en días distintos. Esto permite que las cascadas de señalización de cada estímulo se activen sin competir entre sí.</p>
+
+<p><strong>Priorizar la secuencia.</strong> Si entrenas ambas el mismo día, la fuerza va primero. La fatiga residual de la carrera compromete más la técnica de los levantamientos pesados que al revés. Una sentadilla mal ejecutada por fatiga acumulada es un riesgo de lesión. Una carrera suave después de levantar es perfectamente segura.</p>
+
+<p><strong>Modular el tipo de cardio.</strong> Las sesiones de zona 2 y carrera moderada interfieren menos con las adaptaciones de fuerza que los intervalos de alta intensidad. Esto encaja con la distribución polarizada: la mayor parte de tu volumen de carrera es de baja intensidad &mdash; precisamente el tipo que menos compite con tu entrenamiento de barra.</p>
+
+<p>Areté está diseñada desde su arquitectura para gestionar esta ecuación. No es una app de fuerza con un módulo de running pegado, ni una app de running con ejercicios de gimnasio añadidos. Es una plataforma que programa ambos estímulos de forma integrada, respetando los tiempos de recuperación, la secuencia óptima y la proporción de volumen que minimiza la interferencia.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LA BRÚJULA                                      -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>La brújula: rendimiento y proporción</h2>
+
+<p>El Atleta Híbrido necesita dos paneles de control. Uno mide lo que puede hacer. Otro mide cómo lo refleja su cuerpo. No son contradictorios &mdash; son consecuencia uno del otro cuando entrenamiento y nutrición están bien programados.</p>
+
+<div class="dual-metric">
+  <div class="metric-card">
+    <div class="metric-icon">Rendimiento</div>
+    <h4>Lo que tu cuerpo puede hacer</h4>
+    <p>Sentadilla 1.5&times; peso corporal. Peso muerto 1.8&times;. Press banca 1.0&times;. Press militar 0.75&times;. 5K por debajo de 25 minutos. Carrera larga de 90+ minutos sin colapsar. Capacidad de completar sesiones HIIT y series de intervalos.</p>
+  </div>
+  <div class="metric-card">
+    <div class="metric-icon">Proporción</div>
+    <h4>Lo que tu cuerpo refleja</h4>
+    <p>Hombros = cintura &times; 1.618. Bíceps = muñeca &times; 2.5. Pecho = muñeca &times; 6.5. Muslo = rodilla &times; 1.618. Proporción áurea (&phi;) aplicada a tu estructura ósea individual, no a un ideal genérico de revista.</p>
+  </div>
+</div>
+
+<p>Los estándares de rendimiento combinan fuerza y carrera en un mismo perfil. Los ratios de fuerza son relativos a tu peso corporal &mdash; miden eficiencia neuromuscular, no masa absoluta. Los tiempos de carrera miden capacidad cardiovascular real, no kilómetros acumulados sin contexto. Un Atleta Híbrido no es alguien que "también corre un poco": es alguien cuya capacidad aeróbica y cuya fuerza están ambas en un nivel que la mayoría consideraría alto para su especialidad.</p>
+
+<p>Las proporciones estéticas son <strong>individuales</strong>. Dependen de tu estructura ósea &mdash; circunferencia de muñeca y rodilla &mdash; no de una silueta estandarizada. Un hombre con muñecas de 17 cm tiene un objetivo de bíceps diferente a uno con muñecas de 19 cm. El ratio áureo aparece con frecuencia en los cuerpos que percibimos como armónicos &mdash; desde las esculturas clásicas hasta la investigación moderna en percepción visual. Es geometría, no opinión.</p>
+
+<p>Lo que hace útil este sistema dual es que funciona como <strong>diagnóstico cruzado</strong>. Si tu sentadilla sube pero tus hombros siguen estrechos respecto a tu cintura, necesitas más volumen de deltoides. Si tus proporciones están equilibradas pero tu 5K está estancado en 28 minutos, necesitas más trabajo de series y zona 2. Si la fuerza y la carrera progresan pero las proporciones no cambian, el problema es nutricional. Las métricas eliminan la subjetividad y te dicen exactamente qué necesitas priorizar.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PERIODIZACIÓN                                   -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Periodización: pensar en años, no en semanas</h2>
+
+<p>La diferencia entre alguien que entrena y alguien que progresa es una sola palabra: <strong>periodización</strong>.</p>
+
+<p>Tu cuerpo no responde al mismo estímulo para siempre. Las primeras semanas de cualquier programa producen adaptaciones rápidas porque el estímulo es nuevo. Después, esas ganancias se frenan &mdash; no porque el programa sea malo, sino porque tu organismo se ha adaptado. La fatiga se acumula, la capacidad de recuperación se satura, y los mismos ejercicios con el mismo volumen producen cada vez menos retorno.</p>
+
+<p>La periodización resuelve este problema organizando el entrenamiento en <strong>bloques con objetivos distintos</strong> que se suceden de forma lógica. Cada bloque construye sobre el anterior y prepara el terreno para el siguiente. La variación no es aleatoria &mdash; "confusión muscular" es un término de marketing, no de fisiología &mdash; sino planificada para gestionar la fatiga acumulada mientras maximizas la adaptación a largo plazo.</p>
+
+<p>En la práctica, esto significa alternar bloques donde priorizas la fuerza con bloques donde priorizas el volumen muscular, bloques de definición donde revelas lo construido, y bloques de base aeróbica donde construyes el motor cardiovascular. La carrera tiene su propia periodización: fases de base (alto volumen de zona 2), fases de desarrollo (introducción progresiva de series e intervalos) y fases de puesta a punto antes de un objetivo de carrera.</p>
+
+<p>Lo que hace a Areté diferente es que <strong>ambas periodizaciones se integran en un solo plan</strong>. No tienes un programa de fuerza por un lado y un plan de carrera por otro, compitiendo por tu tiempo y tu recuperación. Tienes un sistema que distribuye los estímulos de barra y los estímulos de carrera a lo largo de semanas y meses, respetando la fisiología de la interferencia y aprovechando las sinergias entre ambas adaptaciones.</p>
+
+<div class="info-box">
+  <div class="box-title">El horizonte temporal</div>
+  <p>Un ciclo completo de Areté dura meses, no semanas. Y después del primer ciclo viene el segundo, con un nivel de partida superior. Este es el pensamiento que separa la transformación real de los intentos esporádicos: no estás buscando resultados para el verano. Estás construyendo un sistema que te haga más fuerte, más resistente y más proporcionado cada año durante los próximos diez. La pregunta correcta no es "¿qué programa hago?" &mdash; es "¿qué sistema puedo sostener durante una década?".</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LENTE ESTOICA                                   -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="stoic-block">
+  <div class="stoic-label">Lente Estoica &mdash; Areté como práctica diaria</div>
+
+  <p>Los estoicos no separaban la filosofía de la acción. Para Marco Aurelio, Séneca y Epicteto, la virtud no era un concepto abstracto &mdash; era algo que se expresaba en cada decisión concreta. La <span class="greek">areté</span> griega, la excelencia, no es un destino al que llegas: es una forma de operar cada día.</p>
+
+  <p>Aplicada al entrenamiento, esta filosofía te da tres herramientas que ningún programa puede sustituir:</p>
+
+  <p><strong>La dicotomía del control.</strong> No controlas tu genética, la velocidad a la que tu cuerpo construye músculo, ni el ritmo al que tu VO2max mejora. Controlas si hoy te presentas a entrenar, si ejecutas cada repetición con técnica limpia, si corres la sesión de zona 2 al ritmo prescrito en vez de dispararte porque "te sentías bien", si comes lo que tu plan requiere, y si duermes las horas que necesitas. Enfoca toda tu energía en lo que está bajo tu control. Suelta todo lo demás.</p>
+
+  <p><strong>Premeditatio malorum.</strong> Séneca recomendaba anticipar la dificultad antes de enfrentarla. El Atleta Híbrido hace lo mismo: sabes que habrá semanas de estancamiento en la barra, días en que las piernas no responden en la carrera, fases donde la restricción calórica agota tu paciencia. No te sorprendes cuando llega &mdash; lo habías previsto. Y porque lo previste, tienes un protocolo: deload, ajuste de volumen, revisión nutricional. No reaccionas emocionalmente &mdash; ejecutas el plan.</p>
+
+  <p><strong>Amor fati.</strong> Marco Aurelio escribió que el obstáculo no está en el camino &mdash; es el camino. La progresión lenta no es un defecto del sistema: es el sistema. El kilómetro 14 de la tirada larga cuando tus piernas pesan no es un castigo: es exactamente el estímulo que produce la adaptación. El estancamiento no es fracaso: es la señal que tu cuerpo envía cuando necesita variación. Amar el proceso tal como es &mdash; incluidas las partes que duelen &mdash; es la diferencia entre quien transforma su cuerpo y quien colecciona programas que nunca termina.</p>
+
+  <p><strong>Sistema sobre motivación.</strong> La motivación es una emoción &mdash; fluctúa con tu sueño, tu estrés, tu estado de ánimo. No construyes un cuerpo sobre emociones. Lo construyes sobre hábitos que funcionan independientemente de cómo te sientas. Un Atleta Híbrido no se pregunta "¿tengo ganas de entrenar hoy?". Tiene una sesión programada, una hora reservada, y un protocolo de calentamiento que arranca antes de que su cerebro tenga tiempo de negociar.</p>
+
+  <p class="stoic-source">"No es que tengamos poco tiempo, sino que perdemos mucho. La vida es suficientemente larga si se invierte bien." &mdash; Séneca, De Brevitate Vitae</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- POR QUÉ LA MAYORÍA FRACASA                      -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Por qué la mayoría fracasa</h2>
+
+<p>No fracasan por falta de información. Nunca ha habido más información disponible sobre entrenamiento y nutrición. Fracasan por falta de sistema y de horizonte temporal.</p>
+
+<p><strong>Optimizan detalles irrelevantes y descuidan los fundamentos.</strong> Investigan qué zapatilla tiene 2 mm más de drop, pero no llevan un registro de sus tiempos de carrera. Comparan proteínas de suero por la fuente del ganado, pero duermen 5 horas. La pirámide de prioridades tiene una base (entrenamiento progresivo, sueño, comida real) y una cúspide (suplementos, timing, detalles). La mayoría construye la pirámide invertida.</p>
+
+<p><strong>Piensan en semanas, no en años.</strong> Buscan "el programa de 8 semanas para transformar tu cuerpo". Ocho semanas es lo que tu cuerpo necesita para empezar a adaptarse seriamente. Los resultados que cambian tu vida llegan en meses y se consolidan en años. Quien no acepta este horizonte temporal abandonará antes de que el sistema tenga tiempo de funcionar.</p>
+
+<p><strong>Separan lo que debería estar unido.</strong> Un programa de fuerza por un lado, una app de running por otro, un plan de dieta en un PDF, y motivación sacada de Instagram. Cuatro sistemas desconectados que compiten por tu tiempo, tu recuperación y tu atención. La integración no es un lujo &mdash; es la condición para que las adaptaciones sumen en vez de competir.</p>
+
+<p><strong>No documentan.</strong> Lo que no se mide no se gestiona. Si no registras el peso de cada serie y el ritmo de cada carrera, no sabes si estás progresando o girando en círculos. El registro de entrenamiento es la herramienta más infravalorada del fitness. No miente, no distorsiona, no recuerda selectivamente. Te muestra exactamente dónde estás.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PROTOCOLO                                       -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="protocol">
+  <div class="protocol-title">Tu punto de partida</div>
+  <ol>
+    <li><strong>Evalúa dónde estás.</strong> Haz una sentadilla con barra vacía: ¿tu técnica es correcta? Corre 20 minutos a ritmo cómodo: ¿puedes mantener una conversación? Estas dos pruebas simples te dicen si tu nivel de partida está en la fuerza, en la carrera, o en ambos.</li>
+    <li><strong>Calcula tu brújula.</strong> Pésate. Mide muñeca y rodilla. Con esos tres datos tienes tus estándares de fuerza (ratios &times; peso corporal) y tus proporciones de referencia (ratios &times; estructura ósea). Son tus coordenadas de destino.</li>
+    <li><strong>Configura tu nutrición.</strong> TMB con Mifflin-St Jeor (10 &times; peso + 6.25 &times; altura &ndash; 5 &times; edad + 5), multiplicada por 1.65. Ajusta según fase: superávit para construir, déficit para revelar. Proteína siempre alta (1.8-2.5 g/kg). Carbohidratos periodizados: más los días que entrenas duro, menos los de descanso.</li>
+    <li><strong>Carga tu plan en Areté.</strong> Elige o importa un plan que integre sesiones de fuerza y sesiones de carrera. La app gestiona la distribución semanal, los tiempos de recuperación y la progresión de ambas patas. Tú te presentas y ejecutas.</li>
+    <li><strong>Documenta desde el día uno.</strong> Cada serie, cada carrera, cada peso, cada ritmo. El registro es obligatorio. Sin datos no hay diagnóstico. Sin diagnóstico no hay ajuste. Sin ajuste no hay progresión a largo plazo.</li>
+    <li><strong>Comprométete con el horizonte largo.</strong> No con una semana. No con un mes. Con el sistema. Cada ciclo te deja en un nivel superior &mdash; más fuerte, más resistente, más proporcionado. Pero solo si completas el ciclo. Empezar y abandonar es la forma más eficiente de no llegar a ningún sitio.</li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- CIERRE                                          -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="authority-close">
+  <p>Los griegos lo entendieron hace veinticinco siglos: la excelencia no se alcanza por accidente. Se construye con intención, se sostiene con disciplina, y se mide con honestidad. La barra está cargada. La carretera está abierta. Lo único que falta eres tú.</p>
+  <div class="sign">Areté &mdash; luisgonzalezbernal.com</div>
+</div>
+
+</div><!-- .article-body -->
+
+<div class="article-nav">
+  <a href="fase1-fuerza.html">
+    <div class="nav-label">Siguiente &rarr;</div>
+    <div class="nav-title">Fase I: Fuerza</div>
+  </a>
+</div>
+
+</body>
+</html>

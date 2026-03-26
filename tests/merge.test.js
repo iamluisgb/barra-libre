@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mergeDB } from '../js/utils.js';
 
 const makeDB = (overrides = {}) => ({
-  program: 'barraLibre',
+  program: 'arete',
   phase: 1,
   workouts: [],
   bodyLogs: [],

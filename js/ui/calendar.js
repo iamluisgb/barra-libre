@@ -16,7 +16,7 @@ export function renderCalendar(db) {
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const prog = getActiveProgram();
-  const filtered = db.workouts.filter(w => (w.program || 'barraLibre') === prog);
+  const filtered = db.workouts.filter(w => (w.program || 'arete') === prog);
   const wd = {};
   filtered.forEach(w => { if (!wd[w.date]) wd[w.date] = []; wd[w.date].push(w.session); });
   const vm = new Date(calViewDate.getFullYear(), calViewDate.getMonth(), 1);
@@ -64,7 +64,7 @@ export function initCalendar(db) {
 
 export function calDayClick(ds, db) {
   const prog = getActiveProgram();
-  const ws = db.workouts.filter(w => w.date === ds && (w.program || 'barraLibre') === prog);
+  const ws = db.workouts.filter(w => w.date === ds && (w.program || 'arete') === prog);
   if (ws.length === 1) showDetail(ws[0].id, db);
   else if (ws.length > 1) {
     document.getElementById('historyFilter').value = '';

@@ -3,7 +3,7 @@ import { saveDB } from './data.js';
 let ALL_PROGRAMS = {};
 let ALL_RUNNING_PROGRAMS = {};
 let BUILTIN_IDS = new Set();
-let activeProgram = 'barraLibre';
+let activeProgram = 'arete';
 let BODY_MEASURES = [];
 
 const VALID_MODES = new Set(['sets', 'result', 'interval', 'tabata', 'rounds', 'ladder', 'pyramid', 'amrap', 'emom', 'superset']);
@@ -146,7 +146,7 @@ export function deleteCustomProgram(db, id) {
   delete ALL_RUNNING_PROGRAMS[id];
 
   if (activeProgram === id) {
-    activeProgram = 'barraLibre';
+    activeProgram = 'arete';
   }
 }
 

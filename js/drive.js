@@ -5,14 +5,14 @@ import { getAllRunRoutes, splitAndStoreRoutes } from './run-store.js';
 
 const CLIENT_ID = '146475241021-2sschmrutnqdeug5fo6onc772im94ltt.apps.googleusercontent.com';
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
-const BACKUP_FILENAME = 'barra-libre-backup.json';
+const BACKUP_FILENAME = 'arete-backup.json';
 
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiry = 0;
 
-const TOKEN_KEY = 'barraLibreToken';
-const EXPIRY_KEY = 'barraLibreTokenExpiry';
+const TOKEN_KEY = 'areteToken';
+const EXPIRY_KEY = 'areteTokenExpiry';
 
 function persistToken() {
   try {
@@ -202,7 +202,7 @@ export async function downloadRevision(fileId, revisionId) {
 
 // === Auto-sync ===
 
-const SYNC_TS_KEY = 'barraLibreLastSync';
+const SYNC_TS_KEY = 'areteLastSync';
 
 function getLocalSyncTime() {
   return parseInt(localStorage.getItem(SYNC_TS_KEY)) || 0;

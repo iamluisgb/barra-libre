@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barra-libre-v83';
+const CACHE_NAME = 'arete-v84';
 const ASSETS = [
   './',
   './app.html',
@@ -17,7 +17,7 @@ const ASSETS = [
   './blog/suplementos.html',
   './blog/efecto-kettlebell.html',
   './programs.json',
-  './programs/barra-libre.json',
+  './programs/arete.json',
   './programs/kettlebell.json',
   './programs/running/media-maraton-1h40.json',
   './js/ui/running.js',
@@ -134,7 +134,7 @@ function updateTimerNotification() {
         body: 'Descanso completado',
         icon: './assets/icons/icon-192.png',
         badge: './assets/icons/icon-192.png',
-        tag: 'barra-libre-timer',
+        tag: 'arete-timer',
         vibrate: [200, 100, 200, 100, 200],
         requireInteraction: true,
       });
@@ -144,7 +144,7 @@ function updateTimerNotification() {
       body: fmtTime(remaining) + ' restantes',
       icon: './assets/icons/icon-192.png',
       badge: './assets/icons/icon-192.png',
-      tag: 'barra-libre-timer',
+      tag: 'arete-timer',
       requireInteraction: true,
       silent: true,
     });
@@ -154,7 +154,7 @@ function updateTimerNotification() {
       body: fmtTime(total),
       icon: './assets/icons/icon-192.png',
       badge: './assets/icons/icon-192.png',
-      tag: 'barra-libre-timer',
+      tag: 'arete-timer',
       requireInteraction: true,
       silent: true,
     });
@@ -164,7 +164,7 @@ function updateTimerNotification() {
 function stopTimerNotification() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   timerState = null;
-  self.registration.getNotifications({ tag: 'barra-libre-timer' })
+  self.registration.getNotifications({ tag: 'arete-timer' })
     .then(ns => ns.forEach(n => n.close()));
 }
 
@@ -189,7 +189,7 @@ self.addEventListener('message', event => {
       body: 'Descanso completado',
       icon: './assets/icons/icon-192.png',
       badge: './assets/icons/icon-192.png',
-      tag: 'barra-libre-timer',
+      tag: 'arete-timer',
       vibrate: [200, 100, 200, 100, 200],
       requireInteraction: true,
     });
@@ -228,7 +228,7 @@ function updateRunNotification() {
     body: `${min}:${sec.toString().padStart(2, '0')} · ${km} km`,
     icon: './assets/icons/icon-192.png',
     badge: './assets/icons/icon-192.png',
-    tag: 'barra-libre-run',
+    tag: 'arete-run',
     requireInteraction: true,
     silent: true,
   });
@@ -241,7 +241,7 @@ function updateRunNotification() {
 function stopRunNotification() {
   if (runInterval) { clearInterval(runInterval); runInterval = null; }
   runState = null;
-  self.registration.getNotifications({ tag: 'barra-libre-run' })
+  self.registration.getNotifications({ tag: 'arete-run' })
     .then(ns => ns.forEach(n => n.close()));
 }
 

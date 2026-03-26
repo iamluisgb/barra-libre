@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fase I: Fuerza — Los Cimientos del Atleta Híbrido | Areté</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface-2: #1c1c1c;
+    --border: #2a2a2a;
+    --text: #e8e4df;
+    --text-muted: #9a9590;
+    --accent: #c5a05e;
+    --accent-dim: rgba(197, 160, 94, 0.12);
+    --red: #c45c4a;
+    --green: #6b9e6b;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --max-w: 720px;
+    --space: clamp(1rem, 3vw, 1.5rem);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: clamp(1rem, 2.2vw, 1.125rem);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* — NAV — */
+  .site-nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem var(--space);
+    background: rgba(14,14,14,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--accent); }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+  /* — ARTICLE HEADER — */
+  .article-header {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 6rem) var(--space) 2rem;
+  }
+  .back {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .back:hover { color: var(--accent); }
+  .phase-tag {
+    display: inline-block;
+    margin: 1.5rem 0 1rem;
+    padding: 0.25rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 4px;
+  }
+  .article-header h1 {
+    font-size: clamp(2rem, 5.5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* — ARTICLE BODY — */
+  .article-body {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--space) 4rem;
+  }
+  .article-body h2 {
+    font-size: clamp(1.3rem, 3.5vw, 1.65rem);
+    font-weight: 600;
+    color: var(--text);
+    margin: 3rem 0 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+  .article-body h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .article-body h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 2rem 0 0.75rem;
+  }
+  .article-body p {
+    margin-bottom: 1.25rem;
+    color: var(--text);
+  }
+  .article-body strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .article-body ul, .article-body ol {
+    margin: 0.75rem 0 1.5rem 1.25rem;
+    color: var(--text);
+  }
+  .article-body li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+  }
+
+  /* — HOOK — */
+  .hook {
+    font-size: clamp(1.05rem, 2.4vw, 1.2rem);
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 2rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hook p:last-child { margin-bottom: 0; }
+
+  /* — STOIC BLOCK — */
+  .stoic-block {
+    margin: 2.5rem 0;
+    padding: 1.75rem 2rem;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .stoic-block .stoic-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .stoic-block p {
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .stoic-block p:last-child { margin-bottom: 0; }
+  .stoic-block .stoic-source {
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  /* — INFO BOX — */
+  .info-box {
+    margin: 1.5rem 0;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .info-box .box-title {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+  }
+  .info-box p {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  .info-box p:last-child { margin-bottom: 0; }
+
+  /* — TABLES — */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+  }
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+  }
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* — PROTOCOL BOX — */
+  .protocol {
+    margin: 2.5rem 0;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+  }
+  .protocol .protocol-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .protocol .protocol-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .protocol ol {
+    margin: 0 0 0 1.25rem;
+    color: var(--text);
+  }
+  .protocol li {
+    margin-bottom: 0.75rem;
+    padding-left: 0.25rem;
+  }
+  .protocol li strong {
+    color: var(--accent);
+  }
+
+  /* — BLOCKQUOTE — */
+  blockquote {
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    font-style: italic;
+    color: var(--text-muted);
+    border-left: 2px solid var(--accent);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  /* — CLOSE — */
+  .authority-close {
+    margin: 3rem 0 2rem;
+    padding: 2rem 0;
+    border-top: 2px solid var(--accent);
+    text-align: center;
+  }
+  .authority-close p {
+    font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .authority-close .sign {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 1rem;
+  }
+
+  /* — NAV FOOTER — */
+  .article-nav {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--space) 4rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .article-nav a {
+    text-decoration: none;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    max-width: 48%;
+  }
+  .article-nav a:hover { border-color: var(--accent); }
+  .article-nav .nav-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .article-nav .nav-title {
+    font-size: 0.92rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .article-nav .next { text-align: right; margin-left: auto; }
+
+  /* — RESPONSIVE — */
+  @media (max-width: 600px) {
+    table { font-size: 0.82rem; }
+    th, td { padding: 0.6rem 0.65rem; }
+    .stoic-block { padding: 1.25rem 1.25rem; }
+    .protocol { padding: 1.5rem; }
+    .article-nav { flex-direction: column; }
+    .article-nav a { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="../index.html" class="logo">Barra <span>Libre</span></a>
+  <div class="nav-links">
+    <a href="../index.html" class="active">Guía</a>
+    <a href="../app.html">Mi Entreno</a>
+  </div>
+</nav>
+
+<div class="article-header">
+  <a href="../index.html" class="back">&larr; Volver a la guía</a>
+  <div class="phase-tag">Fase I</div>
+  <h1>Fuerza: los cimientos del Atleta Híbrido</h1>
+  <div class="subtitle">Seis movimientos. Progresión lineal. De cero a intermedio en 2-4 meses. El programa que tu sistema nervioso lleva esperando toda tu vida.</div>
+</div>
+
+<div class="article-body">
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL GANCHO (THE HOOK)                           -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="hook">
+<p>Crees que necesitas quince ejercicios por sesión, cuatro variantes de curl y una máquina distinta para cada músculo. No. Necesitas una barra, seis movimientos y la disciplina de añadir 2.5 kilos cada semana.</p>
+<p>La industria del fitness ha monetizado la complejidad. Más ejercicios, más máquinas, más confusión. Pero la fisiología humana no ha cambiado en 200.000 años: tu cuerpo responde a cargas progresivas aplicadas sobre patrones fundamentales de movimiento. Todo lo demás es ruido.</p>
+<p>Esta es la Fase I de Areté. No es un programa de principiantes &mdash; es la fase donde construyes la infraestructura neuromuscular que sostendrá todo lo que venga después. Saltártela es como intentar construir un edificio de diez pisos sobre cimientos de arena.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL FUNDAMENTO (THE SCIENCE)                    -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Qué ocurre dentro de tu cuerpo cuando empiezas a levantar</h2>
+
+<p>Las primeras semanas de entrenamiento con barra producen ganancias de fuerza rápidas, pero no son principalmente musculares. Son <strong>neurales</strong>. Entender este mecanismo te dará paciencia &mdash; y la paciencia es lo que separa a quien progresa de quien abandona.</p>
+
+<h3>Fase neural: semanas 1-6</h3>
+
+<p>Tu músculo no es débil. Tu cerebro es ineficiente. Un principiante solo recluta entre el 60-70% de sus unidades motoras disponibles durante una contracción máxima. El problema no es el motor &mdash; es el cableado eléctrico.</p>
+
+<p>Cuando levantas una barra, tu corteza motora envía señales a las motoneuronas de la médula espinal, que a su vez activan las fibras musculares. Estas motoneuronas siguen el <strong>principio de Henneman</strong> (principio del tamaño): primero se reclutan las unidades motoras pequeñas (fibras tipo I, lentas), y solo cuando la carga lo exige se activan las grandes (fibras tipo II, rápidas y potentes). El entrenamiento con cargas altas enseña a tu sistema nervioso a reclutar las unidades de alto umbral antes y con más eficacia.</p>
+
+<p>Pero el reclutamiento no es todo. También mejora la <strong>sincronización de disparo</strong>: las unidades motoras aprenden a activarse en el momento preciso, coordinándose entre sí para producir más fuerza con el mismo tejido muscular. Y mejora la <strong>coordinación intermuscular</strong>: los músculos agonistas, antagonistas y estabilizadores afinan su timing. Por eso la sentadilla no es solo un ejercicio de cuádriceps &mdash; es un ejercicio de coordinación de todo el cuerpo bajo carga.</p>
+
+<p>Resultado: las primeras 4-6 semanas verás saltos de fuerza sesión a sesión. No es que tu músculo haya crecido. Es que tu sistema nervioso ha aprendido a usar el músculo que ya tenías.</p>
+
+<h3>Fase estructural: semana 6 en adelante</h3>
+
+<p>A partir de las 6-8 semanas, la hipertrofia empieza a contribuir. La tensión mecánica generada por las cargas pesadas activa la vía <strong>mTOR</strong> (mammalian target of rapamycin), la cascada de señalización celular que regula la síntesis de proteína muscular. Cuando sometes al músculo a tensión progresiva &mdash; más peso, sesión tras sesión &mdash; las células satélite se activan, donan núcleos a las fibras musculares existentes, y estas fibras crecen en sección transversal.</p>
+
+<p>Aquí está la ventaja del principiante: tu potencial de activación de mTOR es alto porque tu cuerpo no está habituado al estímulo. Un avanzado necesita técnicas sofisticadas de programación para seguir creciendo. Tú solo necesitas poner 2.5 kg más en la barra y hacer tus 5 repeticiones. Aprovecha esta ventana &mdash; no dura para siempre.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LOS 6 MOVIMIENTOS                              -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Los 6 movimientos</h2>
+
+<p>Toda la Fase I gira alrededor de seis ejercicios que cubren los patrones fundamentales del movimiento humano. No son seis ejercicios aleatorios &mdash; son los que producen la mayor respuesta hormonal sistémica, activan más masa muscular por repetición, y tienen la mayor capacidad de carga progresiva.</p>
+
+<table>
+<thead>
+<tr><th>Movimiento</th><th>Patrón</th><th>Por qué es insustituible</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Sentadilla</strong></td><td>Empuje de pierna</td><td>Mayor activación de cuádriceps, glúteos y core bajo carga axial. El movimiento compuesto con mayor respuesta hormonal sistémica.</td></tr>
+<tr><td><strong>Peso Muerto</strong></td><td>Tirón de pierna</td><td>Cadena posterior completa. El ejercicio donde moverás más kilos absolutos &mdash; tu sistema nervioso aprende a producir fuerza máxima.</td></tr>
+<tr><td><strong>Press de Banca</strong></td><td>Empuje horizontal</td><td>Pectoral, deltoides anterior, tríceps. Trayectoria libre que obliga a estabilización escapular &mdash; algo que la máquina Smith elimina.</td></tr>
+<tr><td><strong>Press Militar</strong></td><td>Empuje vertical</td><td>Deltoides, tríceps, core como estabilizador. De pie, con barra libre: todo tu cuerpo trabaja para que el peso suba recto.</td></tr>
+<tr><td><strong>Clean</strong></td><td>Potencia</td><td>El único movimiento explosivo del programa. Enseña a producir fuerza rápidamente &mdash; la tasa de producción de fuerza (RFD) que no entrenas con grinds lentos.</td></tr>
+<tr><td><strong>Dominada</strong></td><td>Tirón vertical</td><td>Dorsal, bíceps, core. El contrapeso natural del press. Sin dominadas, tus hombros acabarán con un desbalance anterior/posterior.</td></tr>
+</tbody>
+</table>
+
+<p>Nada de curls de bíceps. Nada de extensiones de tríceps. Nada de aperturas con mancuerna. Eso viene en la Fase II, cuando hayas agotado el potencial de adaptación de estos seis. Ahora mismo, cada gramo de capacidad de recuperación debe ir a los movimientos que generan el mayor retorno de inversión neuromuscular.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- LA LENTE ESTOICA (THE MINDSET)                 -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="stoic-block">
+  <div class="stoic-label">Lente Estoica &mdash; Amor Fati y la belleza del proceso lento</div>
+  <p>La Fase I exige algo que el mundo moderno ha olvidado: <strong>paciencia deliberada</strong>. Añadir 2.5 kg por sesión parece poco. Tres sesiones por semana parecen pocas. Seis ejercicios parecen pocos. Pero eso es exactamente el punto.</p>
+  <p>Marco Aurelio escribió que el obstáculo es el camino. En la Fase I, el obstáculo es la lentitud. La tentación de añadir más ejercicios, más peso, más sesiones. De buscar el programa "óptimo" en vez de ejecutar uno bueno con consistencia brutal.</p>
+  <p>Epicteto lo resumía con precisión: no controlas cuánta masa muscular te dará tu genética. No controlas la velocidad a la que tu sistema nervioso se adapta. Pero controlas si hoy vas al gimnasio, si hoy ejecutas la sentadilla con técnica impecable, si hoy añades los 2.5 kg que corresponden. Eso &mdash; la dicotomía del control aplicada a la barra &mdash; es lo que convierte un programa de fuerza en una práctica de carácter.</p>
+  <p>No busques motivación. Busca sistema. La motivación fluctúa con tu estado de ánimo. El sistema funciona porque no depende de cómo te sientas.</p>
+  <p class="stoic-source">"No pidas que los eventos sucedan como tú quieres. Decide querer que sucedan tal como suceden, y todo irá bien." &mdash; Epicteto, Enquiridión, VIII</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EL PROGRAMA                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>El programa: A/B alternante</h2>
+
+<p>Entrenas 3 días por semana, alternando dos sesiones. Descansas al menos un día entre sesiones de fuerza. La simplicidad es intencional: con seis ejercicios y progresión lineal, tu única variable es el peso en la barra.</p>
+
+<div class="info-box">
+  <div class="box-title">Sesión A</div>
+  <p><strong>Sentadilla</strong> 3&times;5 &middot; <strong>Press de Banca</strong> 3&times;5 &middot; <strong>Peso Muerto</strong> 2&times;5 &middot; <strong>Dominada Prono</strong> 3&times;F &middot; <strong>Plancha Abdominal</strong> 2&times;2min</p>
+</div>
+
+<div class="info-box">
+  <div class="box-title">Sesión B</div>
+  <p><strong>Sentadilla</strong> 3&times;5 &middot; <strong>Press Militar</strong> 3&times;5 &middot; <strong>Clean</strong> 5&times;3 &middot; <strong>Dominada Supino</strong> 3&times;F &middot; <strong>Plancha Lateral</strong> 2&times;1min/lado</p>
+</div>
+
+<p>Semana 1: <strong>Lunes A, Miércoles B, Viernes A</strong>. Semana 2: <strong>Lunes B, Miércoles A, Viernes B</strong>. La sentadilla aparece en cada sesión porque es el ejercicio con mayor transferencia a todo lo demás &mdash; y porque tu cuerpo puede recuperarse de 3&times;5 en 48 horas sin problema mientras seas principiante.</p>
+
+<p>El peso muerto solo tiene 2 series de trabajo porque la carga total del movimiento es la más alta del programa y genera más fatiga sistémica. Cinco series de peso muerto sobre tres series de sentadilla el mismo día destruiría tu recuperación.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PROGRESIÓN LINEAL                              -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Progresión lineal: la mecánica de crecer</h2>
+
+<p>Este es el motor del programa. Cada vez que completas las repeticiones prescritas en todas las series, subes el peso la siguiente sesión. Sin excepciones, sin improvisación.</p>
+
+<table>
+<thead>
+<tr><th>Movimiento</th><th>Incremento por sesión</th><th>Lógica</th></tr>
+</thead>
+<tbody>
+<tr><td>Sentadilla</td><td>+2.5 kg</td><td>Gran masa muscular implicada, alta capacidad de carga</td></tr>
+<tr><td>Peso Muerto</td><td>+2.5 kg</td><td>El movimiento donde más fuerte serás &mdash; tolera incrementos constantes</td></tr>
+<tr><td>Press de Banca</td><td>+1.25 &ndash; 2.5 kg</td><td>Menos masa muscular que pierna; los incrementos deben ser más pequeños</td></tr>
+<tr><td>Press Militar</td><td>+1.25 kg</td><td>El lift más pequeño del programa, el primero en estancarse</td></tr>
+<tr><td>Clean</td><td>+2.5 kg cuando completas 5&times;3</td><td>Movimiento técnico &mdash; el peso sube solo cuando la técnica es sólida</td></tr>
+<tr><td>Dominada</td><td>Lastre cuando alcanzas 3&times;12</td><td>Primero domina tu peso corporal; luego añade discos</td></tr>
+</tbody>
+</table>
+
+<p><strong>Si no completas las repeticiones</strong>: repite el mismo peso la siguiente sesión. Si fallas dos sesiones consecutivas con la misma carga, reduce un 10% y vuelve a subir. Este deload no es un retroceso &mdash; es consolidación neural. Tu sistema nervioso necesita tiempo para estabilizar la nueva carga.</p>
+
+<p>Con incrementos de 2.5 kg por sesión en sentadilla, 3 sesiones semanales, estás ante una progresión teórica de 7.5 kg por semana, 30 kg por mes. Un principiante que empieza con 40 kg de sentadilla puede estar en 100 kg en 8 semanas. Esto no es fantasía &mdash; es la curva de adaptación del principiante, y es real.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- HIIT COMPLEMENTARIO                            -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>HIIT complementario: la semilla del Atleta Híbrido</h2>
+
+<p>Además de las 3 sesiones de fuerza, la Fase I incluye 1-2 sesiones HIIT semanales en días alternos. Esto no es "cardio para quemar grasa". Es el primer paso para desarrollar la capacidad aeróbica y la tolerancia al lactato que necesitarás en fases posteriores.</p>
+
+<p>La clave es que el HIIT no interfiera con la recuperación de fuerza. Por eso se programa en días separados y el volumen es bajo. La interferencia entre adaptaciones de fuerza y resistencia (el llamado <strong>efecto de interferencia</strong> o conflicto AMPK-mTOR) es real, pero a este volumen e intensidad es manejable.</p>
+
+<div class="info-box">
+  <div class="box-title">Variante HIIT-1</div>
+  <p>3 rondas, mínimo descanso: 10 dominadas + 20 flexiones + 30 sentadillas + 40 escaladores + 50 saltos. Registra el tiempo total.</p>
+</div>
+
+<div class="info-box">
+  <div class="box-title">Variante HIIT-2</div>
+  <p>5 rondas: sentadilla 1min + flexiones 1min + burpees 1min + descanso 1min. Registra repeticiones totales.</p>
+</div>
+
+<p>Rota entre variantes. Mejorar tu tiempo o tus repeticiones totales es otra forma de progresión &mdash; y te entrena para tolerar el malestar metabólico que la Fase III exigirá.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PRINCIPIOS CLAVE                               -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Principios clave de ejecución</h2>
+
+<p><strong>Técnica antes que peso.</strong> Las primeras dos semanas, entrena con cargas que podrías manejar cómodamente durante 8-10 repeticiones, pero haz solo 5. El objetivo es grabar el patrón motor. Un peso muerto con la espalda redondeada no entrena la cadena posterior &mdash; entrena la hernia discal.</p>
+
+<p><strong>Series de calentamiento obligatorias.</strong> Antes de cada ejercicio principal, haz 2-3 series incrementales. Si tu serie de trabajo de sentadilla es 80 kg: barra vacía &times;10, 40 kg &times;5, 60 kg &times;3, 70 kg &times;2, y luego tus 3&times;5 a 80 kg. El calentamiento no es opcional &mdash; prepara el tejido conectivo y afina la coordinación específica del movimiento.</p>
+
+<p><strong>Descanso entre series: 2-3 minutos.</strong> La resíntesis de fosfocreatina tarda aproximadamente 3 minutos en completarse al 90%. Descansar menos en ejercicios de fuerza máxima compromete el rendimiento de la siguiente serie sin beneficio adicional. No estás entrenando resistencia muscular &mdash; estás entrenando fuerza. Descansa lo que necesites.</p>
+
+<p><strong>No llegues al fallo muscular.</strong> Deja 1-2 repeticiones en reserva (RPE 8-9). El fallo muscular genera fatiga desproporcionada respecto al estímulo adicional que produce, y compromete la calidad de las series restantes. Reserva el fallo para las dominadas al final de la sesión si quieres. Los multiarticulares pesados merecen técnica limpia hasta la última repetición.</p>
+
+<p><strong>Duración total: 45-60 minutos.</strong> Si tardas más, tus descansos son demasiado largos o estás añadiendo ejercicios que no corresponden. Si tardas menos, no estás calentando correctamente o estás corriendo entre series.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PROTOCOLO ARETÉ (THE ACTION)             -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="protocol">
+  <div class="protocol-title">Protocolo Areté &mdash; Tu semana tipo</div>
+  <ol>
+    <li><strong>Lunes &mdash; Sesión A.</strong> Sentadilla 3&times;5, Press Banca 3&times;5, Peso Muerto 2&times;5, Dominada Prono 3&times;F, Plancha 2&times;2min. Registra cada peso y repetición en la app.</li>
+    <li><strong>Martes &mdash; HIIT o descanso.</strong> Si tu recuperación lo permite: una sesión HIIT de 15-20 minutos. Si no, camina 30 minutos a ritmo rápido.</li>
+    <li><strong>Miércoles &mdash; Sesión B.</strong> Sentadilla 3&times;5 (+2.5 kg sobre el lunes), Press Militar 3&times;5, Clean 5&times;3, Dominada Supino 3&times;F, Plancha Lateral 2&times;1min/lado.</li>
+    <li><strong>Jueves &mdash; Descanso activo.</strong> Movilidad, foam rolling, caminata. Tu sistema nervioso se adapta mientras descansas, no mientras entrenas.</li>
+    <li><strong>Viernes &mdash; Sesión A.</strong> Con los pesos de la siguiente progresión. Si el lunes hiciste sentadilla a 60 kg y el miércoles a 62.5 kg, hoy toca 65 kg.</li>
+    <li><strong>Fin de semana &mdash; Recuperación.</strong> HIIT opcional el sábado si no lo hiciste el martes. Domingo: descanso total.</li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ESTÁNDARES DE FUERZA                           -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Estándares de fuerza: cuándo dejas de ser principiante</h2>
+
+<p>La progresión lineal no dura para siempre. Llega un punto en el que tu sistema nervioso ha optimizado el reclutamiento, tu hipertrofia inicial se ha expresado, y necesitas estímulos más sofisticados para seguir creciendo. Ese punto coincide aproximadamente con estos ratios de 1RM respecto a tu peso corporal:</p>
+
+<table>
+<thead>
+<tr><th>Movimiento</th><th>Objetivo (×peso corporal)</th><th>Ejemplo: hombre de 75 kg</th></tr>
+</thead>
+<tbody>
+<tr><td>Sentadilla</td><td>1.5&times;</td><td>112.5 kg</td></tr>
+<tr><td>Peso Muerto</td><td>1.8&times;</td><td>135 kg</td></tr>
+<tr><td>Press de Banca</td><td>1.0&times;</td><td>75 kg</td></tr>
+<tr><td>Press Militar</td><td>0.75&times;</td><td>56 kg</td></tr>
+</tbody>
+</table>
+
+<p>La mayoría de personas alcanza estos números en 2-4 meses de progresión constante. Algunos más rápido, otros más lento. Tu genética, tu edad, tu sueño, tu alimentación y tu consistencia determinan la velocidad. Lo que no cambia es el proceso: carga progresiva sobre los patrones fundamentales.</p>
+
+<p>Cuando la progresión lineal se estanque de forma consistente (no un mal día &mdash; varias semanas sin poder subir peso tras deloads), es momento de pasar a la Fase II. No tengas prisa. Cada kilo de fuerza que construyas aquí es la infraestructura sobre la que se sostiene todo lo demás.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ERRORES FRECUENTES                             -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2>Los 5 errores que destruyen esta fase</h2>
+
+<p><strong>1. Añadir ejercicios.</strong> "Voy a meter unos curls al final." No. Cada ejercicio que añades roba recuperación a los seis principales. Tu cuerpo tiene capacidad limitada de adaptación. Gástala donde el retorno es mayor.</p>
+
+<p><strong>2. Subir peso demasiado rápido.</strong> Si pones 5 kg en vez de 2.5, llegarás al estancamiento en la mitad de tiempo. La progresión lineal funciona porque los incrementos son pequeños y sostenibles. La arrogancia con la barra siempre se paga.</p>
+
+<p><strong>3. Cambiar de programa cada 3 semanas.</strong> El peor enemigo de la fuerza es la falta de constancia, no la falta de variedad. Tu sistema nervioso necesita repetición para optimizar un patrón motor. Cada vez que cambias, reseteas el proceso.</p>
+
+<p><strong>4. Ignorar el sueño.</strong> La hormona del crecimiento se libera en pulsos durante el sueño profundo. La síntesis de proteína muscular se eleva durante 24-48 horas post-entrenamiento, pero necesita el entorno hormonal adecuado para expresarse. Dormir 5 horas sabotea tu recuperación más que cualquier error de programación.</p>
+
+<p><strong>5. No comer suficiente.</strong> Un superávit calórico moderado (10-15% sobre mantenimiento) acelera las adaptaciones de fuerza e hipertrofia. Si estás en déficit calórico como principiante, progresarás &mdash; pero más lento. La fase de definición tiene su momento. Este no es ese momento.</p>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- CIERRE DE AUTORIDAD                            -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<div class="authority-close">
+  <p>La fuerza no es un atributo físico. Es una decisión que tomas tres veces por semana, cada semana, sin excepción. La barra no miente, no negocia, y no perdona la inconsistencia. Pero a quien se presenta con disciplina, le devuelve todo multiplicado.</p>
+  <div class="sign">Areté &mdash; luisgonzalezbernal.com</div>
+</div>
+
+</div><!-- .article-body -->
+
+<div class="article-nav">
+  <a href="filosofia.html">
+    <div class="nav-label">&larr; Anterior</div>
+    <div class="nav-title">Los pilares</div>
+  </a>
+  <a href="fase2-hipertrofia.html" class="next">
+    <div class="nav-label">Siguiente &rarr;</div>
+    <div class="nav-title">Fase II: Hipertrofia</div>
+  </a>
+</div>
+
+</body>
+</html>

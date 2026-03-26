@@ -1,6 +1,6 @@
 {
-  "name": "Barra Libre",
-  "short_name": "BarraLibre",
+  "name": "Areté",
+  "short_name": "Areté",
   "description": "Tu tracker de fuerza personal",
   "start_url": "./app.html",
   "scope": "./",

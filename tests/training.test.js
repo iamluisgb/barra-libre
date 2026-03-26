@@ -4,7 +4,7 @@ import { setActiveProgram } from '../js/programs.js';
 // Mock programs module: inject program data directly
 vi.mock('../js/programs.js', async () => {
   const actual = await vi.importActual('../js/programs.js');
-  let activeProgram = 'barraLibre';
+  let activeProgram = 'arete';
   const mockPrograms = {
     1: {
       name: 'Fuerza',
@@ -47,7 +47,7 @@ describe('populateSessions', () => {
   it('works without calling initTraining first (regression)', async () => {
     // Re-import after resetModules to get fresh cached selectors (all undefined)
     const { populateSessions } = await import('../js/ui/training.js');
-    const db = { phase: 1, workouts: [], program: 'barraLibre' };
+    const db = { phase: 1, workouts: [], program: 'arete' };
 
     expect(() => populateSessions(db)).not.toThrow();
 
@@ -58,7 +58,7 @@ describe('populateSessions', () => {
 
   it('populates historyFilter with all sessions plus "Todas"', async () => {
     const { populateSessions } = await import('../js/ui/training.js');
-    const db = { phase: 1, workouts: [], program: 'barraLibre' };
+    const db = { phase: 1, workouts: [], program: 'arete' };
     populateSessions(db);
 
     const filter = document.getElementById('historyFilter');
@@ -70,8 +70,8 @@ describe('populateSessions', () => {
     const { populateSessions } = await import('../js/ui/training.js');
     const db = {
       phase: 1,
-      program: 'barraLibre',
-      workouts: [{ phase: 1, program: 'barraLibre', session: 'Sesión A', date: '2025-01-01', exercises: [] }],
+      program: 'arete',
+      workouts: [{ phase: 1, program: 'arete', session: 'Sesión A', date: '2025-01-01', exercises: [] }],
     };
     populateSessions(db);
 

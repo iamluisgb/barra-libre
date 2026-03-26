@@ -110,7 +110,7 @@ export async function startKeepAlive() {
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: 'Carrera en curso',
-      artist: 'Barra Libre',
+      artist: 'Areté',
     });
   }
 }

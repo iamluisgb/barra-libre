@@ -125,7 +125,7 @@ export function initDriveUI(db) {
         const exList = (w.exercises || []).map(ex =>
           `${esc(ex.name)}: ${ex.sets.map(s => `${esc(s.kg) || '-'}kg×${esc(s.reps)}`).join(', ')}`
         ).join('<br>');
-        return `<div class="history-item"><div class="hi-main"><div class="hi-date">${esc(w.date)}</div><div class="hi-session">${esc(w.session || '')} · ${esc(w.program || 'barraLibre')} · Fase ${esc(String(w.phase || '?'))}</div></div><div class="hi-detail" style="font-size:12px;color:#666;margin-top:4px">${exList}</div></div>`;
+        return `<div class="history-item"><div class="hi-main"><div class="hi-date">${esc(w.date)}</div><div class="hi-session">${esc(w.session || '')} · ${esc(w.program || 'arete')} · Fase ${esc(String(w.phase || '?'))}</div></div><div class="hi-detail" style="font-size:12px;color:#666;margin-top:4px">${exList}</div></div>`;
       }).join('');
       if (workouts.length > REVISION_PREVIEW_LIMIT) {
         preview.innerHTML += `<p style="color:#666;font-size:13px">... y ${workouts.length - REVISION_PREVIEW_LIMIT} sesiones más</p>`;

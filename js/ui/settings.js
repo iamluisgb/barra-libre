@@ -16,14 +16,14 @@ function normLift(name) {
 export function render1RMs(db) {
   const prog = getActiveProgram();
   const title = document.getElementById('rmTitle');
-  if (prog !== 'barraLibre') {
+  if (prog !== 'arete') {
     title.textContent = 'Records Personales';
     renderRecords(db, prog);
     return;
   }
   title.textContent = '1RM Estimados';
   const lifts = {};
-  db.workouts.filter(w => (w.program || 'barraLibre') === 'barraLibre').forEach(w => {
+  db.workouts.filter(w => (w.program || 'arete') === 'arete').forEach(w => {
     w.exercises.forEach(ex => {
       const n = normLift(ex.name);
       if (!n) return;
@@ -46,7 +46,7 @@ export function render1RMs(db) {
 }
 
 function renderRecords(db, prog) {
-  const workouts = db.workouts.filter(w => (w.program || 'barraLibre') === prog);
+  const workouts = db.workouts.filter(w => (w.program || 'arete') === prog);
   const records = {};
   workouts.forEach(w => {
     w.exercises.forEach(ex => {

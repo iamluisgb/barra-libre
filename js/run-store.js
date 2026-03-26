@@ -1,6 +1,6 @@
 // ── IndexedDB store for heavy running log data ──────────
 
-const DB_NAME = 'barraLibreRuns';
+const DB_NAME = 'areteRuns';
 const DB_VERSION = 1;
 const STORE = 'runRoutes';
 const HEAVY_FIELDS = ['route', 'splits', 'hrTimeSeries', 'hrZoneTimes', 'segments'];
