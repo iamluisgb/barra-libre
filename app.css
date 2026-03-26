@@ -162,7 +162,11 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .zp-chip{font-size:var(--fs-sm);font-weight:700;color:#fff;padding:3px 8px;border-radius:8px;white-space:nowrap}
 .zp-hint{font-size:var(--fs-sm);color:var(--text3);font-style:italic}
 ::-webkit-scrollbar{width:0}
-@media(min-width:500px){body{max-width:500px;margin:0 auto}nav{max-width:500px;left:50%;transform:translateX(-50%)}}
+@media(min-width:500px){body{max-width:500px;margin:0 auto}nav{max-width:500px;left:50%;transform:translateX(-50%)}
+.modal-overlay{justify-content:center;align-items:center}
+.detail-modal .modal,.run-detail-modal .modal{max-width:500px;max-height:90vh;border-radius:var(--radius-lg);margin:auto}
+.share-editor-overlay{max-width:500px;left:50%;transform:translateX(-50%);border-radius:var(--radius-lg);inset:0}
+}
 
 /* Static inline styles extracted from HTML */
 #prefillBanner{display:none;background:rgba(212,55,44,.08);border:.5px solid rgba(212,55,44,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:var(--sp-3);align-items:center;justify-content:space-between;gap:var(--sp-2)}
