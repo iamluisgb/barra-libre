@@ -709,14 +709,16 @@ function renderStatsStrength(ctx, W, H, data, theme) {
     const exCardH = 100;
     drawGlassPanel(ctx, pad, y, W - 2 * pad, exCardH, 16, t);
 
-    // Exercise name + PR pill
+    // Exercise name + PR label
     drawText(ctx, ex.name, pad + 24, y + 32, {
       size: 30, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
     });
     if (isPR) {
-      ctx.font = `700 16px ${FONT}`;
+      ctx.font = `700 30px ${FONT}`;
       const nameW = ctx.measureText(ex.name).width;
-      drawPillBadge(ctx, 'PR', pad + 24 + nameW + 40, y + 18, t);
+      drawText(ctx, 'PR', pad + 24 + nameW + 16, y + 32, {
+        size: 22, weight: 800, color: t.accent, align: 'left', spacing: 0.05
+      });
     }
 
     // Sets row
