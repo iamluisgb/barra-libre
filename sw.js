@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arete-v93';
+const CACHE_NAME = 'arete-v94';
 const ASSETS = [
   './',
   './app.html',
@@ -31,6 +31,7 @@ const ASSETS = [
   './js/bg-worker.js',
   './js/ui/running-helpers.js',
   './js/ui/running-history.js',
+  './js/ui/running-calendar.js',
   './js/ui/share-editor.js',
   './js/ui/running-progress.js',
   './js/ui/running-plan.js',

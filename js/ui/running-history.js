@@ -4,14 +4,15 @@ import { formatPace, formatRunDuration, ZONE_COLORS } from './running-helpers.js
 
 // ── History rendering ───────────────────────────────────
 
-export function renderRunHistory(db, $historyFilter, $historyList) {
+export function renderRunHistory(db, $historyFilter, $historyList, dateFilter) {
   const logs = (db.runningLogs || []).slice().sort((a, b) => {
     if (a.date !== b.date) return b.date.localeCompare(a.date);
     return b.id - a.id;
   });
 
   const filter = $historyFilter?.value || '';
-  const filtered = filter ? logs.filter(l => l.type === filter) : logs;
+  let filtered = filter ? logs.filter(l => l.type === filter) : logs;
+  if (dateFilter) filtered = filtered.filter(l => l.date === dateFilter);
 
   if (filtered.length === 0) {
     $historyList.innerHTML = '<div class="empty-state">Sin sesiones de running registradas</div>';

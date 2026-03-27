@@ -10,6 +10,7 @@ import { HRMonitor } from './hr-monitor.js';
 import { renderRunHistory as _renderRunHistory } from './running-history.js';
 import { openShareEditor } from './share-editor.js';
 import { renderRunProgress as _renderRunProgress } from './running-progress.js';
+import { initRunCalendar, renderRunCalendar } from './running-calendar.js';
 import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession, getNextPlanSession, buildSegmentBar } from './running-plan.js';
 
 // Re-export for backward compatibility
@@ -357,6 +358,10 @@ export function initRunning(db) {
 
   // Manual splits
   document.getElementById('runAddSplitBtn').addEventListener('click', addSplitInput);
+
+  // Running calendar
+  initRunCalendar(db);
+  renderRunCalendar(db);
 
   // History filter
   $historyFilter.addEventListener('change', () => renderRunHistory(db));
@@ -1630,6 +1635,7 @@ function deleteRunLog(db, id) {
   toast('Sesión eliminada');
   if (editingId === id) { editingId = null; closeManualModal(); }
   renderRunHistory(db);
+  renderRunCalendar(db);
   refreshRunning(db);
 }
 
@@ -1873,7 +1879,7 @@ function populateRunWeeks(db) { _populateRunWeeks(db, $weekSelect, $sessionSelec
 function populateRunSessions(db) { _populateRunSessions(db, $weekSelect, $sessionSelect, $segments); }
 function loadRunSessionTemplate(db) { _loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segments); }
 
-export function renderRunHistory(db) { _renderRunHistory(db, $historyFilter, $historyList); }
+export function renderRunHistory(db, dateFilter) { _renderRunHistory(db, $historyFilter, $historyList, dateFilter); }
 export function renderRunProgress(db) { _renderRunProgress(db, $weeklyChart, $paceChart, $statsPanel); }
 
 function renderNextSession(db) {
@@ -1933,5 +1939,5 @@ export function refreshRunning(db) {
   renderGoalWidget(db);
   renderPRs(db);
   renderNextSession(db);
-
+  renderRunCalendar(db);
 }
