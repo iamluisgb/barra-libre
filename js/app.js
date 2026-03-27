@@ -226,9 +226,13 @@ async function init() {
   renderDashboard(db);
   populateSessions(db);
 
-  // Dashboard CTA → switch to Fuerza
+  // Dashboard CTAs
   document.getElementById('dashStartBtn')?.addEventListener('click', () => {
     const btn = document.querySelector('nav button[data-sec="secStrength"]');
+    if (btn) { switchTab(btn, db); }
+  });
+  document.getElementById('dashStartRunBtn')?.addEventListener('click', () => {
+    const btn = document.querySelector('nav button[data-sec="secRunning"]');
     if (btn) { switchTab(btn, db); }
   });
   document.getElementById('appVersion').textContent = `Areté v${APP_VERSION}`;

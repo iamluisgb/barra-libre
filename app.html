@@ -31,7 +31,7 @@
   </section>
   <section class="dash-bento">
     <div class="dash-card" id="dashVolume">
-      <div class="dash-card-label">Volumen Semanal</div>
+      <div class="dash-card-label"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">fitness_center</span> Volumen Semanal</div>
       <div class="dash-ring-wrap">
         <svg class="dash-ring" viewBox="0 0 80 80">
           <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface2)" stroke-width="6"/>
@@ -41,7 +41,7 @@
       </div>
     </div>
     <div class="dash-card" id="dashSessions">
-      <div class="dash-card-label">Sesiones</div>
+      <div class="dash-card-label"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">fitness_center</span> Sesiones</div>
       <div class="dash-ring-wrap">
         <svg class="dash-ring" viewBox="0 0 80 80">
           <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface2)" stroke-width="6"/>
@@ -50,13 +50,36 @@
         <div class="dash-ring-value" id="dashSessionsValue">0</div>
       </div>
     </div>
+    <div class="dash-card" id="dashRunKm">
+      <div class="dash-card-label"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">directions_run</span> Km Semanales</div>
+      <div class="dash-ring-wrap">
+        <svg class="dash-ring" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface2)" stroke-width="6"/>
+          <circle class="dash-ring-fill" cx="40" cy="40" r="34" fill="none" stroke="var(--color-running)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)" id="dashRunKmRing"/>
+        </svg>
+        <div class="dash-ring-value" id="dashRunKmValue">0 km</div>
+      </div>
+    </div>
+    <div class="dash-card" id="dashRunSessions">
+      <div class="dash-card-label"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">directions_run</span> Carreras</div>
+      <div class="dash-ring-wrap">
+        <svg class="dash-ring" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface2)" stroke-width="6"/>
+          <circle class="dash-ring-fill" cx="40" cy="40" r="34" fill="none" stroke="var(--color-running)" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)" id="dashRunSessionsRing"/>
+        </svg>
+        <div class="dash-ring-value" id="dashRunSessionsValue">0</div>
+      </div>
+    </div>
     <div class="dash-card dash-card-wide" id="dashStreak">
       <div class="dash-card-label">Racha Actual</div>
       <div class="dash-streak-value" id="dashStreakValue">0 días</div>
       <div class="dash-streak-sub" id="dashStreakSub">Empieza hoy</div>
     </div>
   </section>
-  <button class="btn dash-cta" id="dashStartBtn"><span class="material-symbols-outlined" style="font-size:20px">play_circle</span> Iniciar Entrenamiento</button>
+  <div class="dash-cta-group">
+    <button class="btn dash-cta" id="dashStartBtn"><span class="material-symbols-outlined" style="font-size:20px">fitness_center</span> Fuerza</button>
+    <button class="btn dash-cta dash-cta-run" id="dashStartRunBtn"><span class="material-symbols-outlined" style="font-size:20px">directions_run</span> Running</button>
+  </div>
   <section class="dash-activity" id="dashActivity">
     <h3 class="dash-section-title">Actividad Reciente</h3>
     <div class="dash-activity-scroll" id="dashActivityList"></div>
