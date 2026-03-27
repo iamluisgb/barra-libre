@@ -625,14 +625,18 @@ function renderMinimalStrength(ctx, W, H, data, theme) {
       size: 36, weight: 700, color: isPR ? t.accent : t.text, align: 'left'
     });
 
-    // Best set (right) - "80 kg × 5"
-    const bestSet = ex.sets?.reduce((a, b) =>
-      (parseFloat(b.kg) || 0) > (parseFloat(a.kg) || 0) ? b : a, ex.sets[0]);
-    if (bestSet && (parseFloat(bestSet.kg) || 0) > 0) {
+    // Best set (right) - "80 kg × 5" or duration for weight-0 exercises
+    const hasKg = ex.sets?.some(s => parseFloat(s.kg) > 0);
+    if (hasKg) {
+      const bestSet = ex.sets.reduce((a, b) =>
+        (parseFloat(b.kg) || 0) > (parseFloat(a.kg) || 0) ? b : a, ex.sets[0]);
       const rx = W - pad - 30;
       drawFauxItalic(ctx, `${bestSet.kg}`, rx - 120, ey + 35, { size: 36, weight: 900, color: t.text, align: 'right' });
       drawText(ctx, 'kg', rx - 60, ey + 35, { size: 28, weight: 700, color: t.accent, align: 'center' });
       drawFauxItalic(ctx, `×${bestSet.reps}`, rx, ey + 35, { size: 28, weight: 500, color: t.sub(.6), align: 'right' });
+    } else if (ex.sets?.[0]?.reps) {
+      const rx = W - pad - 30;
+      drawFauxItalic(ctx, `${ex.sets[0].reps}`, rx, ey + 35, { size: 36, weight: 900, color: t.text, align: 'right' });
     }
 
     // PR indicator
@@ -694,7 +698,10 @@ function renderStatsStrength(ctx, W, H, data, theme) {
     const isPR = data.prs?.some(p => p.exercise === ex.name);
 
     // Glass card for each exercise
-    const setsStr = ex.sets.map(s => `${s.kg || 0}kg × ${s.reps || 0}`).join('  ·  ');
+    const hasKg = ex.sets?.some(s => parseFloat(s.kg) > 0);
+    const setsStr = hasKg
+      ? ex.sets.map(s => `${s.kg || 0}kg × ${s.reps || 0}`).join('  ·  ')
+      : ex.sets?.[0]?.reps || '—';
     const exCardH = 100;
     drawGlassPanel(ctx, pad, y, W - 2 * pad, exCardH, 16, t);
 
