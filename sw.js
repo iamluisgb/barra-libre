@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arete-v96';
+const CACHE_NAME = 'arete-v97';
 const ASSETS = [
   './',
   './app.html',
@@ -73,7 +73,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: stale-while-revalidate for same-origin, network-only for external APIs
+// Fetch: network-first with cache fallback (ensures users always get latest version)
 self.addEventListener('fetch', event => {
   const url = event.request.url;
   if (!url.startsWith('http')) return;
@@ -85,28 +85,21 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.match(event.request).then(cached => {
-        const networkFetch = fetch(event.request).then(response => {
-          if (response.ok && event.request.method === 'GET') {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        }).catch(() => null);
-
-        // Return cached immediately, update in background
-        if (cached) {
-          networkFetch.catch(() => {});
-          return cached;
+    fetch(event.request)
+      .then(response => {
+        if (response.ok && event.request.method === 'GET') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-        // No cache: wait for network
-        return networkFetch.then(r => r || new Response('Offline', { status: 503 }));
+        return response;
       })
-    ).catch(() => {
-      if (event.request.destination === 'document') {
-        return caches.match('./app.html');
-      }
-    })
+      .catch(() =>
+        caches.match(event.request).then(cached =>
+          cached || (event.request.destination === 'document'
+            ? caches.match('./app.html')
+            : new Response('Offline', { status: 503 }))
+        )
+      )
   );
 });
 
