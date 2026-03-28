@@ -6,7 +6,7 @@ import { renderHistory } from './history.js';
 import { renderBodyForm, renderBodyHistory, calcProportions, calcCalories } from './body.js';
 import { render1RMs } from './settings.js';
 import { initProgress } from './progress.js';
-import { populateSessions, exTargetText } from './training.js';
+import { populateSessions, exTargetText, selectAndStartSession } from './training.js';
 import { refreshRunning, renderRunHistory, renderRunProgress } from './running.js';
 import { renderDashboard } from './dashboard.js';
 import { esc } from '../utils.js';
@@ -72,12 +72,12 @@ function renderStrPlan(db) {
     return `<option value="${k}">${esc(p.name || 'Fase ' + k)}</option>`;
   }).join('');
   $phase.value = String(db.phase);
-  $phase.onchange = () => renderPlanPhaseContent(progs, $phase.value, $content);
+  $phase.onchange = () => renderPlanPhaseContent(progs, $phase.value, $content, db);
 
-  renderPlanPhaseContent(progs, $phase.value, $content);
+  renderPlanPhaseContent(progs, $phase.value, $content, db);
 }
 
-function renderPlanPhaseContent(progs, phaseKey, $content) {
+function renderPlanPhaseContent(progs, phaseKey, $content, db) {
   const phase = progs[phaseKey];
   if (!phase?.sessions) { $content.innerHTML = ''; return; }
 
@@ -94,8 +94,16 @@ function renderPlanPhaseContent(progs, phaseKey, $content) {
         <div class="str-plan-ex-list">${exercises.map(ex =>
           `<div class="so-ex"><span class="so-ex-name">${esc(ex.name)}</span><span class="so-ex-target">${exTargetText(ex)}</span></div>`
         ).join('')}</div>
+        <button class="btn str-plan-start-btn" data-plan-session="${esc(name)}" data-plan-phase="${phaseKey}">Iniciar sesión</button>
       </div>`;
     }).join('')}`;
+
+  $content.querySelectorAll('.str-plan-start-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectAndStartSession(btn.dataset.planSession, btn.dataset.planPhase, db);
+      switchStrTab('strTrain', db);
+    });
+  });
 }
 
 export function openPhaseModal() {

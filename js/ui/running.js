@@ -11,7 +11,7 @@ import { renderRunHistory as _renderRunHistory } from './running-history.js';
 import { openShareEditor } from './share-editor.js';
 import { renderRunProgress as _renderRunProgress } from './running-progress.js';
 import { initRunCalendar, renderRunCalendar } from './running-calendar.js';
-import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession, getNextPlanSession, buildSegmentBar } from './running-plan.js';
+import { populateRunWeeks as _populateRunWeeks, populateRunSessions as _populateRunSessions, loadRunSessionTemplate as _loadRunSessionTemplate, renderAllWeekSessions as _renderAllWeekSessions, inferRunType, populateSumSessionSelect, updateRunContextBar, renderRunProgramModal, renderRunWeekModal, setOnStartSession, getNextPlanSession, buildSegmentBar } from './running-plan.js';
 
 // Re-export for backward compatibility
 export { formatPace, formatRunDuration, parseRunDuration, parseSegDuration, segModeToRunType };
@@ -396,14 +396,13 @@ export function initRunning(db) {
     });
   });
 
-  // Plan tab: week/session selectors
+  // Plan tab: week selector
   $weekSelect.addEventListener('change', () => {
     db.runningWeek = parseInt($weekSelect.value) || 1;
     saveDB(db);
-    populateRunSessions(db);
+    renderAllWeekSessions(db);
     updateRunContextBar(db);
   });
-  $sessionSelect.addEventListener('change', () => loadRunSessionTemplate(db));
 
   // Running program context bar
   document.getElementById('runProgramContext').addEventListener('click', () => {
@@ -1878,6 +1877,7 @@ function checkAndNotifyPRs(db, newLog) {
 function populateRunWeeks(db) { _populateRunWeeks(db, $weekSelect, $sessionSelect, $segments); }
 function populateRunSessions(db) { _populateRunSessions(db, $weekSelect, $sessionSelect, $segments); }
 function loadRunSessionTemplate(db) { _loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segments); }
+function renderAllWeekSessions(db) { _renderAllWeekSessions(db, $weekSelect, $segments); }
 
 export function renderRunHistory(db, dateFilter) { _renderRunHistory(db, $historyFilter, $historyList, dateFilter); }
 export function renderRunProgress(db) { _renderRunProgress(db, $weeklyChart, $paceChart, $statsPanel); }

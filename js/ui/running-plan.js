@@ -12,7 +12,7 @@ export function populateRunWeeks(db, $weekSelect, $sessionSelect, $segments) {
   const programs = getRunningProgramList();
   if (programs.length === 0) {
     $weekSelect.innerHTML = '<option value="">Sin programa</option>';
-    $sessionSelect.innerHTML = '<option value="">—</option>';
+    if ($sessionSelect) $sessionSelect.innerHTML = '<option value="">—</option>';
     $segments.innerHTML = '<div class="empty-state">No hay programas de running disponibles</div>';
     return;
   }
@@ -26,7 +26,7 @@ export function populateRunWeeks(db, $weekSelect, $sessionSelect, $segments) {
     `<option value="${k}" ${parseInt(k) === db.runningWeek ? 'selected' : ''}>${phases[k].name || 'Semana ' + k}</option>`
   ).join('');
 
-  populateRunSessions(db, $weekSelect, $sessionSelect, $segments);
+  renderAllWeekSessions(db, $weekSelect, $segments);
 }
 
 export function populateRunSessions(db, $weekSelect, $sessionSelect, $segments) {
@@ -95,17 +95,8 @@ export function buildSegmentBar(segs, db) {
   }).join('')}</div>`;
 }
 
-export function loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segments) {
-  const progId = db.runningProgram;
-  const phases = getRunningPhases(progId);
-  const week = phases[$weekSelect.value];
-  if (!week) { $segments.innerHTML = ''; return; }
-
-  const sessionName = $sessionSelect.value;
-  const segs = week.sessions?.[sessionName];
-  if (!segs || segs.length === 0) { $segments.innerHTML = ''; return; }
-
-  $segments.innerHTML = buildSegmentBar(segs, db) + segs.map(seg => {
+function renderSegmentCards(segs, db) {
+  return segs.map(seg => {
     const zone = inferZone(seg, db);
     const color = ZONE_COLORS[zone] || ZONE_COLORS.Z2;
 
@@ -128,12 +119,53 @@ export function loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segment
         <div class="run-seg-info">${esc(info)}</div>
       </div>`;
   }).join('');
+}
+
+export function loadRunSessionTemplate(db, $weekSelect, $sessionSelect, $segments) {
+  const progId = db.runningProgram;
+  const phases = getRunningPhases(progId);
+  const week = phases[$weekSelect.value];
+  if (!week) { $segments.innerHTML = ''; return; }
+
+  const sessionName = $sessionSelect.value;
+  const segs = week.sessions?.[sessionName];
+  if (!segs || segs.length === 0) { $segments.innerHTML = ''; return; }
+
+  $segments.innerHTML = buildSegmentBar(segs, db) + renderSegmentCards(segs, db);
 
   $segments.innerHTML += `<button class="btn run-seg-start-btn" id="runSegStartBtn" style="width:100%;margin-top:8px">Iniciar esta sesión</button>`;
   document.getElementById('runSegStartBtn').addEventListener('click', () => {
     const runType = inferRunType(segs);
     const sessionLabel = $sessionSelect.value || '';
     _onStartSession?.(segs, runType, sessionLabel, db);
+  });
+}
+
+export function renderAllWeekSessions(db, $weekSelect, $segments) {
+  const progId = db.runningProgram;
+  const phases = getRunningPhases(progId);
+  const week = phases[$weekSelect.value];
+  if (!week?.sessions) { $segments.innerHTML = '<div class="empty-state">No hay sesiones en esta semana</div>'; return; }
+
+  const sessionNames = Object.keys(week.sessions);
+  $segments.innerHTML = sessionNames.map(name => {
+    const segs = week.sessions[name];
+    if (!segs || segs.length === 0) return '';
+    return `<div class="run-plan-session-card">
+      <div class="run-plan-session-header">${esc(name)}</div>
+      ${buildSegmentBar(segs, db)}
+      ${renderSegmentCards(segs, db)}
+      <button class="btn run-seg-start-btn" data-session="${esc(name)}" style="width:100%;margin-top:8px">Iniciar esta sesión</button>
+    </div>`;
+  }).join('');
+
+  $segments.querySelectorAll('.run-seg-start-btn[data-session]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.session;
+      const segs = week.sessions[name];
+      const runType = inferRunType(segs);
+      _onStartSession?.(segs, runType, name, db);
+    });
   });
 }
 

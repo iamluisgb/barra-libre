@@ -549,6 +549,24 @@ export function cancelEdit(db) {
   loadSessionTemplate(db, true);
 }
 
+/** Programmatically select a session and expand the training form */
+export function selectAndStartSession(sessionName, phaseKey, db) {
+  cacheSelectors();
+  const needPhaseSwitch = parseInt(phaseKey) !== db.phase;
+  if (needPhaseSwitch) {
+    db.phase = parseInt(phaseKey);
+    saveDB(db);
+    const phases = getAllPhases();
+    const phase = phases.find(p => p.id === db.phase);
+    const roman = ROMAN[db.phase - 1] || db.phase;
+    document.getElementById('phaseName').textContent = phase ? `Fase ${roman} · ${phase.name}` : `Fase ${roman}`;
+    populateSessions(db);
+  }
+  $trainSession.value = sessionName;
+  _formExpanded = true;
+  loadSessionTemplate(db, true);
+}
+
 /** Save or update a workout from the training form data */
 export function saveWorkout(db) {
   const date = $trainDate.value;
