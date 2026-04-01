@@ -285,8 +285,8 @@ export function loadSessionTemplate(db, autoPrefill) {
     const prevEx = prev ? prev.exercises[i] : null;
     const mode = ex.mode || (ex.type === 'hiit' || ex.type === 'density' ? 'result' : 'sets');
     switch (mode) {
-      case 'sets': return renderSetsCard(ex, i, prevEx, shouldPrefill);
-      case 'result': return renderResultCard(ex, i, prevEx, shouldPrefill, ex.type);
+      case 'sets': return renderSetsCard(ex, i, prevEx, shouldPrefill, db);
+      case 'result': return renderResultCard(ex, i, prevEx, shouldPrefill, ex.type, db);
       case 'interval': return renderIntervalCard(ex, i, prevEx, shouldPrefill);
       case 'tabata': return renderTabataCard(ex, i, prevEx, shouldPrefill);
       case 'rounds': return renderRoundsCard(ex, i, prevEx, shouldPrefill);
@@ -305,7 +305,7 @@ function timerBtnHtml(i, mode) {
   return `<button class="ex-timer-btn" data-ex-timer="${i}" data-timer-mode="${mode}">▶ Iniciar timer</button><div class="ex-timer-zone" data-ex="${i}"></div>`;
 }
 
-function renderSetsCard(ex, i, prevEx, shouldPrefill) {
+function renderSetsCard(ex, i, prevEx, shouldPrefill, db) {
   let sh = `<div class="sets-grid"><div></div><div class="sets-header">Kg</div><div class="sets-header">Reps</div>`;
   for (let s = 0; s < ex.sets; s++) {
     const pK = prevEx?.sets[s]?.kg ?? '';
@@ -318,11 +318,21 @@ function renderSetsCard(ex, i, prevEx, shouldPrefill) {
     sh += `<button type="button" class="set-label${activeClass}" data-ex="${i}" data-set="${s}">S${s + 1}</button><input type="number" class="${cK}" data-ex="${i}" data-set="${s}" data-field="kg" placeholder="${pK || '—'}" value="${vK}" step="0.5" aria-label="Peso serie ${s + 1} de ${esc(ex.name)}"><input type="text" class="${cR}" data-ex="${i}" data-set="${s}" data-field="reps" placeholder="${pR || ex.reps}" value="${vR}" inputmode="numeric" aria-label="Reps serie ${s + 1} de ${esc(ex.name)}">`;
   }
   sh += '</div>';
-  const pi = prevEx ? `<div class="prev-data">Anterior: ${prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ')}</div>` : '';
+  let pi = '';
+  if (prevEx) {
+    const prevStr = prevEx.sets.map(s => `<span>${s.kg || '—'}×${s.reps || '—'}</span>`).join(' · ');
+    const isRepsOnly = db && prevEx.sets.every(s => !s.kg || s.kg === '');
+    const badge = isRepsOnly && db ? _prevBadgeHtml(
+      prevEx.sets.map(s => `×${s.reps || 0}`).join('·'),
+      getExerciseBestReps(db, ex.name),
+      false
+    ) : '';
+    pi = `<div class="prev-data">Anterior: ${prevStr}${badge}</div>`;
+  }
   return `<div class="ex-card"><div class="ex-name">${esc(ex.name)}</div><div class="ex-target">${ex.sets}×${ex.reps}${ex.type === 'extra' ? ' (extra)' : ''}</div>${sh}${pi}</div>`;
 }
 
-function renderResultCard(ex, i, prevEx, shouldPrefill, exType) {
+function renderResultCard(ex, i, prevEx, shouldPrefill, exType, db) {
   const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
   const cp = pv ? ' prefilled' : '';
   const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
@@ -334,6 +344,9 @@ function renderResultCard(ex, i, prevEx, shouldPrefill, exType) {
       const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps} c/lado` : `${e.reps}`);
       return `<div class="round-item"><span class="ri-name">${esc(e.name)}</span><span class="ri-reps">${repsLabel}</span></div>`;
     }).join('');
+    const prevRaw = prevEx?.sets[0]?.reps || '';
+    const hiitBadge = prevRaw && db ? _prevBadgeHtml(prevRaw, getExerciseBestTime(db, ex.name), true) : '';
+    const hiitPi = prevEx ? `<div class="prev-data">Anterior: <span>${prevRaw || '—'}</span>${hiitBadge}</div>` : '';
     return `<div class="ex-card">
       <div class="ex-mode-badge hiit">HIIT</div>
       <div class="ex-name">${esc(ex.name)}</div>
@@ -342,7 +355,7 @@ function renderResultCard(ex, i, prevEx, shouldPrefill, exType) {
       <button class="ex-timer-btn hiit-start" data-ex-timer="${i}" data-timer-mode="result">▶ Iniciar HIIT</button>
       <div class="ex-timer-zone" data-ex="${i}"></div>
       <div style="margin-top:8px"><label>Resultado</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo total" value="${pv}"></div>
-      ${pi}</div>`;
+      ${hiitPi}</div>`;
   }
 
   const isTimed = exType === 'hiit' || exType === 'density';
@@ -535,6 +548,81 @@ export function getExercisePR(db, name, excludeId) {
     return max;
   }
   return entry.kg;
+}
+
+function getExerciseBestReps(db, name) {
+  let best = 0, bestDate = null, count = 0;
+  for (const w of db.workouts) {
+    for (const e of w.exercises) {
+      if (e.name !== name) continue;
+      for (const s of e.sets) {
+        const r = parseInt(s.reps) || 0;
+        if (r > 0) {
+          count++;
+          if (r > best) { best = r; bestDate = w.date; }
+        }
+      }
+    }
+  }
+  return count >= 2 ? { best, date: bestDate } : null;
+}
+
+function getExerciseBestTime(db, name) {
+  // For entries like "4R · 18:32" or plain "18:32"
+  function parseEntry(str) {
+    if (!str) return null;
+    const rMatch = str.match(/(\d+)R\s*·\s*(\d+):(\d+)/);
+    if (rMatch) return { rounds: parseInt(rMatch[1]), secs: parseInt(rMatch[2]) * 60 + parseInt(rMatch[3]) };
+    const tMatch = str.match(/(\d+):(\d+)/);
+    if (tMatch) return { rounds: 0, secs: parseInt(tMatch[1]) * 60 + parseInt(tMatch[2]) };
+    return null;
+  }
+  function isBetter(a, b) {
+    if (a.rounds !== b.rounds) return a.rounds > b.rounds;
+    return a.secs < b.secs;
+  }
+  let best = null, bestStr = null, bestDate = null, count = 0;
+  for (const w of db.workouts) {
+    for (const e of w.exercises) {
+      if (e.name !== name) continue;
+      const val = e.sets[0]?.reps;
+      const parsed = parseEntry(val);
+      if (!parsed) continue;
+      count++;
+      if (!best || isBetter(parsed, best)) { best = parsed; bestStr = val; bestDate = w.date; }
+    }
+  }
+  return count >= 2 ? { bestStr, best, date: bestDate } : null;
+}
+
+function _prevBadgeHtml(prevStr, bestResult, isTime) {
+  if (!bestResult) return '';
+  if (isTime) {
+    function parseEntry(str) {
+      if (!str) return null;
+      const rMatch = str.match(/(\d+)R\s*·\s*(\d+):(\d+)/);
+      if (rMatch) return { rounds: parseInt(rMatch[1]), secs: parseInt(rMatch[2]) * 60 + parseInt(rMatch[3]) };
+      const tMatch = str.match(/(\d+):(\d+)/);
+      if (tMatch) return { rounds: 0, secs: parseInt(tMatch[1]) * 60 + parseInt(tMatch[2]) };
+      return null;
+    }
+    const prev = parseEntry(prevStr);
+    const best = bestResult.best;
+    if (!prev) return '';
+    const isRecord = prev.rounds === best.rounds && prev.secs === best.secs;
+    const dateStr = bestResult.date ? bestResult.date.slice(5).replace('-', '/') : '';
+    if (isRecord) return `<span class="prev-badge prev-badge--record">★ tu récord</span>`;
+    return `<span class="prev-badge">★ récord: ${bestResult.bestStr}${dateStr ? ` · ${dateStr}` : ''}</span>`;
+  } else {
+    const prevMax = (prevStr || '').split('·').reduce((m, p) => {
+      const r = parseInt((p.match(/×(\d+)/) || [])[1]) || 0;
+      return Math.max(m, r);
+    }, 0);
+    const { best, date } = bestResult;
+    const dateStr = date ? date.slice(5).replace('-', '/') : '';
+    if (prevMax >= best) return `<span class="prev-badge prev-badge--record">★ tu récord</span>`;
+    return `<span class="prev-badge">★ récord: ${best} reps${dateStr ? ` · ${dateStr}` : ''}</span>`;
+  }
 }
 
 /** Pre-fill the training form for editing an existing workout */

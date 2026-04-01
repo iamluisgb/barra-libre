@@ -91,6 +91,14 @@ export function buildTimerConfig(mode, ex) {
   return { phases: [], totalRounds: 0, type: 'stopwatch' };
 }
 
+function _hiitDotsSVG(currentRound, totalRounds) {
+  const dots = Array.from({ length: totalRounds }, (_, i) => {
+    const cls = i < currentRound - 1 ? 'hrd filled' : 'hrd';
+    return `<span class="${cls}" aria-hidden="true"></span>`;
+  }).join('');
+  return `<div class="hiit-rounds-dots" aria-label="Ronda ${currentRound} de ${totalRounds}">${dots}</div>`;
+}
+
 function renderExTimerUI(zone) {
   if (!activeExTimer) return;
   const { config } = activeExTimer;
@@ -131,6 +139,7 @@ function renderExTimerUI(zone) {
       return `<div class="hiit-ex-item${cls}" data-ex-item="${idx}"><span class="hiit-ex-name">${esc(e.name)}</span><span class="hiit-ex-reps">${repsLabel}</span></div>`;
     }).join('');
     zone.innerHTML = `<div class="ex-timer hiit-work">
+      ${_hiitDotsSVG(1, rounds)}
       <div class="ex-timer-phase">RONDA 1 / ${rounds}</div>
       <div class="ex-timer-display">0:00</div>
       <div class="hiit-ex-list">${exItems}</div>
@@ -390,6 +399,7 @@ function _rebuildHiitWorkUI(zone) {
     return `<div class="hiit-ex-item${cls}" data-ex-item="${idx}"><span class="hiit-ex-name">${esc(e.name)}</span><span class="hiit-ex-reps">${repsLabel}</span></div>`;
   }).join('');
   zone.innerHTML = `<div class="ex-timer hiit-work">
+    ${_hiitDotsSVG(hiitCurrentRound, rounds)}
     <div class="ex-timer-phase">RONDA ${hiitCurrentRound} / ${rounds}</div>
     <div class="ex-timer-display">0:00</div>
     <div class="hiit-ex-list">${exItems}</div>
@@ -508,6 +518,14 @@ function _updateHiitUI(zone) {
   const { config, hiitCurrentRound, hiitCurrentExIdx } = activeExTimer;
   const { exercises, rounds } = config;
 
+  const dotsEl = zone.querySelector('.hiit-rounds-dots');
+  if (dotsEl) {
+    dotsEl.setAttribute('aria-label', `Ronda ${hiitCurrentRound} de ${rounds}`);
+    dotsEl.querySelectorAll('.hrd').forEach((dot, i) => {
+      dot.className = i < hiitCurrentRound - 1 ? 'hrd filled' : 'hrd';
+    });
+  }
+
   const phaseEl = zone.querySelector('.ex-timer-phase');
   if (phaseEl) phaseEl.textContent = `RONDA ${hiitCurrentRound} / ${rounds}`;
 
@@ -591,6 +609,12 @@ function handleHiitExDone() {
       // All rounds done
       stopExTimer(true);
       return;
+    }
+    const completedDotIdx = activeExTimer.hiitCurrentRound - 1;
+    const dots = zone.querySelectorAll('.hrd');
+    if (dots[completedDotIdx]) {
+      dots[completedDotIdx].classList.add('just-completed');
+      setTimeout(() => dots[completedDotIdx].classList.remove('just-completed'), 400);
     }
     activeExTimer.hiitCurrentRound++;
     activeExTimer.hiitCurrentExIdx = 0;

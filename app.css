@@ -67,6 +67,8 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-card .sets-header{font-size:var(--fs-xs);color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:.5px;padding-bottom:2px;font-weight:600}
 .ex-card .prev-data{font-size:var(--fs-sm);color:var(--text2);margin-top:10px;padding-top:8px;font-weight:500}
 .ex-card .prev-data span{color:var(--green);font-weight:600}
+.prev-badge{display:inline-flex;align-items:center;font-size:var(--fs-2xs);font-weight:700;color:var(--text3);background:var(--surface2);border-radius:10px;padding:2px 7px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.prev-badge--record{color:#a16207;background:rgba(245,158,11,.12)}
 .timer-bar{z-index:50;background:var(--surface-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius);padding:10px 16px;display:none;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-4)}
 .timer-bar.active{display:flex}
 .timer-mode-toggle{display:flex;background:var(--surface2);border-radius:20px;padding:2px;gap:2px}
@@ -346,6 +348,11 @@ body.hiit-focus{padding-bottom:0}
 .hiit-rest-next strong{color:rgba(255,255,255,.85);font-weight:700}
 .hiit-skip-btn{width:100%;padding:16px;min-height:52px;border-radius:14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-family:var(--font);font-size:var(--fs-lg);font-weight:700;cursor:pointer;transition:background .15s}
 .hiit-skip-btn:active{background:rgba(255,255,255,.22);transform:scale(.97)}
+.hiit-rounds-dots{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:10px}
+.hrd{width:10px;height:10px;border-radius:50%;border:2px solid var(--green);background:transparent;transition:background .25s,transform .25s}
+.hrd.filled{background:var(--green)}
+.hrd.just-completed{animation:hrd-pop .3s ease-out}
+@keyframes hrd-pop{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(1)}}
 
 /* Toast notifications */
 .toast-container{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:250;display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);pointer-events:none}
