@@ -113,7 +113,7 @@ function renderExTimerUI(zone) {
       <div class="ex-timer-round">R${phase.round} / ${config.totalRounds}</div>
       <div class="ex-timer-label">${esc(phase.label)}</div>
       <div class="ex-timer-bar"><div class="ex-timer-bar-fill" style="width:100%"></div></div>
-      <div class="ex-timer-actions"><button class="ex-timer-stop">Parar</button></div>
+      <div class="ex-timer-actions"><button class="ex-timer-stop">II Pausar</button></div>
     </div>`;
   } else if (t === 'countdown-manual') {
     const phase = config.phases[0];
@@ -122,14 +122,14 @@ function renderExTimerUI(zone) {
       <div class="ex-timer-display">${exFmtTime(phase.duration)}</div>
       <div class="ex-timer-round">Rondas: <strong>0</strong></div>
       <div class="ex-timer-bar"><div class="ex-timer-bar-fill" style="width:100%"></div></div>
-      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button></div>
+      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">II Pausar</button></div>
     </div>`;
   } else if (t === 'manual-rounds') {
     zone.innerHTML = `<div class="ex-timer neutral">
       <div class="ex-timer-phase">Circuito</div>
       <div class="ex-timer-display">0:00</div>
       <div class="ex-timer-round">Rondas: <strong>0</strong>${config.totalRounds > 0 ? ` / ${config.totalRounds}` : ''}</div>
-      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button></div>
+      <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">II Pausar</button></div>
     </div>`;
   } else if (t === 'hiit-rounds') {
     const { exercises, rounds } = config;
@@ -145,7 +145,7 @@ function renderExTimerUI(zone) {
       <div class="hiit-ex-list">${exItems}</div>
       <div class="ex-timer-actions">
         <button class="hiit-ex-btn">Hecho (1/${exercises.length})</button>
-        <button class="ex-timer-stop">Parar</button>
+        <button class="ex-timer-stop">II Pausar</button>
       </div>
     </div>`;
     activeExTimer.hiitCurrentRound = 1;
@@ -154,7 +154,7 @@ function renderExTimerUI(zone) {
     zone.innerHTML = `<div class="ex-timer neutral">
       <div class="ex-timer-phase">Tiempo</div>
       <div class="ex-timer-display">0:00</div>
-      <div class="ex-timer-actions"><button class="ex-timer-stop">Parar</button></div>
+      <div class="ex-timer-actions"><button class="ex-timer-stop">II Pausar</button></div>
     </div>`;
   }
 }
@@ -413,7 +413,7 @@ function _rebuildHiitWorkUI(zone) {
     <div class="hiit-ex-list">${exItems}</div>
     <div class="ex-timer-actions">
       <button class="hiit-ex-btn">Hecho (${hiitCurrentExIdx + 1}/${exercises.length})</button>
-      <button class="ex-timer-stop">Parar</button>
+      <button class="ex-timer-stop">II Pausar</button>
     </div>
   </div>`;
   activeExTimer.resting = false;
@@ -558,7 +558,7 @@ function _renderPausedUI() {
   timer.classList.add('paused');
   const actions = timer.querySelector('.ex-timer-actions');
   if (actions) {
-    actions.innerHTML = `<button class="ex-timer-resume">▶ Continuar</button><button class="ex-timer-stop">✕ Parar</button>`;
+    actions.innerHTML = `<button class="ex-timer-resume">▶ Continuar</button><button class="ex-timer-stop">Terminar</button>`;
   }
 }
 
@@ -573,13 +573,13 @@ function _restoreTimerUI() {
   const actions = timer.querySelector('.ex-timer-actions');
   if (!actions) return;
   if (t === 'countdown-manual' || t === 'manual-rounds') {
-    actions.innerHTML = `<button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button>`;
+    actions.innerHTML = `<button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">II Pausar</button>`;
   } else if (t === 'hiit-rounds') {
     const { exercises } = activeExTimer.config;
     const exIdx = activeExTimer.hiitCurrentExIdx;
-    actions.innerHTML = `<button class="hiit-ex-btn">Hecho (${exIdx + 1}/${exercises.length})</button><button class="ex-timer-stop">Parar</button>`;
+    actions.innerHTML = `<button class="hiit-ex-btn">Hecho (${exIdx + 1}/${exercises.length})</button><button class="ex-timer-stop">II Pausar</button>`;
   } else {
-    actions.innerHTML = `<button class="ex-timer-stop">Parar</button>`;
+    actions.innerHTML = `<button class="ex-timer-stop">II Pausar</button>`;
   }
 }
 
