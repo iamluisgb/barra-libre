@@ -342,6 +342,8 @@ input.partial{border-color:var(--text3);color:var(--text2)}
 .ex-timer.hiit-done .ex-timer-display{color:var(--green)}
 body.hiit-focus header{display:none}
 body.hiit-focus nav{display:none}
+body.hiit-focus .context-bar{display:none}
+body.hiit-focus .str-subnav{display:none}
 body.hiit-focus{padding-bottom:0}
 body.hiit-focus .round-list{display:none}
 body.hiit-focus .ex-mode-info{display:none}
