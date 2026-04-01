@@ -74,6 +74,11 @@ const STR_PRESETS = {
   statsPro: { name: 'Stats Pro' },
 };
 
+const HIIT_PRESETS = {
+  minimal: { name: 'Minimal' },
+  statsPro: { name: 'Stats Pro' },
+};
+
 // ── Douglas-Peucker simplification ─────────────────────────
 
 function _sqDist(p, a, b) {
@@ -164,16 +169,37 @@ function normalizeRunData(log) {
   };
 }
 
+function _parseRoundsFromResult(str) {
+  const m = str.match(/^(\d+)R/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+function _parseTimeFromResult(str) {
+  const m = str.match(/(\d+:\d{2})$/);
+  return m ? m[1] : str;
+}
+
 function normalizeWorkoutData(w) {
   let totalSets = 0, totalVolume = 0;
+  let isHiit = false, hiitRounds = 0, hiitTime = '', hiitExercises = [], hiitRest = '';
+
   for (const ex of (w.exercises || [])) {
+    const repsStr = ex.sets?.[0]?.reps || '';
+    if (ex.type === 'hiit' || _parseRoundsFromResult(repsStr) > 0) {
+      isHiit = true;
+      hiitRounds    = ex.rounds    || _parseRoundsFromResult(repsStr);
+      hiitTime      = _parseTimeFromResult(repsStr);
+      hiitExercises = ex.exercises || [];
+      hiitRest      = ex.rest || '';
+    }
     for (const s of (ex.sets || [])) {
       totalSets++;
       totalVolume += (parseFloat(s.kg) || 0) * (parseInt(s.reps) || 0);
     }
   }
+
   return {
-    mode: 'strength',
+    mode: isHiit ? 'hiit' : 'strength',
     date: w.date || '',
     session: w.session || '',
     phase: w.phase || '',
@@ -185,6 +211,11 @@ function normalizeWorkoutData(w) {
     dateStr: _formatDateLong(w.date),
     sessionStr: w.session || 'Entrenamiento',
     volumeStr: totalVolume >= 1000 ? `${(totalVolume / 1000).toFixed(1)}t` : `${Math.round(totalVolume)} kg`,
+    isHiit,
+    hiitRounds,
+    hiitTime,
+    hiitExercises,
+    hiitRest,
   };
 }
 
@@ -733,6 +764,153 @@ function renderStatsStrength(ctx, W, H, data, theme) {
   drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
 }
 
+// ── HIIT presets rendering ──────────────────────────────────
+
+function renderMinimalHiit(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bg);
+  drawAccentGlow(ctx, W, H, t);
+
+  const is916 = H > 1200;
+  const pad = 60;
+
+  drawBrandingTopRight(ctx, W, t);
+
+  // Badge pill "HIIT"
+  let y = 100;
+  drawPillBadge(ctx, 'HIIT', W / 2, y, t);
+  y += 72;
+
+  // Session name HERO
+  const name = data.sessionStr || 'HIIT';
+  const nameSize = name.length > 10 ? (is916 ? 110 : 88) : (is916 ? 140 : 110);
+  drawTextGlow(ctx, name, W / 2, y + 60, {
+    size: nameSize, weight: 900, color: t.text, italic: true,
+    glowColor: t.sub(.1), glowBlur: 30,
+  });
+  y += 60 + (nameSize > 100 ? 90 : 70);
+
+  // Date
+  drawText(ctx, data.dateStr || '', W / 2, y, { size: 24, weight: 500, color: t.sub(.35) });
+  y += is916 ? 72 : 54;
+
+  // Bento 2-col: RONDAS | TIEMPO
+  const bentoGap = 14;
+  const bentoW = (W - 2 * pad - bentoGap) / 2;
+  const bentoH = 150;
+  const bentoItems = [
+    { val: data.hiitRounds > 0 ? String(data.hiitRounds) : '—', label: 'RONDAS' },
+    { val: data.hiitTime || '—', label: 'TIEMPO' },
+  ];
+  for (let i = 0; i < 2; i++) {
+    const bx = pad + i * (bentoW + bentoGap);
+    drawGlassPanel(ctx, bx, y, bentoW, bentoH, 20, t);
+    drawText(ctx, bentoItems[i].label, bx + bentoW / 2, y + 36, { size: 22, weight: 700, color: t.accent, spacing: 0.12 });
+    drawFauxItalic(ctx, bentoItems[i].val, bx + bentoW / 2, y + 108, { size: 66, weight: 900, color: t.text });
+  }
+  y += bentoH + 40;
+
+  // Circuit exercise list
+  if (data.hiitExercises.length > 0) {
+    drawText(ctx, 'CIRCUITO', pad, y, { size: 20, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
+    y += 36;
+
+    const maxEx = is916 ? 8 : 5;
+    const visEx = data.hiitExercises.slice(0, maxEx);
+    const exRowH = 72;
+
+    drawGlassPanel(ctx, pad, y, W - 2 * pad, visEx.length * exRowH, 16, t);
+
+    visEx.forEach((ex, idx) => {
+      const ey = y + idx * exRowH;
+      if (idx > 0) {
+        ctx.fillStyle = t.sub(.08);
+        ctx.fillRect(pad + 24, ey, W - 2 * pad - 48, 1);
+      }
+      drawText(ctx, ex.name, pad + 28, ey + exRowH / 2, { size: 30, weight: 600, color: t.text, align: 'left' });
+      const repsLabel = ex.duration ? ex.duration : (ex.perSide ? `${ex.reps} c/l` : `×${ex.reps}`);
+      drawFauxItalic(ctx, repsLabel, W - pad - 28, ey + exRowH / 2, { size: 30, weight: 800, color: t.accent, align: 'right' });
+    });
+    y += visEx.length * exRowH + 16;
+
+    if (data.hiitExercises.length > maxEx) {
+      drawText(ctx, `+${data.hiitExercises.length - maxEx} más`, W / 2, y + 20, { size: 22, weight: 500, color: t.sub(.3) });
+      y += 48;
+    }
+  }
+
+  // Rest note
+  if (data.hiitRest && data.hiitRest !== '0s') {
+    drawText(ctx, `Desc. entre rondas: ${data.hiitRest}`, W / 2, y + 20, { size: 20, weight: 500, color: t.sub(.25) });
+  }
+
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
+}
+
+function renderStatsHiit(ctx, W, H, data, theme) {
+  const t = theme;
+  drawBackground(ctx, W, H, t.bgFlat);
+
+  const pad = 60;
+  const is916 = H > 1200;
+  let y = pad;
+
+  drawBrandingTopRight(ctx, W, t);
+
+  // Date accent + session name
+  drawText(ctx, data.dateStr?.toUpperCase?.() || '', pad, y + 10, { size: 24, weight: 700, color: t.accent, align: 'left' });
+  y += 34;
+
+  // Hero card: session name + rounds sub-line
+  const heroH = 200;
+  drawGlassPanel(ctx, pad, y, W - 2 * pad, heroH, 20, t);
+  drawFauxItalic(ctx, data.sessionStr, W / 2, y + 80, { size: 100, weight: 900, color: t.text });
+  const roundsLabel = data.hiitRounds > 0 ? `${data.hiitRounds} rondas` : 'HIIT';
+  drawText(ctx, roundsLabel, W / 2, y + 148, { size: 28, weight: 700, color: t.accent, spacing: 0.05 });
+  y += heroH + 20;
+
+  // Bento 2-col: TIEMPO | RONDAS
+  const bentoGap = 14;
+  const bentoW = (W - 2 * pad - bentoGap) / 2;
+  const bentoH = 120;
+  const bentoItems = [
+    { val: data.hiitTime || '—', label: 'TIEMPO' },
+    { val: data.hiitRounds > 0 ? String(data.hiitRounds) : '—', label: 'RONDAS' },
+  ];
+  for (let i = 0; i < 2; i++) {
+    const bx = pad + i * (bentoW + bentoGap);
+    drawGlassPanel(ctx, bx, y, bentoW, bentoH, 16, t);
+    drawText(ctx, bentoItems[i].label, bx + bentoW / 2, y + 30, { size: 22, weight: 700, color: t.accent, spacing: 0.1 });
+    drawFauxItalic(ctx, bentoItems[i].val, bx + bentoW / 2, y + 84, { size: 52, weight: 900, color: t.text });
+  }
+  y += bentoH + 30;
+
+  // Exercises list
+  if (data.hiitExercises.length > 0) {
+    drawText(ctx, 'CIRCUITO', pad, y + 8, { size: 20, weight: 700, color: t.sub(.4), align: 'left', spacing: 0.15 });
+    y += 42;
+
+    const maxEx = is916 ? 7 : 5;
+    for (let i = 0; i < Math.min(data.hiitExercises.length, maxEx); i++) {
+      const ex = data.hiitExercises[i];
+      const exCardH = 90;
+      drawGlassPanel(ctx, pad, y, W - 2 * pad, exCardH, 16, t);
+      drawText(ctx, ex.name, pad + 24, y + 34, { size: 30, weight: 700, color: t.text, align: 'left' });
+      const repsLabel = ex.duration ? ex.duration : (ex.perSide ? `${ex.reps} c/l` : `×${ex.reps}`);
+      drawFauxItalic(ctx, repsLabel, W - pad - 24, y + 34, { size: 30, weight: 800, color: t.accent, align: 'right' });
+      if (data.hiitRest && data.hiitRest !== '0s') {
+        drawText(ctx, `${data.hiitRest} descanso`, pad + 24, y + 65, { size: 20, weight: 500, color: t.sub(.35), align: 'left' });
+      }
+      y += exCardH + 10;
+    }
+    if (data.hiitExercises.length > maxEx) {
+      drawText(ctx, `+${data.hiitExercises.length - maxEx} más`, W / 2, y + 10, { size: 22, weight: 500, color: t.sub(.3) });
+    }
+  }
+
+  drawBranding(ctx, W, H * (is916 ? 0.94 : 0.92), t);
+}
+
 // ── Main render ─────────────────────────────────────────────
 
 async function renderToCanvas() {
@@ -756,6 +934,9 @@ async function renderToCanvas() {
     if (_preset === 'minimal') renderMinimal(ctx, W, H, _data, theme);
     else if (_preset === 'statsPro') renderStatsPro(ctx, W, H, _data, theme);
     else if (_preset === 'routeHero') renderRouteHero(ctx, W, H, _data, theme);
+  } else if (_mode === 'hiit') {
+    if (_preset === 'minimal')       renderMinimalHiit(ctx, W, H, _data, theme);
+    else if (_preset === 'statsPro') renderStatsHiit(ctx, W, H, _data, theme);
   } else {
     if (_preset === 'minimal') renderMinimalStrength(ctx, W, H, _data, theme);
     else if (_preset === 'statsPro') renderStatsStrength(ctx, W, H, _data, theme);
@@ -907,7 +1088,7 @@ function _bindUI() {
 }
 
 function _updatePresetChips() {
-  const presets = _mode === 'running' ? RUN_PRESETS : STR_PRESETS;
+  const presets = _mode === 'running' ? RUN_PRESETS : (_mode === 'hiit' ? HIIT_PRESETS : STR_PRESETS);
   const hasRoute = _data?.coords?.length > 1;
 
   document.querySelectorAll('.se-preset-chip').forEach(btn => {
@@ -944,11 +1125,12 @@ export function openShareEditor(logData, options = {}) {
     _data = normalizeRunData(logData);
   } else {
     _data = normalizeWorkoutData(logData);
+    if (_data.isHiit) _mode = 'hiit';
   }
 
   // Restore prefs
   const prefs = loadPrefs();
-  const presets = _mode === 'running' ? RUN_PRESETS : STR_PRESETS;
+  const presets = _mode === 'running' ? RUN_PRESETS : (_mode === 'hiit' ? HIIT_PRESETS : STR_PRESETS);
   _preset = (prefs.preset && presets[prefs.preset]) ? prefs.preset : 'minimal';
   _format = prefs.format || '9:16';
   _theme = (prefs.theme && THEMES[prefs.theme]) ? prefs.theme : 'dark';

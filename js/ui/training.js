@@ -707,7 +707,14 @@ export function saveWorkout(db) {
       return { name: ex.name, sets };
     } else {
       const r = document.querySelector(`[data-ex="${i}"][data-set="0"][data-field="reps"]`);
-      return { name: ex.name || ex.mode, sets: [{ kg: '', reps: r ? r.value : '' }] };
+      const exObj = { name: ex.name || ex.mode, sets: [{ kg: '', reps: r ? r.value : '' }] };
+      if (ex.type === 'hiit') {
+        exObj.type = 'hiit';
+        if (ex.rounds)    exObj.rounds    = ex.rounds;
+        if (ex.rest)      exObj.rest      = ex.rest;
+        if (ex.exercises) exObj.exercises = ex.exercises;
+      }
+      return exObj;
     }
   });
 
