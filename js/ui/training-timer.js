@@ -267,7 +267,9 @@ export function startExTimer(exIdx, mode, ex) {
     phaseIdx: 0,
     phaseStartedAt: Date.now(),
     roundCount: 0,
-    interval: setInterval(tickExTimer, 250)
+    interval: setInterval(tickExTimer, 250),
+    paused: false,
+    pausedAt: null,
   };
   lastBeepSec = -1;
 
@@ -287,14 +289,17 @@ export function startExTimer(exIdx, mode, ex) {
 export function stopExTimer(completed) {
   if (!activeExTimer) return;
   clearInterval(activeExTimer.interval);
+  if (activeExTimer.restInterval) clearInterval(activeExTimer.restInterval);
 
   const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
   const btn = document.querySelector(`[data-ex-timer="${activeExTimer.exIdx}"]`);
 
+  const input = document.querySelector(`[data-ex="${activeExTimer.exIdx}"][data-set="0"][data-field="reps"]`);
+  const totalElapsed = activeExTimer.pausedAt
+    ? Math.floor((activeExTimer.pausedAt - activeExTimer.startedAt) / 1000)
+    : Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
   if (completed) {
-    const input = document.querySelector(`[data-ex="${activeExTimer.exIdx}"][data-set="0"][data-field="reps"]`);
     if (input && !input.value) {
-      const totalElapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
       if (activeExTimer.config.type === 'stopwatch') {
         input.value = exFmtTime(totalElapsed);
       } else if (activeExTimer.config.type === 'hiit-rounds') {
@@ -305,17 +310,33 @@ export function stopExTimer(completed) {
       input.classList.add('prefilled');
     }
     exBeepDone();
+  } else {
+    // Guardar resultado parcial si hay datos útiles
+    if (input && !input.value) {
+      const t = activeExTimer.config.type;
+      if ((t === 'stopwatch' || t === 'hiit-rounds') && totalElapsed > 5) {
+        input.value = exFmtTime(totalElapsed);
+        input.classList.add('partial');
+      } else if ((t === 'countdown-manual' || t === 'manual-rounds') && activeExTimer.roundCount > 0) {
+        input.value = activeExTimer.roundCount;
+        input.classList.add('partial');
+      } else if (t === 'phased' && activeExTimer.phaseIdx > 0) {
+        const workDone = Math.ceil(activeExTimer.phaseIdx / 2);
+        input.value = `${exFmtTime(totalElapsed)} (R${workDone}/${activeExTimer.config.totalRounds})`;
+        input.classList.add('partial');
+      }
+    }
+    vibrate(150);
   }
 
   const wasHiitRounds = activeExTimer.config.type === 'hiit-rounds';
-  const hiitElapsed = wasHiitRounds ? Math.floor((Date.now() - activeExTimer.startedAt) / 1000) : 0;
   const hiitRounds = wasHiitRounds ? activeExTimer.config.rounds : 0;
 
   if (zone) {
     if (completed && wasHiitRounds) {
       zone.innerHTML = `<div class="ex-timer hiit-done">
         <div class="ex-timer-phase">Completado</div>
-        <div class="ex-timer-display">${exFmtTime(hiitElapsed)}</div>
+        <div class="ex-timer-display">${exFmtTime(totalElapsed)}</div>
         <div class="ex-timer-round">${hiitRounds} rondas</div>
       </div>`;
     } else {
@@ -394,6 +415,7 @@ function startRestCountdown(zone, duration, onComplete) {
       if (onComplete) onComplete();
     }
   }, 250);
+  activeExTimer.restInterval = restInterval;
 }
 
 function _updateHiitUI(zone) {
@@ -412,6 +434,61 @@ function _updateHiitUI(zone) {
 
   const btn = zone.querySelector('.hiit-ex-btn');
   if (btn) btn.textContent = `Hecho (${hiitCurrentExIdx + 1}/${exercises.length})`;
+}
+
+function _renderPausedUI() {
+  if (!activeExTimer) return;
+  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
+  if (!zone) return;
+  const timer = zone.querySelector('.ex-timer');
+  if (!timer) return;
+  timer.classList.add('paused');
+  const actions = timer.querySelector('.ex-timer-actions');
+  if (actions) {
+    actions.innerHTML = `<button class="ex-timer-resume">▶ Continuar</button><button class="ex-timer-stop">✕ Parar</button>`;
+  }
+}
+
+function _restoreTimerUI() {
+  if (!activeExTimer) return;
+  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
+  if (!zone) return;
+  const timer = zone.querySelector('.ex-timer');
+  if (!timer) return;
+  timer.classList.remove('paused');
+  const t = activeExTimer.config.type;
+  const actions = timer.querySelector('.ex-timer-actions');
+  if (!actions) return;
+  if (t === 'countdown-manual' || t === 'manual-rounds') {
+    actions.innerHTML = `<button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button>`;
+  } else if (t === 'hiit-rounds') {
+    const { exercises } = activeExTimer.config;
+    const exIdx = activeExTimer.hiitCurrentExIdx;
+    actions.innerHTML = `<button class="hiit-ex-btn">Hecho (${exIdx + 1}/${exercises.length})</button><button class="ex-timer-stop">Parar</button>`;
+  } else {
+    actions.innerHTML = `<button class="ex-timer-stop">Parar</button>`;
+  }
+}
+
+export function pauseExTimer() {
+  if (!activeExTimer || activeExTimer.paused) return;
+  clearInterval(activeExTimer.interval);
+  activeExTimer.interval = null;
+  activeExTimer.paused = true;
+  activeExTimer.pausedAt = Date.now();
+  vibrate(150);
+  _renderPausedUI();
+}
+
+export function resumeExTimer() {
+  if (!activeExTimer || !activeExTimer.paused) return;
+  const pauseDuration = Date.now() - activeExTimer.pausedAt;
+  activeExTimer.phaseStartedAt += pauseDuration;
+  activeExTimer.startedAt += pauseDuration;
+  activeExTimer.paused = false;
+  activeExTimer.pausedAt = null;
+  activeExTimer.interval = setInterval(tickExTimer, 250);
+  _restoreTimerUI();
 }
 
 function handleHiitExDone() {
@@ -459,7 +536,13 @@ export function initExTimerEvents($exerciseList, getExercise) {
       return;
     }
     const stopBtn = e.target.closest('.ex-timer-stop');
-    if (stopBtn) { stopExTimer(false); return; }
+    if (stopBtn) {
+      if (activeExTimer && !activeExTimer.paused) { pauseExTimer(); }
+      else { stopExTimer(false); }
+      return;
+    }
+    const resumeBtn = e.target.closest('.ex-timer-resume');
+    if (resumeBtn) { resumeExTimer(); return; }
     const roundBtn = e.target.closest('.ex-timer-round-btn');
     if (roundBtn) { handleExTimerRound(); return; }
     const hiitExBtn = e.target.closest('.hiit-ex-btn');

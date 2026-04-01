@@ -291,6 +291,7 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-timer-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;margin:8px 0;border-radius:var(--radius);border:1.5px dashed var(--border);background:none;color:var(--text2);font-size:var(--fs-base);font-weight:600;cursor:pointer;transition:all .2s}
 .ex-timer-btn:active{transform:scale(.97)}
 .ex-timer-btn.hiit-start{background:var(--accent);color:#fff;border:none;padding:14px 16px;font-size:var(--fs-lg)}
+input.partial{border-color:var(--text3);color:var(--text2)}
 .ex-timer-btn.hiit-start:active{opacity:.85;transform:scale(.97)}
 .ex-timer{margin:8px 0;padding:12px;border-radius:var(--radius);text-align:center;transition:background .3s,border-color .3s}
 .ex-timer.work{background:rgba(52,199,89,.1);border:1.5px solid var(--green)}
@@ -309,12 +310,17 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-timer.rest .ex-timer-bar-fill{background:var(--red)}
 .ex-timer.neutral .ex-timer-bar-fill{background:var(--accent)}
 .ex-timer-actions{display:flex;align-items:center;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-2)}
-.ex-timer-stop{padding:6px 20px;border-radius:20px;border:none;font-size:var(--fs-base);font-weight:700;cursor:pointer}
+.ex-timer-stop{padding:12px 20px;min-height:44px;border-radius:20px;border:none;font-size:var(--fs-base);font-weight:700;cursor:pointer}
 .ex-timer.work .ex-timer-stop{background:var(--green);color:#fff}
 .ex-timer.rest .ex-timer-stop{background:var(--red);color:#fff}
 .ex-timer.neutral .ex-timer-stop{background:var(--text2);color:#fff}
 .ex-timer-round-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:var(--fs-base);font-weight:700;cursor:pointer}
 .ex-timer-round-btn:active{background:var(--accent);color:#fff}
+.ex-timer.paused{opacity:.9;border-style:dashed}
+.ex-timer.paused .ex-timer-phase::after{content:' · PAUSADO';color:var(--text3);font-size:var(--fs-2xs)}
+.ex-timer-resume{padding:12px 0;min-height:44px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-size:var(--fs-base);font-weight:700;cursor:pointer;flex:1}
+.ex-timer-resume:active{opacity:.85}
+.ex-timer.paused .ex-timer-stop{background:var(--text3);color:#fff;min-height:44px}
 .hiit-ex-list{margin:8px 0 4px;padding:0}
 .hiit-ex-item{display:flex;justify-content:space-between;align-items:center;padding:7px 6px;border-bottom:1px solid var(--border);font-size:var(--fs-base);color:var(--text3);transition:all .2s}
 .hiit-ex-item.active{color:var(--accent);font-weight:700;border-bottom-color:var(--accent)}
