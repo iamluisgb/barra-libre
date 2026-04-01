@@ -140,7 +140,7 @@ function renderExTimerUI(zone) {
     }).join('');
     zone.innerHTML = `<div class="ex-timer hiit-work">
       ${_hiitDotsSVG(1, rounds)}
-      <div class="ex-timer-phase">RONDA 1 / ${rounds}</div>
+      <div class="ex-timer-phase">RONDA 1 / ${rounds}<span class="hiit-session-elapsed">0:00</span></div>
       <div class="ex-timer-display">0:00</div>
       <div class="hiit-ex-list">${exItems}</div>
       <div class="ex-timer-actions">
@@ -187,6 +187,14 @@ function updateExTimerDisplay() {
     if (activeExTimer.resting) return;
     const elapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
     display.textContent = exFmtTime(elapsed);
+  }
+
+  if (config.type === 'hiit-rounds') {
+    const sessionEl = zone.querySelector('.hiit-session-elapsed');
+    if (sessionEl) {
+      const sessionSec = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
+      sessionEl.textContent = exFmtTime(sessionSec);
+    }
   }
 }
 
@@ -400,7 +408,7 @@ function _rebuildHiitWorkUI(zone) {
   }).join('');
   zone.innerHTML = `<div class="ex-timer hiit-work">
     ${_hiitDotsSVG(hiitCurrentRound, rounds)}
-    <div class="ex-timer-phase">RONDA ${hiitCurrentRound} / ${rounds}</div>
+    <div class="ex-timer-phase">RONDA ${hiitCurrentRound} / ${rounds}<span class="hiit-session-elapsed">0:00</span></div>
     <div class="ex-timer-display">0:00</div>
     <div class="hiit-ex-list">${exItems}</div>
     <div class="ex-timer-actions">
@@ -435,7 +443,7 @@ function startRestCountdown(zone, duration, onComplete) {
     if (timerEl) {
       timerEl.className = 'ex-timer hiit-rest';
       timerEl.innerHTML = `
-        <div class="ex-timer-phase">DESCANSA</div>
+        <div class="ex-timer-phase">DESCANSA<span class="hiit-session-elapsed">0:00</span></div>
         <div class="ex-timer-display">${exFmtTime(duration)}</div>
         <div class="hiit-rest-next">
           Siguiente: <strong>Ronda ${nextRound}</strong><br>
@@ -452,6 +460,8 @@ function startRestCountdown(zone, duration, onComplete) {
       const remaining = Math.max(0, duration - elapsed);
       const display = zone.querySelector('.ex-timer-display');
       if (display) display.textContent = exFmtTime(remaining);
+      const sessionEl = zone.querySelector('.hiit-session-elapsed');
+      if (sessionEl) sessionEl.textContent = exFmtTime(Math.floor((Date.now() - activeExTimer.startedAt) / 1000));
       if (remaining <= 3 && remaining > 0 && remaining !== lastBeepSec) {
         lastBeepSec = remaining;
         beep(660 + (3 - remaining) * 220, 100);
@@ -527,7 +537,7 @@ function _updateHiitUI(zone) {
   }
 
   const phaseEl = zone.querySelector('.ex-timer-phase');
-  if (phaseEl) phaseEl.textContent = `RONDA ${hiitCurrentRound} / ${rounds}`;
+  if (phaseEl) phaseEl.innerHTML = `RONDA ${hiitCurrentRound} / ${rounds}<span class="hiit-session-elapsed">${exFmtTime(Math.floor((Date.now() - activeExTimer.startedAt) / 1000))}</span>`;
 
   zone.querySelectorAll('.hiit-ex-item').forEach((el, idx) => {
     el.className = 'hiit-ex-item' +
