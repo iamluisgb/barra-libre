@@ -78,6 +78,15 @@ export function buildTimerConfig(mode, ex) {
     const count = ex.count || 0;
     return { phases: [], totalRounds: count, restDuration: restSec, type: 'manual-rounds' };
   }
+  // result (structured HIIT) — guided rounds with checklist
+  if (ex.exercises && ex.exercises.length > 0) {
+    return {
+      type: 'hiit-rounds',
+      exercises: ex.exercises,
+      rounds: ex.rounds || 1,
+      restDuration: parseDurationStr(ex.rest)
+    };
+  }
   // result (HIIT) — stopwatch
   return { phases: [], totalRounds: 0, type: 'stopwatch' };
 }
@@ -114,6 +123,24 @@ function renderExTimerUI(zone) {
       <div class="ex-timer-round">Rondas: <strong>0</strong>${config.totalRounds > 0 ? ` / ${config.totalRounds}` : ''}</div>
       <div class="ex-timer-actions"><button class="ex-timer-round-btn">Ronda ✓</button><button class="ex-timer-stop">Parar</button></div>
     </div>`;
+  } else if (t === 'hiit-rounds') {
+    const { exercises, rounds } = config;
+    const exItems = exercises.map((e, idx) => {
+      const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps}×c/lado` : `${e.reps}`);
+      const cls = idx === 0 ? ' active' : '';
+      return `<div class="hiit-ex-item${cls}" data-ex-item="${idx}"><span class="hiit-ex-name">${esc(e.name)}</span><span class="hiit-ex-reps">${repsLabel}</span></div>`;
+    }).join('');
+    zone.innerHTML = `<div class="ex-timer neutral">
+      <div class="ex-timer-phase">RONDA 1 / ${rounds}</div>
+      <div class="ex-timer-display">0:00</div>
+      <div class="hiit-ex-list">${exItems}</div>
+      <div class="ex-timer-actions">
+        <button class="hiit-ex-btn">Hecho (1/${exercises.length})</button>
+        <button class="ex-timer-stop">Parar</button>
+      </div>
+    </div>`;
+    activeExTimer.hiitCurrentRound = 1;
+    activeExTimer.hiitCurrentExIdx = 0;
   } else {
     zone.innerHTML = `<div class="ex-timer neutral">
       <div class="ex-timer-phase">Tiempo</div>
@@ -251,6 +278,10 @@ export function startExTimer(exIdx, mode, ex) {
   if (config.type === 'phased' && config.phases[0]?.type === 'work') {
     exBeepWork();
   }
+  if (config.type === 'hiit-rounds') {
+    document.body.classList.add('hiit-focus');
+    exBeepWork();
+  }
 }
 
 export function stopExTimer(completed) {
@@ -266,6 +297,8 @@ export function stopExTimer(completed) {
       const totalElapsed = Math.floor((Date.now() - activeExTimer.startedAt) / 1000);
       if (activeExTimer.config.type === 'stopwatch') {
         input.value = exFmtTime(totalElapsed);
+      } else if (activeExTimer.config.type === 'hiit-rounds') {
+        input.value = exFmtTime(totalElapsed);
       } else if (activeExTimer.config.type === 'countdown-manual' || activeExTimer.config.type === 'manual-rounds') {
         if (activeExTimer.roundCount > 0) input.value = activeExTimer.roundCount;
       }
@@ -274,8 +307,23 @@ export function stopExTimer(completed) {
     exBeepDone();
   }
 
-  if (zone) zone.innerHTML = '';
+  const wasHiitRounds = activeExTimer.config.type === 'hiit-rounds';
+  const hiitElapsed = wasHiitRounds ? Math.floor((Date.now() - activeExTimer.startedAt) / 1000) : 0;
+  const hiitRounds = wasHiitRounds ? activeExTimer.config.rounds : 0;
+
+  if (zone) {
+    if (completed && wasHiitRounds) {
+      zone.innerHTML = `<div class="ex-timer hiit-done">
+        <div class="ex-timer-phase">Completado</div>
+        <div class="ex-timer-display">${exFmtTime(hiitElapsed)}</div>
+        <div class="ex-timer-round">${hiitRounds} rondas</div>
+      </div>`;
+    } else {
+      zone.innerHTML = '';
+    }
+  }
   if (btn) btn.style.display = '';
+  if (wasHiitRounds) document.body.classList.remove('hiit-focus');
   activeExTimer = null;
   lastBeepSec = -1;
   releaseWakeLock();
@@ -303,13 +351,17 @@ export function handleExTimerRound() {
   }
 }
 
-function startRestCountdown(zone, duration) {
+function startRestCountdown(zone, duration, onComplete) {
   if (!activeExTimer) return;
   const timer = zone.querySelector('.ex-timer');
   if (timer) {
     timer.className = 'ex-timer rest';
     const phaseEl = timer.querySelector('.ex-timer-phase');
     if (phaseEl) phaseEl.textContent = 'Descanso';
+    const listEl = timer.querySelector('.hiit-ex-list');
+    if (listEl) listEl.style.display = 'none';
+    const hiitBtn = timer.querySelector('.hiit-ex-btn');
+    if (hiitBtn) hiitBtn.style.display = 'none';
   }
 
   const restStart = Date.now();
@@ -333,10 +385,66 @@ function startRestCountdown(zone, duration) {
         timer.className = 'ex-timer neutral';
         const phaseEl = timer.querySelector('.ex-timer-phase');
         if (phaseEl) phaseEl.textContent = 'Circuito';
+        const listEl = timer.querySelector('.hiit-ex-list');
+        if (listEl) listEl.style.display = '';
+        const hiitBtn = timer.querySelector('.hiit-ex-btn');
+        if (hiitBtn) hiitBtn.style.display = '';
       }
       if (activeExTimer) activeExTimer.resting = false;
+      if (onComplete) onComplete();
     }
   }, 250);
+}
+
+function _updateHiitUI(zone) {
+  if (!activeExTimer) return;
+  const { config, hiitCurrentRound, hiitCurrentExIdx } = activeExTimer;
+  const { exercises, rounds } = config;
+
+  const phaseEl = zone.querySelector('.ex-timer-phase');
+  if (phaseEl) phaseEl.textContent = `RONDA ${hiitCurrentRound} / ${rounds}`;
+
+  zone.querySelectorAll('.hiit-ex-item').forEach((el, idx) => {
+    el.className = 'hiit-ex-item' +
+      (idx < hiitCurrentExIdx ? ' done' : '') +
+      (idx === hiitCurrentExIdx ? ' active' : '');
+  });
+
+  const btn = zone.querySelector('.hiit-ex-btn');
+  if (btn) btn.textContent = `Hecho (${hiitCurrentExIdx + 1}/${exercises.length})`;
+}
+
+function handleHiitExDone() {
+  if (!activeExTimer || activeExTimer.config.type !== 'hiit-rounds') return;
+  const { config } = activeExTimer;
+  const { exercises, rounds, restDuration } = config;
+  const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
+  if (!zone) return;
+
+  activeExTimer.hiitCurrentExIdx++;
+
+  if (activeExTimer.hiitCurrentExIdx >= exercises.length) {
+    // Round complete
+    if (activeExTimer.hiitCurrentRound >= rounds) {
+      // All rounds done
+      stopExTimer(true);
+      return;
+    }
+    activeExTimer.hiitCurrentRound++;
+    activeExTimer.hiitCurrentExIdx = 0;
+    beep(1000, 150); vibrate([100, 50, 100]);
+
+    if (restDuration > 0) {
+      activeExTimer.resting = true;
+      startRestCountdown(zone, restDuration, () => {
+        _updateHiitUI(zone);
+      });
+    } else {
+      _updateHiitUI(zone);
+    }
+  } else {
+    _updateHiitUI(zone);
+  }
 }
 
 /** Initialize timer event delegation on the exercise list */
@@ -354,6 +462,8 @@ export function initExTimerEvents($exerciseList, getExercise) {
     if (stopBtn) { stopExTimer(false); return; }
     const roundBtn = e.target.closest('.ex-timer-round-btn');
     if (roundBtn) { handleExTimerRound(); return; }
+    const hiitExBtn = e.target.closest('.hiit-ex-btn');
+    if (hiitExBtn) { handleHiitExDone(); return; }
   });
 
   document.addEventListener('touchstart', function u() {

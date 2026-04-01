@@ -39,6 +39,11 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .so-last{font-size:var(--fs-sm);color:var(--text2);margin-top:var(--sp-3);text-align:center}
 .so-draft{font-size:var(--fs-sm);color:var(--accent);margin-top:var(--sp-1);text-align:center}
 .so-start{width:100%;margin-top:var(--sp-3)}
+.so-ex-hiit{flex-direction:column;align-items:stretch;padding:8px 12px;background:var(--surface2);border-radius:var(--radius)}
+.so-ex-hiit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.so-hiit-list{display:flex;flex-direction:column;gap:2px;padding-top:4px;border-top:1px solid var(--border)}
+.so-hiit-ex{display:flex;justify-content:space-between;font-size:var(--fs-sm);color:var(--text2);padding:3px 0}
+.so-hiit-ex span:first-child{color:var(--text)}
 .str-plan-header{margin-bottom:var(--sp-3)}
 .str-plan-select{width:100%}
 .str-plan-desc{font-size:var(--fs-sm);color:var(--text2);margin-bottom:var(--sp-3);line-height:1.4}
@@ -270,6 +275,7 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-mode-badge.amrap{background:rgba(52,199,89,.1);color:var(--green)}
 .ex-mode-badge.emom{background:rgba(175,82,222,.1);color:#af52de}
 .ex-mode-badge.superset{background:rgba(255,149,0,.1);color:#ff9500}
+.ex-mode-badge.hiit{background:rgba(212,55,44,.1);color:var(--accent)}
 .ex-mode-info{font-size:var(--fs-base);color:var(--text2);margin-bottom:var(--sp-2);line-height:1.4}
 .ex-mode-desc{font-size:var(--fs-base);color:var(--text3);margin-bottom:var(--sp-2);line-height:1.4;font-style:italic}
 .round-list{margin:6px 0 10px;padding-left:0;list-style:none}
@@ -284,6 +290,8 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 /* Exercise inline timer */
 .ex-timer-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;margin:8px 0;border-radius:var(--radius);border:1.5px dashed var(--border);background:none;color:var(--text2);font-size:var(--fs-base);font-weight:600;cursor:pointer;transition:all .2s}
 .ex-timer-btn:active{transform:scale(.97)}
+.ex-timer-btn.hiit-start{background:var(--accent);color:#fff;border:none;padding:14px 16px;font-size:var(--fs-lg)}
+.ex-timer-btn.hiit-start:active{opacity:.85;transform:scale(.97)}
 .ex-timer{margin:8px 0;padding:12px;border-radius:var(--radius);text-align:center;transition:background .3s,border-color .3s}
 .ex-timer.work{background:rgba(52,199,89,.1);border:1.5px solid var(--green)}
 .ex-timer.rest{background:rgba(255,59,48,.08);border:1.5px solid var(--red)}
@@ -307,6 +315,19 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-
 .ex-timer.neutral .ex-timer-stop{background:var(--text2);color:#fff}
 .ex-timer-round-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:var(--fs-base);font-weight:700;cursor:pointer}
 .ex-timer-round-btn:active{background:var(--accent);color:#fff}
+.hiit-ex-list{margin:8px 0 4px;padding:0}
+.hiit-ex-item{display:flex;justify-content:space-between;align-items:center;padding:7px 6px;border-bottom:1px solid var(--border);font-size:var(--fs-base);color:var(--text3);transition:all .2s}
+.hiit-ex-item.active{color:var(--accent);font-weight:700;border-bottom-color:var(--accent)}
+.hiit-ex-item.done{color:var(--text3);text-decoration:line-through;opacity:.45}
+.hiit-ex-item .hiit-ex-reps{font-size:var(--fs-sm);color:inherit;margin-left:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hiit-ex-btn{padding:8px 0;border-radius:20px;background:var(--accent);border:none;color:#fff;font-size:var(--fs-base);font-weight:700;cursor:pointer;flex:1}
+.hiit-ex-btn:active{opacity:.85}
+.ex-timer.hiit-done{background:rgba(52,199,89,.1);border:1.5px solid var(--green)}
+.ex-timer.hiit-done .ex-timer-phase{color:var(--green);font-size:var(--fs-sm);letter-spacing:1px}
+.ex-timer.hiit-done .ex-timer-display{color:var(--green)}
+body.hiit-focus header{display:none}
+body.hiit-focus nav{display:none}
+body.hiit-focus{padding-bottom:0}
 
 /* Toast notifications */
 .toast-container{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:250;display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);pointer-events:none}

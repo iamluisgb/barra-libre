@@ -217,9 +217,20 @@ function renderSessionOverview(db, session, exercises) {
         <span class="so-name">${esc(session)}</span>
         <span class="so-count">${exercises.length} ejercicios</span>
       </div>
-      <div class="so-list">${exercises.map(ex =>
-        `<div class="so-ex"><span class="so-ex-name">${esc(ex.name)}</span><span class="so-ex-target">${exTargetText(ex)}</span></div>`
-      ).join('')}</div>
+      <div class="so-list">${exercises.map(ex => {
+        if (ex.type === 'hiit' && ex.exercises && ex.exercises.length > 0) {
+          const subList = ex.exercises.map(e => {
+            const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps} c/lado` : `${e.reps}`);
+            return `<div class="so-hiit-ex"><span>${esc(e.name)}</span><span>${repsLabel}</span></div>`;
+          }).join('');
+          const roundsLabel = ex.rounds ? `${ex.rounds} rondas` : 'HIIT';
+          return `<div class="so-ex so-ex-hiit">
+            <div class="so-ex-hiit-header"><span class="so-ex-name">${esc(ex.name)}</span><span class="so-ex-target">${roundsLabel}</span></div>
+            <div class="so-hiit-list">${subList}</div>
+          </div>`;
+        }
+        return `<div class="so-ex"><span class="so-ex-name">${esc(ex.name)}</span><span class="so-ex-target">${exTargetText(ex)}</span></div>`;
+      }).join('')}</div>
       ${lastDate ? `<div class="so-last">Última vez: ${lastDate}</div>` : ''}
       ${draftInfo}
       <button class="btn so-start">${btnText}</button>
@@ -315,6 +326,25 @@ function renderResultCard(ex, i, prevEx, shouldPrefill, exType) {
   const pv = shouldPrefill && prevEx ? prevEx.sets[0]?.reps || '' : '';
   const cp = pv ? ' prefilled' : '';
   const pi = prevEx ? `<div class="prev-data">Anterior: <span>${prevEx.sets[0]?.reps || '—'}</span></div>` : '';
+
+  if (exType === 'hiit' && ex.exercises && ex.exercises.length > 0) {
+    const roundsLabel = ex.rounds ? `${ex.rounds} rondas` : '';
+    const restLabel = ex.rest && ex.rest !== '0s' ? ` · Desc: ${ex.rest}` : '';
+    const exList = ex.exercises.map(e => {
+      const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps} c/lado` : `${e.reps}`);
+      return `<div class="round-item"><span class="ri-name">${esc(e.name)}</span><span class="ri-reps">${repsLabel}</span></div>`;
+    }).join('');
+    return `<div class="ex-card">
+      <div class="ex-mode-badge hiit">HIIT</div>
+      <div class="ex-name">${esc(ex.name)}</div>
+      <div class="ex-mode-info">${roundsLabel}${restLabel}</div>
+      <div class="round-list">${exList}</div>
+      <button class="ex-timer-btn hiit-start" data-ex-timer="${i}" data-timer-mode="result">▶ Iniciar HIIT</button>
+      <div class="ex-timer-zone" data-ex="${i}"></div>
+      <div style="margin-top:8px"><label>Resultado</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo total" value="${pv}"></div>
+      ${pi}</div>`;
+  }
+
   const isTimed = exType === 'hiit' || exType === 'density';
   const timer = isTimed ? timerBtnHtml(i, 'result') : '';
   return `<div class="ex-card"><div class="ex-name">${esc(ex.name)}</div>${timer}<div style="margin-top:8px"><label>Resultado</label><input type="text" class="${cp}" data-ex="${i}" data-set="0" data-field="reps" placeholder="Tiempo / reps totales" value="${pv}"></div>${pi}</div>`;
