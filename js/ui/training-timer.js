@@ -37,6 +37,12 @@ export function parseDurationStr(str) {
   return total;
 }
 
+function _exWorkSec(repsStr) {
+  if (!repsStr) return 0;
+  const s = repsStr.toLowerCase().replace(/\s/g, '');
+  return /\d+(s|min|h)/.test(s) ? parseDurationStr(s) : 0;
+}
+
 export function buildTimerConfig(mode, ex) {
   if (mode === 'interval') {
     const onSec = parseDurationStr(ex.on);
@@ -76,6 +82,9 @@ export function buildTimerConfig(mode, ex) {
   if (mode === 'rounds') {
     const restSec = parseDurationStr(ex.rest);
     const count = ex.count || 0;
+    if (ex.exercises && ex.exercises.length > 0) {
+      return { type: 'hiit-rounds', exercises: ex.exercises, rounds: count, restDuration: restSec, isCircuit: true };
+    }
     return { phases: [], totalRounds: count, restDuration: restSec, type: 'manual-rounds' };
   }
   // result (structured HIIT) — guided rounds with checklist
@@ -133,12 +142,13 @@ function renderExTimerUI(zone) {
     </div>`;
   } else if (t === 'hiit-rounds') {
     const { exercises, rounds } = config;
+    const timerCls = config.isCircuit ? 'circuit-work' : 'hiit-work';
     const exItems = exercises.map((e, idx) => {
       const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps}×c/lado` : `${e.reps}`);
       const cls = idx === 0 ? ' active' : '';
       return `<div class="hiit-ex-item${cls}" data-ex-item="${idx}"><span class="hiit-ex-name">${esc(e.name)}</span><span class="hiit-ex-reps">${repsLabel}</span></div>`;
     }).join('');
-    zone.innerHTML = `<div class="ex-timer hiit-work">
+    zone.innerHTML = `<div class="ex-timer ${timerCls}">
       ${_hiitDotsSVG(1, rounds)}
       <div class="ex-timer-phase">RONDA 1 / ${rounds}<span class="hiit-session-elapsed">0:00</span></div>
       <div class="ex-timer-display">0:00</div>
@@ -150,6 +160,13 @@ function renderExTimerUI(zone) {
     </div>`;
     activeExTimer.hiitCurrentRound = 1;
     activeExTimer.hiitCurrentExIdx = 0;
+    activeExTimer.exWorkInterval = null;
+    activeExTimer.exWorkStartedAt = null;
+    setTimeout(() => {
+      if (!activeExTimer) return;
+      const z = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
+      if (z) _startExWorkCountdown(z);
+    }, 0);
   } else {
     zone.innerHTML = `<div class="ex-timer neutral">
       <div class="ex-timer-phase">Tiempo</div>
@@ -307,6 +324,7 @@ export function stopExTimer(completed) {
   if (!activeExTimer) return;
   clearInterval(activeExTimer.interval);
   if (activeExTimer.restInterval) clearInterval(activeExTimer.restInterval);
+  if (activeExTimer.exWorkInterval) clearInterval(activeExTimer.exWorkInterval);
 
   const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
   const btn = document.querySelector(`[data-ex-timer="${activeExTimer.exIdx}"]`);
@@ -358,7 +376,8 @@ export function stopExTimer(completed) {
 
   if (zone) {
     if (completed && wasHiitRounds) {
-      zone.innerHTML = `<div class="ex-timer hiit-done">
+      const doneCls = activeExTimer.config.isCircuit ? 'circuit-done' : 'hiit-done';
+      zone.innerHTML = `<div class="ex-timer ${doneCls}">
         <div class="ex-timer-phase">Completado</div>
         <div class="ex-timer-display">${exFmtTime(totalElapsed)}</div>
         <div class="ex-timer-round">${hiitRounds} rondas</div>
@@ -400,12 +419,13 @@ function _rebuildHiitWorkUI(zone) {
   if (!activeExTimer) return;
   const { config, hiitCurrentRound, hiitCurrentExIdx } = activeExTimer;
   const { exercises, rounds } = config;
+  const timerCls = config.isCircuit ? 'circuit-work' : 'hiit-work';
   const exItems = exercises.map((e, idx) => {
     const repsLabel = e.duration ? e.duration : (e.perSide ? `${e.reps}×c/lado` : `${e.reps}`);
     const cls = idx < hiitCurrentExIdx ? ' done' : (idx === hiitCurrentExIdx ? ' active' : '');
     return `<div class="hiit-ex-item${cls}" data-ex-item="${idx}"><span class="hiit-ex-name">${esc(e.name)}</span><span class="hiit-ex-reps">${repsLabel}</span></div>`;
   }).join('');
-  zone.innerHTML = `<div class="ex-timer hiit-work">
+  zone.innerHTML = `<div class="ex-timer ${timerCls}">
     ${_hiitDotsSVG(hiitCurrentRound, rounds)}
     <div class="ex-timer-phase">RONDA ${hiitCurrentRound} / ${rounds}<span class="hiit-session-elapsed">0:00</span></div>
     <div class="ex-timer-display">0:00</div>
@@ -416,6 +436,7 @@ function _rebuildHiitWorkUI(zone) {
     </div>
   </div>`;
   activeExTimer.resting = false;
+  _startExWorkCountdown(zone);
 }
 
 function _skipRest() {
@@ -430,6 +451,32 @@ function _skipRest() {
   vibrate([50, 30, 100]);
   exBeepWork();
   _rebuildHiitWorkUI(zone);
+}
+
+function _startExWorkCountdown(zone) {
+  if (!activeExTimer || activeExTimer.resting) return;
+  const ex = activeExTimer.config.exercises[activeExTimer.hiitCurrentExIdx];
+  const duration = _exWorkSec(ex?.reps);
+  if (duration <= 0) return;
+
+  activeExTimer.exWorkStartedAt = Date.now();
+  let lastExBeep = -1;
+  activeExTimer.exWorkInterval = setInterval(() => {
+    if (!activeExTimer) { clearInterval(activeExTimer?.exWorkInterval); return; }
+    const elapsed = Math.floor((Date.now() - activeExTimer.exWorkStartedAt) / 1000);
+    const remaining = Math.max(0, duration - elapsed);
+    const activeReps = zone.querySelector('.hiit-ex-item.active .hiit-ex-reps');
+    if (activeReps) activeReps.textContent = remaining > 0 ? exFmtTime(remaining) : '0:00';
+    if (remaining <= 3 && remaining > 0 && remaining !== lastExBeep) {
+      lastExBeep = remaining;
+      beep(660 + (3 - remaining) * 220, 100);
+    }
+    if (remaining <= 0) {
+      clearInterval(activeExTimer.exWorkInterval);
+      activeExTimer.exWorkInterval = null;
+      handleHiitExDone();
+    }
+  }, 250);
 }
 
 function startRestCountdown(zone, duration, onComplete) {
@@ -546,6 +593,8 @@ function _updateHiitUI(zone) {
 
   const btn = zone.querySelector('.hiit-ex-btn');
   if (btn) btn.textContent = `Hecho (${hiitCurrentExIdx + 1}/${exercises.length})`;
+
+  if (!activeExTimer.resting) _startExWorkCountdown(zone);
 }
 
 function _renderPausedUI() {
@@ -586,6 +635,15 @@ export function pauseExTimer() {
   if (!activeExTimer || activeExTimer.paused) return;
   clearInterval(activeExTimer.interval);
   activeExTimer.interval = null;
+  if (activeExTimer.exWorkInterval) {
+    clearInterval(activeExTimer.exWorkInterval);
+    activeExTimer.exWorkInterval = null;
+    const ex = activeExTimer.config.exercises?.[activeExTimer.hiitCurrentExIdx];
+    const exDur = _exWorkSec(ex?.reps);
+    activeExTimer.exWorkPausedRemaining = exDur > 0
+      ? Math.max(0, exDur - Math.floor((Date.now() - activeExTimer.exWorkStartedAt) / 1000))
+      : null;
+  }
   activeExTimer.paused = true;
   activeExTimer.pausedAt = Date.now();
   vibrate(150);
@@ -600,6 +658,14 @@ export function resumeExTimer() {
   activeExTimer.paused = false;
   activeExTimer.pausedAt = null;
   activeExTimer.interval = setInterval(tickExTimer, 250);
+  if (activeExTimer.exWorkPausedRemaining != null) {
+    const ex = activeExTimer.config.exercises?.[activeExTimer.hiitCurrentExIdx];
+    const exDur = _exWorkSec(ex?.reps);
+    activeExTimer.exWorkStartedAt = Date.now() - (exDur - activeExTimer.exWorkPausedRemaining) * 1000;
+    activeExTimer.exWorkPausedRemaining = null;
+    const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
+    if (zone) _startExWorkCountdown(zone);
+  }
   _restoreTimerUI();
 }
 
@@ -610,6 +676,10 @@ function handleHiitExDone() {
   const zone = document.querySelector(`.ex-timer-zone[data-ex="${activeExTimer.exIdx}"]`);
   if (!zone) return;
 
+  if (activeExTimer.exWorkInterval) {
+    clearInterval(activeExTimer.exWorkInterval);
+    activeExTimer.exWorkInterval = null;
+  }
   activeExTimer.hiitCurrentExIdx++;
 
   if (activeExTimer.hiitCurrentExIdx >= exercises.length) {

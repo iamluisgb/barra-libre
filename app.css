@@ -322,7 +322,7 @@ input.partial{border-color:var(--text3);color:var(--text2)}
 .ex-timer.work .ex-timer-stop{background:var(--green);color:#fff}
 .ex-timer.rest .ex-timer-stop{background:var(--red);color:#fff}
 .ex-timer.neutral .ex-timer-stop{background:var(--text2);color:#fff}
-.ex-timer-round-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:var(--fs-base);font-weight:700;cursor:pointer}
+.ex-timer-round-btn{padding:12px 16px;min-height:48px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:var(--fs-base);font-weight:700;cursor:pointer}
 .ex-timer-round-btn:active{background:var(--accent);color:#fff}
 .ex-timer.paused{opacity:.9;border-style:dashed}
 .ex-timer.paused .ex-timer-phase::after{content:' · PAUSADO';color:var(--text3);font-size:var(--fs-2xs)}
@@ -365,6 +365,18 @@ body.hiit-focus .ex-mode-info{display:none}
 .hrd.filled{background:var(--green)}
 .hrd.just-completed{animation:hrd-pop .3s ease-out}
 @keyframes hrd-pop{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(1)}}
+
+/* Circuit variant — usa --accent (rojo) en lugar de --green */
+.ex-timer.circuit-work{background:rgba(212,55,44,.08);border:2px solid var(--accent);border-radius:var(--radius);padding:16px 16px 12px;text-align:center}
+.ex-timer.circuit-work .ex-timer-phase{color:var(--accent);font-size:var(--fs-xs);letter-spacing:2px;display:flex;justify-content:space-between;align-items:center}
+.ex-timer.circuit-work .ex-timer-display{display:none}
+.ex-timer.circuit-work .ex-timer-stop{flex:1;min-height:44px;background:var(--surface);color:var(--text2);border:1.5px solid var(--border)}
+.ex-timer.circuit-work .hrd{border-color:var(--accent)}
+.ex-timer.circuit-work .hrd.filled{background:var(--accent)}
+.ex-timer.circuit-work .hiit-ex-item.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ex-timer.circuit-done{background:rgba(212,55,44,.1);border:1.5px solid var(--accent)}
+.ex-timer.circuit-done .ex-timer-phase{color:var(--accent);font-size:var(--fs-sm);letter-spacing:1px}
+.ex-timer.circuit-done .ex-timer-display{color:var(--accent)}
 
 /* Toast notifications */
 .toast-container{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:250;display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);pointer-events:none}
